@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  O app roda em celular, em campo, sob sol forte e tambem a noite. Os dois temas
+  sao de primeira classe: o escuro e o padrao porque a maior parte dos plantoes
+  observados acontece no fim do dia.
+*/
+:root,
+[data-tema='escuro'] {
+  --cor-fundo: 13 21 32;
+  --cor-superficie: 22 33 46;
+  --cor-superficie-2: 28 41 56;
+  --cor-borda: 45 62 80;
+  --cor-texto: 233 239 245;
+  --cor-texto-suave: 143 160 178;
+  --cor-marca: 47 125 109;
+  --cor-marca-clara: 90 191 168;
+  --cor-marca-escura: 26 77 67;
+}
+
+[data-tema='claro'] {
+  --cor-fundo: 244 247 249;
+  --cor-superficie: 255 255 255;
+  --cor-superficie-2: 237 242 246;
+  --cor-borda: 209 219 228;
+  --cor-texto: 17 28 39;
+  --cor-texto-suave: 90 106 122;
+  --cor-marca: 34 106 92;
+  --cor-marca-clara: 26 77 67;
+  --cor-marca-escura: 18 58 51;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-fundo text-texto antialiased;
+  /* Respeita a area segura de aparelhos com notch. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer components {
+  .campo {
+    @apply w-full rounded-xl border border-borda bg-superficie-2 px-4 py-3 text-texto
+           placeholder:text-texto-suave focus:border-marca-clara focus:outline-none
+           focus:ring-2 focus:ring-marca-clara/40;
+  }
+
+  .rotulo {
+    @apply mb-2 block text-sm font-semibold text-texto;
+  }
+
+  .botao {
+    @apply w-full rounded-xl bg-marca px-4 py-3 font-semibold text-white
+           transition hover:brightness-110 focus:outline-none focus:ring-2
+           focus:ring-marca-clara/50 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .botao-secundario {
+    @apply rounded-xl border border-borda bg-superficie-2 px-4 py-2 font-medium
+           text-texto transition hover:bg-superficie focus:outline-none
+           focus:ring-2 focus:ring-marca-clara/40;
+  }
+
+  .cartao {
+    @apply rounded-card border border-borda bg-superficie p-4;
+  }
+}
+
+/* Alvo de toque minimo para uso com luva e no sol. */
+button,
+[role='button'],
+select,
+input[type='checkbox'] {
+  min-height: 44px;
+}

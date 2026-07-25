@@ -1,0 +1,20 @@
+# Railway injeta a porta em PORT; 8080 e so o padrao para rodar local.
+:{$PORT:8080} {
+	root * /srv
+	encode gzip
+
+	# O app usa rotas do lado do cliente. Sem este fallback, recarregar a
+	# pagina em /atendimentos/<id> devolveria 404, porque o arquivo nao existe
+	# no disco — so a rota existe, dentro do JavaScript.
+	try_files {path} /index.html
+	file_server
+
+	# Os assets tem hash no nome, entao podem ser cacheados indefinidamente.
+	@comHash path /assets/*
+	header @comHash Cache-Control "public, max-age=31536000, immutable"
+
+	# O index nao tem hash e aponta para os assets: precisa ser sempre fresco,
+	# senao o navegador serve um HTML velho apontando para assets que sumiram.
+	@index path /index.html /
+	header @index Cache-Control "no-cache"
+}
