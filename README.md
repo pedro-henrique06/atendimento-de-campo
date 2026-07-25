@@ -18,26 +18,34 @@ Monorepo com dois serviços independentes, pensados para rodar como dois
 serviços separados no [Railway](https://railway.app):
 
 ```
-/backend    API .NET 8 (ASP.NET Core Web API + EF Core + PostgreSQL, JWT)
+/backend    API .NET 8 (ASP.NET Core Web API + MongoDB.Driver, JWT)
 /frontend   React + Vite + TypeScript + Tailwind
 ```
 
 ### Modelo de dados (resumo)
 
-- **Base** — acampamento/abrigo onde a equipe atende; tem uma senha de
+Banco de dados: **MongoDB**. Três coleções:
+
+- **bases** — acampamento/abrigo onde a equipe atende; tem uma senha de
   equipe compartilhada.
-- **Usuario** — voluntário (nome, função, registro profissional). Criado
+- **usuarios** — voluntário (nome, função, registro profissional). Criado
   automaticamente no primeiro login de cada base.
-- **Atendimento** — o "prontuário" do paciente: dados pessoais, código
-  curto, classificação de risco, status.
-- **AtendimentoEtapa** — cada passagem por um setor (Triagem, Clínica
-  Geral, Enfermagem, Pediatria). Os campos clínicos variam muito por
-  setor, então ficam guardados como JSON em vez de uma tabela por
-  especialidade — isso deixa fácil adicionar novos setores depois (basta
-  registrar o schema do formulário no frontend, o backend não precisa
-  mudar).
-- **HistoricoAlteracao** — log de auditoria: quem alterou o quê, valor
-  anterior → novo, quando.
+- **atendimentos** — o "prontuário" do paciente: dados pessoais, código
+  curto, classificação de risco, status, e dois arrays **embutidos** no
+  próprio documento:
+  - `etapas` — cada passagem por um setor (Triagem, Clínica Geral,
+    Enfermagem, Pediatria). Os campos clínicos variam muito por setor,
+    então ficam guardados como um sub-documento dinâmico em vez de uma
+    coleção por especialidade — isso deixa fácil adicionar novos setores
+    depois (basta registrar o schema do formulário no frontend, o
+    backend não precisa mudar).
+  - `historico` — log de auditoria: quem alterou o quê, valor anterior →
+    novo, quando.
+
+Modelar Etapas e Histórico como sub-documentos embutidos (em vez de
+coleções separadas com referência) é proposital: eles sempre são lidos e
+escritos junto com o atendimento, então evita joins/lookups e casa bem
+com o jeito de modelar dados do MongoDB.
 
 ### Autenticação
 
@@ -59,7 +67,8 @@ própria, permissões por função), dá para evoluir sem quebrar o schema.
 
 ### Backend
 
-Requer .NET 8 SDK e PostgreSQL local (ou um container `postgres:16`).
+Requer .NET 8 SDK e MongoDB local (ou um container `mongo:7`, ex.:
+`docker run -d -p 27017:27017 mongo:7`).
 
 ```bash
 cd backend/AtendimentoCampo.Api
@@ -67,10 +76,11 @@ dotnet restore
 dotnet run
 ```
 
-Por padrão usa `appsettings.Development.json` (Postgres em
-`localhost:5432`, banco `atendimento_campo`). O schema é criado
-automaticamente no start (`EnsureCreated`) e uma Base "Base Principal" com
-senha de equipe `equipe123` é semeada se o banco estiver vazio.
+Por padrão usa `appsettings.Development.json` (Mongo em
+`mongodb://localhost:27017`, banco `atendimento_campo`). MongoDB não tem
+schema/migração — as coleções e índices são criados automaticamente no
+start, e uma Base "Base Principal" com senha de equipe `equipe123` é
+semeada se o banco estiver vazio.
 
 ### Frontend
 
@@ -87,11 +97,13 @@ Acesse `http://localhost:5173`.
 
 ## Deploy no Railway
 
-1. Crie um projeto no Railway e adicione um plugin **PostgreSQL**.
+1. Crie um projeto no Railway e adicione um plugin **MongoDB**.
 2. Crie um serviço apontando para este repositório com **Root Directory =
    `backend`** (ele vai detectar o `Dockerfile`). Variáveis de ambiente:
-   - `DATABASE_URL` → referencie a variável do plugin Postgres
-     (`${{Postgres.DATABASE_URL}}`)
+   - `MONGO_URL` → referencie a variável do plugin Mongo
+     (`${{MongoDB.MONGO_URL}}` — confira o nome exato da variável na aba
+     "Variables" do plugin Mongo criado, pode vir como `MONGO_URL` ou
+     `MONGO_PUBLIC_URL`/`MONGO_PRIVATE_URL` dependendo do template)
    - `JWT_KEY` → uma string aleatória longa (ex.: `openssl rand -base64 48`)
    - `FRONTEND_ORIGIN` → URL pública do serviço do frontend (pode ajustar
      depois de criar o segundo serviço)
@@ -114,5 +126,3 @@ Acesse `http://localhost:5173`.
 - Exportação CSV/PDF e impressão
 - Multi-idioma (PT/ES/EN)
 - Mapa com geolocalização dos atendimentos
-- EF Core Migrations "de verdade" no lugar do `EnsureCreated` (necessário
-  assim que o schema mudar em produção)

@@ -1,7 +1,8 @@
 using AtendimentoCampo.Api.Data;
 using AtendimentoCampo.Api.Dtos;
+using AtendimentoCampo.Api.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 
 namespace AtendimentoCampo.Api.Controllers;
 
@@ -9,22 +10,21 @@ namespace AtendimentoCampo.Api.Controllers;
 [Route("api/bases")]
 public class BasesController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly MongoContext _mongo;
 
-    public BasesController(AppDbContext db)
+    public BasesController(MongoContext mongo)
     {
-        _db = db;
+        _mongo = mongo;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<BaseDto>>> Listar()
     {
-        var bases = await _db.Bases
-            .Where(b => b.Ativo)
-            .OrderBy(b => b.Nome)
-            .Select(b => new BaseDto(b.Id, b.Nome))
+        var bases = await _mongo.Bases
+            .Find(b => b.Ativo)
+            .SortBy(b => b.Nome)
             .ToListAsync();
 
-        return Ok(bases);
+        return Ok(bases.Select(b => new BaseDto(b.Id, b.Nome)).ToList());
     }
 }

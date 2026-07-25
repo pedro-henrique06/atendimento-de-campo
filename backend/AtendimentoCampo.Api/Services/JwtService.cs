@@ -22,9 +22,9 @@ public class JwtService
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new(ClaimTypes.NameIdentifier, usuario.Id),
             new(ClaimTypes.Name, usuario.Nome),
-            new("baseId", usuario.BaseId.ToString()),
+            new("baseId", usuario.BaseId),
             new("funcao", usuario.Funcao),
         };
 

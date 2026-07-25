@@ -1,9 +1,11 @@
+using System.Text.RegularExpressions;
 using AtendimentoCampo.Api.Data;
 using AtendimentoCampo.Api.Dtos;
 using AtendimentoCampo.Api.Models;
 using AtendimentoCampo.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace AtendimentoCampo.Api.Controllers;
 
@@ -11,13 +13,13 @@ namespace AtendimentoCampo.Api.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly MongoContext _mongo;
     private readonly SenhaService _senhaService;
     private readonly JwtService _jwtService;
 
-    public AuthController(AppDbContext db, SenhaService senhaService, JwtService jwtService)
+    public AuthController(MongoContext mongo, SenhaService senhaService, JwtService jwtService)
     {
-        _db = db;
+        _mongo = mongo;
         _senhaService = senhaService;
         _jwtService = jwtService;
     }
@@ -31,7 +33,9 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Nome) || string.IsNullOrWhiteSpace(request.Funcao))
             return BadRequest(new { message = "Nome e função são obrigatórios." });
 
-        var baseEntidade = await _db.Bases.FirstOrDefaultAsync(b => b.Id == request.BaseId && b.Ativo);
+        var baseEntidade = await _mongo.Bases
+            .Find(b => b.Id == request.BaseId && b.Ativo)
+            .FirstOrDefaultAsync();
         if (baseEntidade is null)
             return NotFound(new { message = "Base não encontrada." });
 
@@ -39,8 +43,12 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Nome ou senha inválidos." });
 
         var nomeNormalizado = request.Nome.Trim();
-        var usuario = await _db.Usuarios.FirstOrDefaultAsync(u =>
-            u.BaseId == baseEntidade.Id && u.Nome.ToLower() == nomeNormalizado.ToLower());
+        var filtroUsuario = Builders<Usuario>.Filter.And(
+            Builders<Usuario>.Filter.Eq(u => u.BaseId, baseEntidade.Id),
+            Builders<Usuario>.Filter.Regex(u => u.Nome,
+                new BsonRegularExpression($"^{Regex.Escape(nomeNormalizado)}$", "i")));
+
+        var usuario = await _mongo.Usuarios.Find(filtroUsuario).FirstOrDefaultAsync();
 
         if (usuario is null)
         {
@@ -51,16 +59,15 @@ public class AuthController : ControllerBase
                 Funcao = request.Funcao,
                 Registro = request.Registro,
             };
-            _db.Usuarios.Add(usuario);
+            await _mongo.Usuarios.InsertOneAsync(usuario);
         }
         else
         {
             usuario.Funcao = request.Funcao;
             usuario.Registro = request.Registro;
             usuario.UltimoAcessoEm = DateTime.UtcNow;
+            await _mongo.Usuarios.ReplaceOneAsync(u => u.Id == usuario.Id, usuario);
         }
-
-        await _db.SaveChangesAsync();
 
         var token = _jwtService.GerarToken(usuario);
         return Ok(new LoginResponse(

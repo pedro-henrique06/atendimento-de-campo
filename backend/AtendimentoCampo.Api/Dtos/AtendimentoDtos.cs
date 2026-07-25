@@ -16,7 +16,7 @@ public record CriarAtendimentoRequest(
 );
 
 public record AtendimentoResumoDto(
-    Guid Id,
+    string Id,
     string Codigo,
     string PacienteNome,
     string? QueixaPrincipal,
@@ -28,7 +28,7 @@ public record AtendimentoResumoDto(
 );
 
 public record EtapaDto(
-    Guid Id,
+    string Id,
     TipoEtapa Tipo,
     StatusEtapa Status,
     int Ordem,
@@ -50,7 +50,7 @@ public record HistoricoDto(
 );
 
 public record AtendimentoDetalheDto(
-    Guid Id,
+    string Id,
     string Codigo,
     bool ConsentimentoRegistro,
     string PacienteNome,
@@ -72,5 +72,7 @@ public record AtendimentoDetalheDto(
 );
 
 public record AtualizarEtapaRequest(Dictionary<string, object?> Campos);
+
+public record ConcluirEtapaRequest(TipoEtapa? ProximaEtapa);
 
 public record PainelResumoDto(int Total, int Vermelho, int Amarelo, int Verde, int Preto, int SemClassificacao);

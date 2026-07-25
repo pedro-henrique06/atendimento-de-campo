@@ -1,25 +1,30 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace AtendimentoCampo.Api.Models;
 
-// Cada etapa representa a passagem do atendimento por um setor (Triagem, Clínica
-// Geral, Enfermagem, Pediatria...). Os campos clínicos variam muito por setor, então
-// ficam guardados como JSON (chave -> valor) em vez de uma coluna por campo.
+// Documento embutido dentro de Atendimento.Etapas — cada item representa a
+// passagem por um setor (Triagem, Clínica Geral, Enfermagem, Pediatria...).
+// Os campos clínicos variam muito por setor, então ficam num BsonDocument
+// dinâmico em vez de uma coleção/tabela por especialidade — assim dá pra
+// adicionar setores novos sem mudar o schema.
 public class AtendimentoEtapa
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [BsonElement("id")]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
 
-    public Guid AtendimentoId { get; set; }
-    public Atendimento? Atendimento { get; set; }
-
+    [BsonRepresentation(BsonType.String)]
     public TipoEtapa Tipo { get; set; }
+
+    [BsonRepresentation(BsonType.String)]
     public StatusEtapa Status { get; set; } = StatusEtapa.Aguardando;
+
     public int Ordem { get; set; }
 
-    public Guid? UsuarioResponsavelId { get; set; }
-    public Usuario? UsuarioResponsavel { get; set; }
+    public string? UsuarioResponsavelId { get; set; }
+    public string? UsuarioResponsavelNome { get; set; }
 
-    // JSON serializado com os campos do formulário do setor (ex.: pressaoArterial,
-    // sintomasAtuais, diagnosticoCid, desfechoConsulta, encaminhamento...)
-    public string DadosJson { get; set; } = "{}";
+    public BsonDocument Dados { get; set; } = new();
 
     public DateTime EntrouEm { get; set; } = DateTime.UtcNow;
     public DateTime? IniciadoEm { get; set; }
