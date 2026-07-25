@@ -12,6 +12,19 @@ import type {
 
 const CHAVE_TOKEN = 'atendimento.token';
 
+/**
+ * Base da API.
+ *
+ * Em desenvolvimento fica vazia e o proxy do Vite encaminha `/api` para o
+ * backend local. Em produção o build é estático e não existe proxy nenhum:
+ * sem `VITE_API_URL`, toda chamada cairia no servidor de arquivos e voltaria
+ * 404 — ou, pior, o `index.html` com status 200.
+ *
+ * A variável é lida em tempo de build, então precisa estar definida no serviço
+ * do front antes de publicar, não depois.
+ */
+export const BASE_API = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
 /** Erro da API com a lista de mensagens que o formulário exibe campo a campo. */
 export class ErroApi extends Error {
   readonly status: number;
@@ -58,7 +71,7 @@ async function requisitar<T>(
   let resposta: Response;
 
   try {
-    resposta = await fetch(`/api${caminho}`, {
+    resposta = await fetch(`${BASE_API}/api${caminho}`, {
       ...opcoes,
       headers: {
         'Content-Type': 'application/json',

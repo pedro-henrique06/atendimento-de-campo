@@ -20,6 +20,37 @@ npm test               # 33 testes
 npm run build
 ```
 
+## Deploy no Railway
+
+O repositório traz `Dockerfile`, `Caddyfile` e `railway.json`. O build gera os
+arquivos estáticos e o Caddy os serve.
+
+### Variável
+
+| Variável | Valor |
+|---|---|
+| `VITE_API_URL` | URL do serviço da API, sem barra final |
+
+**Ela é lida em tempo de build, não de execução.** O Vite embute o valor no
+bundle, então precisa estar definida no serviço do front *antes* de publicar —
+defini-la depois não muda nada até um novo deploy. No Railway, adicione também
+como *build arg* se o serviço não repassar as variáveis automaticamente.
+
+Em desenvolvimento deixe vazia: o proxy do Vite encaminha `/api` para
+`http://localhost:5080`.
+
+### Rotas do lado do cliente
+
+O `Caddyfile` faz `try_files {path} /index.html`. Sem isso, recarregar a página
+em `/atendimentos/<id>` devolveria 404 — o arquivo não existe no disco, só a
+rota existe dentro do JavaScript.
+
+### CORS
+
+A URL pública do front precisa estar em `Cors__OrigensTexto` no serviço da API.
+Sem isso o app carrega normalmente e **toda** chamada é bloqueada pelo
+navegador, com erro que não explica o motivo.
+
 ## Telas
 
 | Rota | Tela |
