@@ -256,6 +256,21 @@ export interface Paciente {
   consentimentoRegistro: boolean;
 }
 
+/**
+ * A base como a coordenacao a ve. `totalAtendimentos` explica por que o prefixo
+ * travou; `atendimentosAbertos`, por que a desativacao foi recusada.
+ */
+export interface BaseAdmin {
+  id: string;
+  nome: string;
+  prefixoCodigo: string;
+  ativa: boolean;
+  criadaEm: string;
+  totalAtendimentos: number;
+  atendimentosAbertos: number;
+  prefixoEditavel: boolean;
+}
+
 /** O que a tela mostra para confirmar que e a pessoa certa antes de reabrir. */
 export interface PacienteConhecido {
   paciente: Paciente;

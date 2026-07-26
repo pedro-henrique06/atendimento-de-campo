@@ -1,6 +1,7 @@
 import type {
   AtendimentoResumo,
   Base,
+  BaseAdmin,
   Cid10,
   ClassificacaoRisco,
   Especialidade,
@@ -247,6 +248,32 @@ export const api = {
     return requisitar<Profissional>(`/profissionais/${id}/administrador`, {
       method: 'POST',
       body: JSON.stringify({ ehAdministrador }),
+    });
+  },
+
+  /** Todas as bases, inclusive inativas — so para administradores. */
+  todasAsBases(): Promise<BaseAdmin[]> {
+    return requisitar<BaseAdmin[]>('/bases/todas');
+  },
+
+  prefixoSugerido(nome: string): Promise<{ prefixo: string }> {
+    return requisitar<{ prefixo: string }>(
+      `/bases/prefixo-sugerido?nome=${encodeURIComponent(nome)}`,
+    );
+  },
+
+  criarBase(dados: { nome: string; prefixoCodigo: string }): Promise<BaseAdmin> {
+    return requisitar<BaseAdmin>('/bases', { method: 'POST', body: JSON.stringify(dados) });
+  },
+
+  atualizarBase(id: string, dados: { nome: string; prefixoCodigo: string }): Promise<BaseAdmin> {
+    return requisitar<BaseAdmin>(`/bases/${id}`, { method: 'PUT', body: JSON.stringify(dados) });
+  },
+
+  definirBaseAtiva(id: string, ativa: boolean): Promise<BaseAdmin> {
+    return requisitar<BaseAdmin>(`/bases/${id}/ativa`, {
+      method: 'POST',
+      body: JSON.stringify({ ativa }),
     });
   },
 

@@ -6,6 +6,7 @@ import { ProvedorI18n } from './i18n';
 import { Atendimento } from './paginas/Atendimento';
 import { ListaAtendimentos } from './paginas/ListaAtendimentos';
 import { CriarConta } from './paginas/CriarConta';
+import { GestaoBases } from './paginas/GestaoBases';
 import { GestaoContas } from './paginas/GestaoContas';
 import { Login } from './paginas/Login';
 import { NovoAtendimento } from './paginas/NovoAtendimento';
@@ -87,6 +88,7 @@ function Rotas() {
           */}
           <Route element={<SomenteAdministrador />}>
             <Route path="/contas" element={<GestaoContas />} />
+            <Route path="/bases/gerenciar" element={<GestaoBases />} />
           </Route>
         </Route>
       </Route>
