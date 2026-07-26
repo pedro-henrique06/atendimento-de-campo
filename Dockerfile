@@ -9,8 +9,8 @@ COPY . .
 
 # A URL da API entra no bundle em tempo de build, nao em tempo de execucao:
 # precisa ser passada como build arg.
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_URL=https://atendimento-de-campo-back-production.up.railway.app
+ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
 FROM caddy:2-alpine AS runtime
