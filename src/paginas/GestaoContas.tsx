@@ -58,7 +58,7 @@ export function GestaoContas() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="text-3xl font-bold">{t('gestaoContas')}</h1>
+      <h1 className="titulo">{t('gestaoContas')}</h1>
 
       <input
         className="campo"

@@ -305,7 +305,7 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
     return (
       <form onSubmit={enviarOdontologia} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-        <h1 className="text-3xl font-bold">{t('odontologia')}</h1>
+        <h1 className="titulo">{t('odontologia')}</h1>
         {cabecalhoPaciente}
 
         <Secao titulo={t('sintomas')}>
@@ -390,7 +390,7 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
   return (
     <form onSubmit={enviarConsulta} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="text-3xl font-bold">{traduzir(especialidades, idioma, especialidadeAtual)}</h1>
+      <h1 className="titulo">{traduzir(especialidades, idioma, especialidadeAtual)}</h1>
       {cabecalhoPaciente}
 
       <Secao titulo={t('sintomas')}>

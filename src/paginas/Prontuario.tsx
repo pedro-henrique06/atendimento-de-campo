@@ -140,7 +140,7 @@ export function Prontuario() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-bold tracking-tight">{prontuario.codigo}</h1>
+        <h1 className="titulo">{prontuario.codigo}</h1>
         <button
           type="button"
           className="botao-secundario"

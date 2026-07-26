@@ -1,55 +1,65 @@
 import { useState } from 'react';
+import logoPadrao from '../ativos/logo-instituicao.png';
+import simboloPadrao from '../ativos/simbolo-instituicao.png';
+
+/** Nome da instituição que opera as bases. */
+export const INSTITUICAO_PADRAO = 'Hospital Israelita Albert Einstein';
 
 /**
  * Marca institucional do aplicativo.
  *
- * O logotipo não fica embutido no código: vem de `VITE_LOGO_URL`, e o nome da
- * instituição de `VITE_INSTITUICAO`. Assim a mesma build serve bases operadas
- * por instituições diferentes, e o logotipo exibido é sempre o que a
- * coordenação daquela operação configurou — não um que o aplicativo escolheu
- * por ela.
+ * A marca vem empacotada com o app, não de uma URL externa: em campo a rede
+ * cai, e o logotipo precisa continuar aparecendo. `VITE_LOGO_URL` e
+ * `VITE_INSTITUICAO` trocam a marca sem tocar no código, para quando a mesma
+ * build servir uma operação de outra instituição.
  *
- * O nome da instituição não é repetido ao lado do logotipo: um logotipo já
- * traz o nome escrito, e imprimir os dois só espremia o cabeçalho no celular.
- * Com logotipo, o nome vira o texto alternativo; sem logotipo, ele aparece na
- * tela, porque aí é a única coisa que identifica quem opera a base.
- *
- * A marca própria do aplicativo entra quando nada foi configurado ou quando a
- * imagem não carrega — em campo a rede cai, e um ícone de imagem quebrada no
- * topo do login é pior que nenhuma imagem.
+ * São duas artes, não uma reduzida. O lockup é empilhado — símbolo em cima,
+ * nome embaixo — e no cabeçalho do celular o nome sairia com poucos pixels de
+ * altura, ilegível. Ali entra só o símbolo; o lockup inteiro fica nas telas
+ * abertas, onde há largura para ele ser lido.
  *
  * `contexto` diz onde a marca está: no cartão das telas abertas, cuja
- * superfície acompanha o tema, ou na barra azul do cabeçalho. Os dois pedem
- * fundos diferentes para continuar legíveis.
+ * superfície acompanha o tema, ou na barra azul do cabeçalho.
  */
 export function Marca({ contexto = 'cartao' }: { contexto?: 'cartao' | 'cabecalho' }) {
-  const logo = import.meta.env.VITE_LOGO_URL?.trim();
-  const instituicao = import.meta.env.VITE_INSTITUICAO?.trim();
+  const configurado = import.meta.env.VITE_LOGO_URL?.trim();
+  const instituicao = import.meta.env.VITE_INSTITUICAO?.trim() || INSTITUICAO_PADRAO;
   const [falhou, setFalhou] = useState(false);
   const grande = contexto === 'cartao';
 
-  if (logo && !falhou) {
+  /*
+    Quem configura uma marca propria manda uma arte so; ela serve os dois usos.
+    `||` e nao `??`: `VITE_LOGO_URL=` vazia e o que o .env.example traz, e com
+    `??` isso viraria uma imagem de src vazio em vez de cair no padrao.
+  */
+  const arte = configurado || (grande ? logoPadrao : simboloPadrao);
+
+  if (!falhou) {
     return (
       /*
-        Placa branca nos dois contextos: logotipo institucional e desenhado
-        para fundo claro e some sobre o azul do cabecalho ou sobre o tema
-        escuro.
+        Placa branca nos dois contextos: a marca e desenhada para fundo claro e
+        sumiria no azul do cabecalho e no tema escuro.
       */
       <div
-        className={`inline-flex shrink-0 items-center justify-center rounded-xl bg-white ${
-          grande ? 'px-4 py-3' : 'px-2 py-1.5'
+        className={`inline-flex shrink-0 items-center justify-center bg-white ${
+          grande ? 'rounded-2xl px-5 py-4' : 'rounded-lg px-2 py-1.5'
         }`}
       >
         <img
-          src={logo}
-          alt={instituicao ?? ''}
+          src={arte}
+          alt={instituicao}
           onError={() => setFalhou(true)}
-          className={`w-auto object-contain ${grande ? 'h-12 max-w-56' : 'h-7 max-w-32'}`}
+          className={grande ? 'h-auto w-40' : 'h-8 w-auto max-w-32'}
         />
       </div>
     );
   }
 
+  /*
+    A arte nao carregou. Um icone de imagem quebrada no topo do login e pior
+    que nenhuma imagem, entao entra a marca propria do aplicativo, com o nome
+    escrito ao lado para nao perder quem opera a base.
+  */
   const marcaPropria = (
     <span
       aria-hidden
@@ -65,16 +75,14 @@ export function Marca({ contexto = 'cartao' }: { contexto?: 'cartao' | 'cabecalh
     </span>
   );
 
-  if (grande && instituicao) {
-    return (
-      <span className="flex flex-col items-center gap-2">
-        {marcaPropria}
-        <span className="text-sm font-semibold uppercase tracking-wide text-marca-clara">
-          {instituicao}
-        </span>
-      </span>
-    );
-  }
+  if (!grande) return marcaPropria;
 
-  return marcaPropria;
+  return (
+    <span className="flex flex-col items-center gap-2">
+      {marcaPropria}
+      <span className="text-sm font-semibold uppercase tracking-wide text-marca-clara">
+        {instituicao}
+      </span>
+    </span>
+  );
 }

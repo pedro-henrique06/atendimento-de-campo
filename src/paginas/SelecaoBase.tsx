@@ -51,7 +51,7 @@ export function SelecaoBase() {
             <div className="mb-4 flex justify-center">
               <Marca />
             </div>
-            <h1 className="text-2xl font-bold">{t('app')}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t('app')}</h1>
             <p className="mt-1 text-texto-suave">{t('escolhaBase')}</p>
           </div>
 

@@ -41,18 +41,26 @@ como *build arg* se o serviço não repassar as variáveis automaticamente.
 Em desenvolvimento deixe vazia: o proxy do Vite encaminha `/api` para
 `http://localhost:5080`.
 
-### Logotipo da instituição
+### Marca da instituição
 
-`VITE_LOGO_URL` aceita um caminho servido pelo próprio app ou uma URL completa.
-**Prefira o arquivo local:** coloque a imagem em `public/` (ex.: `public/logo.png`)
-e aponte `VITE_LOGO_URL=/logo.png`. Ela vai junto do bundle e continua aparecendo
-quando a rede em campo cai; uma URL externa depende do servidor de origem estar
-no ar. O logotipo é desenhado em cima de uma placa branca, porque marca
-institucional costuma ser feita para fundo claro e sumiria no tema escuro.
+A marca do Hospital Israelita Albert Einstein vem empacotada em `src/ativos/`, e
+o azul da interface (`#143771`) foi lido do próprio arquivo do logotipo. A arte
+vai junto do bundle em vez de ser buscada de uma URL: em campo a rede cai e o
+logotipo precisa continuar aparecendo.
 
-Sem as duas variáveis o app usa a marca própria dele. Ele não embute logotipo de
-nenhuma instituição: o que aparece é o que a coordenação configurou, e cabe a
-ela ter o direito de uso da marca que subir ali.
+São **duas artes, não uma reduzida**. O lockup é empilhado — símbolo em cima,
+nome embaixo — e no cabeçalho do celular o nome sairia com poucos pixels de
+altura, ilegível. Ali entra `simbolo-instituicao.png`; o lockup inteiro fica nas
+telas abertas, onde há largura para ele ser lido. As duas ficam sobre placa
+branca, porque marca institucional é desenhada para fundo claro e sumiria no
+azul do cabeçalho e no tema escuro.
+
+Para servir uma operação de outra instituição, `VITE_LOGO_URL` e
+`VITE_INSTITUICAO` trocam a marca sem tocar no código — aí uma arte só serve os
+dois usos. Prefira um arquivo em `public/` (ex.: `VITE_LOGO_URL=/logo.png`) a uma
+URL externa, que depende do servidor de origem estar no ar.
+
+O direito de uso da marca que aparece aqui é de quem publica o app.
 
 ### Rotas do lado do cliente
 

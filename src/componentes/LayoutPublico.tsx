@@ -62,7 +62,7 @@ export function CartaoPublico({
         <div className="mb-4 flex justify-center">
           <Marca />
         </div>
-        <h1 className="text-2xl font-bold">{titulo}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
         <p className="mt-1 text-texto-suave">{subtitulo}</p>
       </div>
 
