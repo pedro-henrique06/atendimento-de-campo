@@ -4,15 +4,15 @@ export type Tema = 'claro' | 'escuro';
 
 const CHAVE_TEMA = 'atendimento.tema';
 
+/**
+ * O claro é o padrão. Só uma escolha explícita de quem usa muda isso — nem a
+ * preferência do aparelho: um celular no modo escuro abriria o app escuro sem
+ * ninguém ter pedido, e o padrão deixaria de ser padrão.
+ */
 function temaInicial(): Tema {
   const guardado = localStorage.getItem(CHAVE_TEMA) as Tema | null;
 
-  if (guardado === 'claro' || guardado === 'escuro') {
-    return guardado;
-  }
-
-  // Sem escolha explícita, segue o aparelho.
-  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'claro' : 'escuro';
+  return guardado === 'claro' || guardado === 'escuro' ? guardado : 'claro';
 }
 
 export function useTema() {
@@ -20,11 +20,20 @@ export function useTema() {
 
   useEffect(() => {
     document.documentElement.dataset.tema = tema;
-    localStorage.setItem(CHAVE_TEMA, tema);
   }, [tema]);
 
+  /*
+    Grava so no clique, nao no efeito acima. Gravando no efeito, o tema
+    calculado no primeiro carregamento virava uma "escolha" que ninguem fez, e
+    trocar o padrao depois nao alcancaria mais quem ja tinha aberto o app uma
+    vez.
+  */
   const alternar = useCallback(() => {
-    setTema((atual) => (atual === 'escuro' ? 'claro' : 'escuro'));
+    setTema((atual) => {
+      const proximo = atual === 'escuro' ? 'claro' : 'escuro';
+      localStorage.setItem(CHAVE_TEMA, proximo);
+      return proximo;
+    });
   }, []);
 
   return { tema, alternar };
