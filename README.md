@@ -16,7 +16,7 @@ O Vite faz proxy de `/api` para `http://localhost:5080`, onde roda a API do
 repositório `atendimento-de-campo-back`. Suba o backend antes.
 
 ```bash
-npm test               # 33 testes
+npm test               # 102 testes
 npm run build
 ```
 
@@ -82,12 +82,32 @@ navegador, com erro que não explica o motivo.
 | `/criar-conta` | Registro de nova conta, sujeito a aprovação |
 | `/bases` | Seleção da base de atendimento |
 | `/atendimentos` | Fila, com filtro por especialidade, risco e busca |
-| `/atendimentos/novo` | Cadastro do paciente e abertura |
+| `/atendimentos/novo` | Escolha do paciente, cadastro e abertura |
 | `/atendimentos/:id` | Prontuário completo |
 | `/atendimentos/:id/triagem` | Triagem e classificação START |
 | `/atendimentos/:id/consulta/:especialidade` | Consulta médica |
 | `/atendimentos/:id/odontologia` | Odontologia com odontograma |
 | `/contas` | Gestão de contas — só para administradores |
+
+### Cadastro do paciente
+
+A tela pergunta primeiro se é alguém novo ou alguém que já foi atendido. Sem essa
+bifurcação, quem volta vira um cadastro novo e o histórico se perde — em campo
+isso é a regra, não a exceção, porque a maioria não tem documento.
+
+**Paciente novo:** o código é sorteado e mostrado *antes* de qualquer campo,
+porque é ele que a equipe anota e entrega à pessoa. Esperar o formulário terminar
+significaria perder o código se o aparelho desligasse no meio.
+
+**Paciente conhecido:** o código traz o cadastro de volta para a tela, com nome,
+idade e número de visitas anteriores para a equipe confirmar que é a pessoa
+certa. Redigitar nome, idade e alergia a cada visita é como o dado se perde.
+
+O consentimento é o primeiro campo e desabilita o resto do formulário enquanto
+não for marcado. Perguntar depois inverte a ordem: o dado já teria sido digitado
+sem a pessoa ter concordado. Ele é pedido de novo a cada atendimento, inclusive
+para quem já é cadastrado — herdar o consentimento de meses atrás registraria a
+visita de hoje sem ninguém ter perguntado nada.
 
 ## Decisões
 

@@ -240,6 +240,8 @@ export interface AlertaAlergia {
 
 export interface Paciente {
   id: string;
+  /** Codigo que o paciente leva anotado, ex.: "4K7Z-2YAP". */
+  codigo: string;
   nome: string;
   tipoDocumento: TipoDocumento;
   numeroDocumento: string | null;
@@ -252,6 +254,14 @@ export interface Paciente {
   condicoesCronicas: CondicaoCronica[];
   vulnerabilidades: Vulnerabilidade[];
   consentimentoRegistro: boolean;
+}
+
+/** O que a tela mostra para confirmar que e a pessoa certa antes de reabrir. */
+export interface PacienteConhecido {
+  paciente: Paciente;
+  totalAtendimentos: number;
+  ultimoAtendimentoEm: string | null;
+  ultimaBase: string | null;
 }
 
 export interface EtapaResumo {

@@ -2,8 +2,17 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { CondicaoCronica, Sexo, StatusAlergia, TipoDocumento, Vulnerabilidade } from '../api/tipos';
+import type {
+  CondicaoCronica,
+  PacienteConhecido,
+  Sexo,
+  StatusAlergia,
+  TipoDocumento,
+  Vulnerabilidade,
+} from '../api/tipos';
 import { Campo, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
+import { CodigoPaciente } from '../componentes/CodigoPaciente';
+import { EscolhaDePaciente } from '../componentes/EscolhaDePaciente';
 import { useRascunho } from '../hooks/useRascunho';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
@@ -50,6 +59,10 @@ const VULNERABILIDADES: Vulnerabilidade[] = [
 ];
 
 interface Formulario {
+  /** Vazio enquanto ninguem escolheu entre paciente novo e paciente conhecido. */
+  codigo: string;
+  /** Verdadeiro quando o cadastro veio de um codigo que ja existia. */
+  jaCadastrado: boolean;
   nome: string;
   tipoDocumento: TipoDocumento;
   numeroDocumento: string;
@@ -66,6 +79,8 @@ interface Formulario {
 }
 
 const INICIAL: Formulario = {
+  codigo: '',
+  jaCadastrado: false,
   nome: '',
   tipoDocumento: 'SemDocumento',
   numeroDocumento: '',
@@ -98,6 +113,38 @@ export function NovoAtendimento() {
     setForm({ ...form, ...mudanca });
   }
 
+  /** Paciente novo: o codigo ja sorteado passa a ser o do cadastro que vai nascer. */
+  function comecarComCodigo(codigo: string) {
+    setForm({ ...INICIAL, codigo, jaCadastrado: false });
+  }
+
+  /**
+   * Paciente conhecido: traz o cadastro para a tela em vez de pedir tudo de
+   * novo. Quem esta atendendo confere e corrige o que mudou — redigitar nome,
+   * idade e alergia a cada visita e como o dado se perde.
+   */
+  function comecarComCadastro({ paciente }: PacienteConhecido) {
+    setForm({
+      ...INICIAL,
+      codigo: paciente.codigo,
+      jaCadastrado: true,
+      nome: paciente.nome,
+      tipoDocumento: paciente.tipoDocumento,
+      numeroDocumento: paciente.numeroDocumento ?? '',
+      semDataNascimento: paciente.dataNascimento === null,
+      dataNascimento: paciente.dataNascimento ?? '',
+      idadeAproximada: paciente.dataNascimento === null ? String(paciente.idade ?? '') : '',
+      sexo: paciente.sexo,
+      statusAlergia: paciente.statusAlergia,
+      alergias: paciente.alergias ?? '',
+      condicoesCronicas: paciente.condicoesCronicas,
+      vulnerabilidades: paciente.vulnerabilidades,
+      // O consentimento e por atendimento: e perguntado de novo a cada visita,
+      // nao herdado do cadastro antigo.
+      consentimento: false,
+    });
+  }
+
   async function aoEnviar(evento: FormEvent) {
     evento.preventDefault();
 
@@ -118,6 +165,7 @@ export function NovoAtendimento() {
         longitude: posicao?.longitude ?? null,
         precisaoMetros: posicao?.precisao ?? null,
         paciente: {
+          codigo: form.codigo,
           nome: form.nome.trim(),
           tipoDocumento: form.tipoDocumento,
           numeroDocumento: form.numeroDocumento.trim() || null,
@@ -147,9 +195,43 @@ export function NovoAtendimento() {
     }
   }
 
+  if (!form.codigo) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+        <h1 className="titulo">{t('novoAtendimento')}</h1>
+
+        <EscolhaDePaciente
+          aoEscolherNovo={comecarComCodigo}
+          aoEscolherConhecido={comecarComCadastro}
+        />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={aoEnviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <h1 className="titulo">{t('novoAtendimento')}</h1>
+
+      <CodigoPaciente codigo={form.codigo} />
+
+      {/*
+        Codigo errado e digitacao errada: sem esta saida, a unica forma de
+        corrigir seria salvar o atendimento na pessoa errada.
+      */}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        {form.jaCadastrado ? (
+          <span className="text-texto-suave">{t('pacienteEncontrado')}</span>
+        ) : (
+          <span />
+        )}
+        <button
+          type="button"
+          onClick={() => setForm({ ...INICIAL })}
+          className="text-marca-clara underline"
+        >
+          {t('trocarPaciente')}
+        </button>
+      </div>
 
       {recuperado ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-marca-clara/40 bg-marca-clara/10 px-4 py-3 text-sm">
@@ -161,6 +243,19 @@ export function NovoAtendimento() {
       ) : null}
 
       <Secao titulo={t('dadosPessoais')}>
+        {/*
+          O consentimento vem antes de tudo, e desabilita o resto enquanto nao
+          for marcado. Perguntar depois do formulario preenchido inverte a
+          ordem: o dado ja teria sido digitado sem a pessoa ter concordado.
+        */}
+        <Interruptor
+          rotulo={t('consentimento')}
+          valor={form.consentimento}
+          aoMudar={(v) => alterar({ consentimento: v })}
+        />
+        <p className="text-sm text-texto-suave">{t('consentimentoObrigatorio')}</p>
+
+        <fieldset disabled={!form.consentimento} className="space-y-4 disabled:opacity-50">
         <Campo rotulo={t('nome')} obrigatorio>
           <input
             className="campo"
@@ -235,8 +330,10 @@ export function NovoAtendimento() {
             idioma={idioma}
           />
         </div>
+        </fieldset>
       </Secao>
 
+      <fieldset disabled={!form.consentimento} className="space-y-4 disabled:opacity-50">
       <Secao titulo={t('alergia')}>
         {/*
           Estado explícito em vez de texto livre. No sistema de referência a
@@ -312,17 +409,12 @@ export function NovoAtendimento() {
         />
       </Secao>
 
-      <Interruptor
-        rotulo={t('consentimento')}
-        valor={form.consentimento}
-        aoMudar={(v) => alterar({ consentimento: v })}
-      />
-
       <Erros erros={erros} />
 
-      <button type="submit" className="botao" disabled={enviando || !form.consentimento}>
+      <button type="submit" className="botao" disabled={enviando}>
         {enviando ? t('carregando') : t('continuar')}
       </button>
+      </fieldset>
     </form>
   );
 }
