@@ -213,6 +213,11 @@ export interface Profissional {
   ehAdministrador: boolean;
   motivoRecusa: string | null;
   criadoEm: string;
+  /**
+   * Filas que interessam a esta funcao, na ordem em que a tela deve oferece-las.
+   * A primeira e a que abre por padrao. Nao e permissao: "Todas" continua ali.
+   */
+  filas: Especialidade[];
 }
 
 export interface RespostaLogin {

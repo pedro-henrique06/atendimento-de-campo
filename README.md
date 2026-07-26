@@ -16,7 +16,7 @@ O Vite faz proxy de `/api` para `http://localhost:5080`, onde roda a API do
 repositório `atendimento-de-campo-back`. Suba o backend antes.
 
 ```bash
-npm test               # 110 testes
+npm test               # 121 testes
 npm run build
 ```
 
@@ -89,6 +89,25 @@ navegador, com erro que não explica o motivo.
 | `/atendimentos/:id/odontologia` | Odontologia com odontograma |
 | `/contas` | Gestão de contas — só para administradores |
 | `/bases/gerenciar` | Cadastro de bases — só para administradores |
+
+### Fila do profissional
+
+A barra de filas abre na fila da função de quem entrou e lista as filas dela
+primeiro. Antes abria sempre em "Triagem": o dentista via a fila da enfermagem e
+tinha que descobrir sozinho onde ficava a dele.
+
+**Não é permissão.** "Todas as filas" continua ali e as demais filas seguem
+acessíveis — em campo as funções se cobrem. Conta antiga, gravada antes das filas
+existirem, abre em "Todas" em vez de abrir vazia.
+
+**Assumir** tira o paciente da fila de quem está livre e marca "Com você". A
+recusa do servidor é exibida com o nome de quem já pegou, porque sem ele a equipe
+fica sem saber a quem perguntar. O botão para o evento de clique: o cartão inteiro
+é um link, e sem isso assumir também navegaria para o prontuário.
+
+Em "Todas" não há botão — a lista mistura filas e a etapa a assumir seria uma
+escolha arbitrária — mas quem está com o paciente continua aparecendo, que é
+justamente o que a coordenação olha ali.
 
 ### Cadastro de bases
 
