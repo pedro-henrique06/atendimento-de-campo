@@ -16,7 +16,7 @@ O Vite faz proxy de `/api` para `http://localhost:5080`, onde roda a API do
 repositório `atendimento-de-campo-back`. Suba o backend antes.
 
 ```bash
-npm test               # 102 testes
+npm test               # 110 testes
 npm run build
 ```
 
@@ -88,6 +88,21 @@ navegador, com erro que não explica o motivo.
 | `/atendimentos/:id/consulta/:especialidade` | Consulta médica |
 | `/atendimentos/:id/odontologia` | Odontologia com odontograma |
 | `/contas` | Gestão de contas — só para administradores |
+| `/bases/gerenciar` | Cadastro de bases — só para administradores |
+
+### Cadastro de bases
+
+O prefixo é sugerido a partir do nome, mas só em base nova e só enquanto ninguém
+o editou à mão — sem isso, cada letra digitada no nome apagaria o prefixo que a
+coordenação acabou de escolher.
+
+Em base que já emitiu códigos o campo aparece desabilitado, com o motivo escrito
+ao lado: o prefixo está impresso em papéis já distribuídos. O nome continua
+editável.
+
+Base não se apaga, se desativa. As recusas do servidor (fila aberta, única base
+ativa) são exibidas com o texto que ele mandou, não com um erro genérico — a
+coordenação precisa saber o que finalizar antes de tentar de novo.
 
 ### Cadastro do paciente
 
