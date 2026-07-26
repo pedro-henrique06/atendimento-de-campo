@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, ErroDeRede } from '../api/cliente';
 import type { Base } from '../api/tipos';
 import { Carregando, Erros } from '../componentes/Basicos';
+import { Marca } from '../componentes/Marca';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n } from '../i18n';
 
@@ -47,8 +48,8 @@ export function SelecaoBase() {
       <main className="mx-auto max-w-md">
         <div className="cartao space-y-5">
           <div className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-marca text-3xl font-light text-white">
-              +
+            <div className="mb-4 flex justify-center">
+              <Marca />
             </div>
             <h1 className="text-2xl font-bold">{t('app')}</h1>
             <p className="mt-1 text-texto-suave">{t('escolhaBase')}</p>

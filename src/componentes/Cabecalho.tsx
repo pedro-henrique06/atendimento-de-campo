@@ -3,6 +3,7 @@ import { api } from '../api/cliente';
 import { useNavigate } from 'react-router-dom';
 import { useSessao } from '../hooks/useSessao';
 import { IDIOMAS, rotuloIdioma, useI18n } from '../i18n';
+import { Marca } from './Marca';
 import type { Tema } from '../hooks/useTema';
 
 export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: () => void }) {
@@ -40,9 +41,10 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
           <button
             type="button"
             onClick={() => navegar('/atendimentos')}
-            className="text-lg font-bold"
+            className="flex min-w-0 items-center gap-2.5 text-left"
           >
-            {t('app')}
+            <Marca contexto="cabecalho" />
+            <span className="min-w-0 truncate text-lg font-bold">{t('app')}</span>
           </button>
 
           <div className="relative">

@@ -9,27 +9,31 @@
 */
 :root,
 [data-tema='escuro'] {
-  --cor-fundo: 13 21 32;
-  --cor-superficie: 22 33 46;
-  --cor-superficie-2: 28 41 56;
-  --cor-borda: 45 62 80;
-  --cor-texto: 233 239 245;
-  --cor-texto-suave: 143 160 178;
-  --cor-marca: 47 125 109;
-  --cor-marca-clara: 90 191 168;
-  --cor-marca-escura: 26 77 67;
+  --cor-fundo: 9 18 34;
+  --cor-superficie: 17 30 51;
+  --cor-superficie-2: 24 40 65;
+  --cor-borda: 41 61 92;
+  --cor-texto: 232 238 247;
+  --cor-texto-suave: 146 163 188;
+  --cor-marca: 21 87 176;
+  --cor-marca-clara: 122 178 250;
+  --cor-marca-escura: 10 45 96;
 }
 
+/*
+  No tema claro `marca-clara` e mais escura que `marca`: ela e usada em texto de
+  link e foco sobre fundo branco, onde clarear reduziria o contraste.
+*/
 [data-tema='claro'] {
-  --cor-fundo: 244 247 249;
+  --cor-fundo: 243 246 251;
   --cor-superficie: 255 255 255;
-  --cor-superficie-2: 237 242 246;
-  --cor-borda: 209 219 228;
-  --cor-texto: 17 28 39;
-  --cor-texto-suave: 90 106 122;
-  --cor-marca: 34 106 92;
-  --cor-marca-clara: 26 77 67;
-  --cor-marca-escura: 18 58 51;
+  --cor-superficie-2: 236 241 248;
+  --cor-borda: 203 214 230;
+  --cor-texto: 12 25 44;
+  --cor-texto-suave: 86 102 126;
+  --cor-marca: 0 62 145;
+  --cor-marca-clara: 0 45 106;
+  --cor-marca-escura: 0 33 78;
 }
 
 html,

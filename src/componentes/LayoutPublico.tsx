@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { IDIOMAS, rotuloIdioma, useI18n } from '../i18n';
+import { Marca } from './Marca';
 import type { Tema } from '../hooks/useTema';
 
 /**
@@ -58,8 +59,8 @@ export function CartaoPublico({
   return (
     <div className="cartao space-y-5">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-marca text-3xl font-light text-white">
-          +
+        <div className="mb-4 flex justify-center">
+          <Marca />
         </div>
         <h1 className="text-2xl font-bold">{titulo}</h1>
         <p className="mt-1 text-texto-suave">{subtitulo}</p>

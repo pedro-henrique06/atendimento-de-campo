@@ -30,14 +30,29 @@ arquivos estáticos e o Caddy os serve.
 | Variável | Valor |
 |---|---|
 | `VITE_API_URL` | URL do serviço da API, sem barra final |
+| `VITE_LOGO_URL` | Logotipo da instituição que opera a base — opcional |
+| `VITE_INSTITUICAO` | Nome da instituição — opcional |
 
-**Ela é lida em tempo de build, não de execução.** O Vite embute o valor no
+**Elas são lidas em tempo de build, não de execução.** O Vite embute o valor no
 bundle, então precisa estar definida no serviço do front *antes* de publicar —
 defini-la depois não muda nada até um novo deploy. No Railway, adicione também
 como *build arg* se o serviço não repassar as variáveis automaticamente.
 
 Em desenvolvimento deixe vazia: o proxy do Vite encaminha `/api` para
 `http://localhost:5080`.
+
+### Logotipo da instituição
+
+`VITE_LOGO_URL` aceita um caminho servido pelo próprio app ou uma URL completa.
+**Prefira o arquivo local:** coloque a imagem em `public/` (ex.: `public/logo.png`)
+e aponte `VITE_LOGO_URL=/logo.png`. Ela vai junto do bundle e continua aparecendo
+quando a rede em campo cai; uma URL externa depende do servidor de origem estar
+no ar. O logotipo é desenhado em cima de uma placa branca, porque marca
+institucional costuma ser feita para fundo claro e sumiria no tema escuro.
+
+Sem as duas variáveis o app usa a marca própria dele. Ele não embute logotipo de
+nenhuma instituição: o que aparece é o que a coordenação configurou, e cabe a
+ela ter o direito de uso da marca que subir ali.
 
 ### Rotas do lado do cliente
 
