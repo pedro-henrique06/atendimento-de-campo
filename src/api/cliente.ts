@@ -6,6 +6,7 @@ import type {
   Especialidade,
   ItemCatalogo,
   MotivoRecusaLogin,
+  PacienteConhecido,
   Profissional,
   Prontuario,
   RespostaLogin,
@@ -270,6 +271,30 @@ export const api = {
 
   prontuario(id: string): Promise<Prontuario> {
     return requisitar<Prontuario>(`/atendimentos/${id}`);
+  },
+
+  /**
+   * Sorteia um codigo livre para o paciente. Nada e gravado: o cadastro so nasce
+   * quando o formulario e salvo, com o consentimento marcado.
+   */
+  codigoNovoPaciente(): Promise<{ codigo: string }> {
+    return requisitar<{ codigo: string }>('/pacientes/codigo-novo');
+  },
+
+  /**
+   * Procura um paciente ja cadastrado. Aceita o codigo do paciente e tambem o
+   * de um atendimento dele. Devolve null quando nao existe, que aqui e resposta
+   * esperada e nao erro.
+   */
+  async pacientePorCodigo(codigo: string): Promise<PacienteConhecido | null> {
+    try {
+      return await requisitar<PacienteConhecido>(
+        `/pacientes/codigo/${encodeURIComponent(codigo)}`,
+      );
+    } catch (erro) {
+      if (erro instanceof ErroApi && erro.status === 404) return null;
+      throw erro;
+    }
   },
 
   criarAtendimento(corpo: unknown): Promise<Prontuario> {
