@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { ConselhoTipo, FuncaoProfissional } from '../api/tipos';
 import { Campo, Erros } from '../componentes/Basicos';
+import { IconeOlho, IconeOlhoFechado } from '../componentes/Icones';
 import { CabecalhoPublico, CartaoPublico } from '../componentes/LayoutPublico';
 import { useI18n, traduzir } from '../i18n';
 import { conselhos, funcoes } from '../i18n/enums';
@@ -264,9 +265,9 @@ export function CriarConta({ tema, alternarTema }: { tema: Tema; alternarTema: (
                   type="button"
                   onClick={() => setMostrarSenha((v) => !v)}
                   aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xl"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center px-3 text-texto-suave"
                 >
-                  {mostrarSenha ? '🙈' : '👁️'}
+                  {mostrarSenha ? <IconeOlhoFechado /> : <IconeOlho />}
                 </button>
               </div>
               {senhaCurta ? (

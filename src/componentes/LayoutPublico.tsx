@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { IDIOMAS, rotuloIdioma, useI18n } from '../i18n';
+import { IconeLua, IconeSol } from './Icones';
 import { Marca } from './Marca';
 import type { Tema } from '../hooks/useTema';
 
@@ -39,9 +40,9 @@ export function CabecalhoPublico({
         type="button"
         onClick={alternarTema}
         aria-label={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-borda bg-superficie text-lg"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-borda bg-superficie"
       >
-        {tema === 'escuro' ? '☀️' : '🌙'}
+        {tema === 'escuro' ? <IconeSol /> : <IconeLua />}
       </button>
     </header>
   );

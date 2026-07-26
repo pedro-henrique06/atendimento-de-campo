@@ -3,6 +3,7 @@ import { api } from '../api/cliente';
 import { useNavigate } from 'react-router-dom';
 import { useSessao } from '../hooks/useSessao';
 import { IDIOMAS, rotuloIdioma, useI18n } from '../i18n';
+import { IconeLocal, IconeLua, IconeSeta, IconeSol } from './Icones';
 import { Marca } from './Marca';
 import type { Tema } from '../hooks/useTema';
 
@@ -102,9 +103,9 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
             }}
             className="flex min-w-0 items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm font-medium"
           >
-            <span aria-hidden>📍</span>
+            <IconeLocal className="h-4 w-4 shrink-0" />
             <span className="truncate">{base?.nome ?? t('base')}</span>
-            <span aria-hidden>▾</span>
+            <IconeSeta className="h-4 w-4 shrink-0" />
           </button>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -114,7 +115,7 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
               aria-label={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15"
             >
-              {tema === 'escuro' ? '☀️' : '🌙'}
+              {tema === 'escuro' ? <IconeSol /> : <IconeLua />}
             </button>
 
             <select

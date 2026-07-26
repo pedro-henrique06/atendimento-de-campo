@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroDeRede, ErroLogin } from '../api/cliente';
 import { Campo } from '../componentes/Basicos';
+import { IconeOlho, IconeOlhoFechado } from '../componentes/Icones';
 import { CabecalhoPublico, CartaoPublico } from '../componentes/LayoutPublico';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n } from '../i18n';
@@ -89,9 +90,9 @@ export function Login({ tema, alternarTema }: { tema: Tema; alternarTema: () => 
                   type="button"
                   onClick={() => setMostrarSenha((v) => !v)}
                   aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xl"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center px-3 text-texto-suave"
                 >
-                  {mostrarSenha ? '🙈' : '👁️'}
+                  {mostrarSenha ? <IconeOlhoFechado /> : <IconeOlho />}
                 </button>
               </div>
             </Campo>
