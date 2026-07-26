@@ -18,6 +18,7 @@ import type {
   SintomaSaudeMental,
   StatusAlergia,
   StatusAtendimento,
+  StatusConta,
   StatusEtapa,
   TipoDocumento,
   UnidadeDispensacao,
@@ -161,6 +162,31 @@ export const statusAtendimento: Traducao<StatusAtendimento> = {
     Finalizado: 'Finished',
     Evadido: 'Left',
     Cancelado: 'Cancelled',
+  },
+};
+
+/**
+ * Situação de uma conta, no singular. Os filtros da tela de gestão usam o
+ * plural ("Pendentes"), que não serve para rotular um registro só.
+ */
+export const statusConta: Traducao<StatusConta> = {
+  Pt: {
+    Pendente: 'Pendente',
+    Ativa: 'Ativa',
+    Recusada: 'Recusada',
+    Desativada: 'Desativada',
+  },
+  Es: {
+    Pendente: 'Pendiente',
+    Ativa: 'Activa',
+    Recusada: 'Rechazada',
+    Desativada: 'Desactivada',
+  },
+  En: {
+    Pendente: 'Pending',
+    Ativa: 'Active',
+    Recusada: 'Declined',
+    Desativada: 'Deactivated',
   },
 };
 
@@ -695,6 +721,7 @@ export const tabelasDeEnum = {
   classificacoes,
   classificacoesCurtas,
   statusAtendimento,
+  statusConta,
   statusEtapa,
   desfechos,
   sexos,

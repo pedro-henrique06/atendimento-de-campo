@@ -55,7 +55,8 @@ navegador, com erro que não explica o motivo.
 
 | Rota | Tela |
 |---|---|
-| `/entrar` | Login com nome, função, registro do conselho e senha |
+| `/entrar` | Login com usuário e senha |
+| `/criar-conta` | Registro de nova conta, sujeito a aprovação |
 | `/bases` | Seleção da base de atendimento |
 | `/atendimentos` | Fila, com filtro por especialidade, risco e busca |
 | `/atendimentos/novo` | Cadastro do paciente e abertura |
@@ -63,8 +64,28 @@ navegador, com erro que não explica o motivo.
 | `/atendimentos/:id/triagem` | Triagem e classificação START |
 | `/atendimentos/:id/consulta/:especialidade` | Consulta médica |
 | `/atendimentos/:id/odontologia` | Odontologia com odontograma |
+| `/contas` | Gestão de contas — só para administradores |
 
 ## Decisões
+
+### Contas e acesso
+
+Login e registro são telas separadas. Antes eram a mesma: se o nome não
+existisse e a senha batesse com a da equipe, a conta era criada em silêncio — e
+um erro de digitação no nome virava uma conta nova em vez de um erro de login.
+
+A conta nasce **pendente** e não acessa nada até um administrador aprovar. A
+tela de recusa diz o motivo, porque sem isso a pessoa fica sem saber se errou
+algum dado e volta a tentar criar conta.
+
+A identidade é um **usuário curto**, sugerido a partir do nome
+("Cláudia Cândido da Luz" → `claudia.luz`) e editável. O modelo anterior
+identificava por nome + função, o que impedia duas pessoas homônimas na mesma
+função de terem conta e obrigava a digitar o nome completo a cada plantão.
+
+A tela `/contas` some para quem não é administrador, mas quem garante a
+restrição é o servidor: a API responde 403 independentemente do que a interface
+mostre.
 
 ### Offline parcial
 

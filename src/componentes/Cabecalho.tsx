@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../api/cliente';
 import { useNavigate } from 'react-router-dom';
 import { useSessao } from '../hooks/useSessao';
 import { IDIOMAS, rotuloIdioma, useI18n } from '../i18n';
@@ -9,6 +10,28 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
   const { profissional, base, definirBase, sair } = useSessao();
   const navegar = useNavigate();
   const [menuAberto, setMenuAberto] = useState(false);
+  const [pendentes, setPendentes] = useState(0);
+
+  // Contas esperando aprovação viram um número ao lado do menu: sem isso o
+  // administrador só descobre que alguém está travado quando a pessoa avisa.
+  useEffect(() => {
+    if (!profissional?.ehAdministrador) return;
+
+    let cancelado = false;
+
+    api
+      .contarPendentes()
+      .then((total) => {
+        if (!cancelado) setPendentes(total);
+      })
+      .catch(() => {
+        // Um aviso que falha não pode atrapalhar o resto da tela.
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [profissional?.ehAdministrador]);
 
   return (
     <header className="sticky top-0 z-10 bg-marca text-white shadow-md">
@@ -35,6 +58,24 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
 
             {menuAberto ? (
               <div className="absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-borda bg-superficie text-texto shadow-lg">
+                {profissional?.ehAdministrador ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuAberto(false);
+                      navegar('/contas');
+                    }}
+                    className="flex w-full items-center justify-between gap-2 border-b border-borda px-4 py-3 text-left text-sm hover:bg-superficie-2"
+                  >
+                    {t('gestaoContas')}
+                    {pendentes > 0 ? (
+                      <span className="rounded-full bg-marca px-2 py-0.5 text-xs font-semibold text-white">
+                        {pendentes}
+                      </span>
+                    ) : null}
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={() => {

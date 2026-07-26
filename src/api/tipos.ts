@@ -179,6 +179,15 @@ export type ProcedimentoEnfermagem =
   | 'Orientacao'
   | 'Outro';
 
+export type StatusConta = 'Pendente' | 'Ativa' | 'Recusada' | 'Desativada';
+
+/** Por que o login foi recusado. Vem como código; a tela é que traduz. */
+export type MotivoRecusaLogin =
+  | 'CredenciaisInvalidas'
+  | 'ContaPendente'
+  | 'ContaRecusada'
+  | 'ContaDesativada';
+
 export type AcaoAuditoria =
   | 'CriouAtendimento'
   | 'IniciouEtapa'
@@ -193,18 +202,28 @@ export type AcaoAuditoria =
 
 export interface Profissional {
   id: string;
+  usuario: string;
   nome: string;
+  email: string | null;
   funcao: FuncaoProfissional;
   conselhoTipo: ConselhoTipo;
   registro: string | null;
   idioma: Idioma;
+  status: StatusConta;
+  ehAdministrador: boolean;
+  motivoRecusa: string | null;
+  criadoEm: string;
 }
 
 export interface RespostaLogin {
   token: string;
   expiraEm: string;
   profissional: Profissional;
-  contaCriadaAgora: boolean;
+}
+
+export interface UsuarioDisponivel {
+  usuario: string;
+  disponivel: boolean;
 }
 
 export interface Base {
