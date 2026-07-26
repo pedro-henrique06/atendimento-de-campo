@@ -8,7 +8,7 @@ export function Cartao({ children, className = '' }: { children: ReactNode; clas
 }
 
 export function Titulo({ children }: { children: ReactNode }) {
-  return <h1 className="text-3xl font-bold tracking-tight">{children}</h1>;
+  return <h1 className="titulo">{children}</h1>;
 }
 
 export function Secao({ titulo, autor, children }: { titulo: string; autor?: string | null; children: ReactNode }) {

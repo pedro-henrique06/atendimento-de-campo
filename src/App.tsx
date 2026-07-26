@@ -5,6 +5,8 @@ import { useTema } from './hooks/useTema';
 import { ProvedorI18n } from './i18n';
 import { Atendimento } from './paginas/Atendimento';
 import { ListaAtendimentos } from './paginas/ListaAtendimentos';
+import { CriarConta } from './paginas/CriarConta';
+import { GestaoContas } from './paginas/GestaoContas';
 import { Login } from './paginas/Login';
 import { NovoAtendimento } from './paginas/NovoAtendimento';
 import { Prontuario } from './paginas/Prontuario';
@@ -16,6 +18,13 @@ import type { Tema } from './hooks/useTema';
 function Protegido() {
   const { autenticado } = useSessao();
   return autenticado ? <Outlet /> : <Navigate to="/entrar" replace />;
+}
+
+/** Restringe a rota a quem administra contas. */
+function SomenteAdministrador() {
+  const { profissional } = useSessao();
+
+  return profissional?.ehAdministrador ? <Outlet /> : <Navigate to="/atendimentos" replace />;
 }
 
 /** Exige base escolhida; o resto do app depende dela para tudo. */
@@ -47,6 +56,17 @@ function Rotas() {
         }
       />
 
+      <Route
+        path="/criar-conta"
+        element={
+          autenticado ? (
+            <Navigate to="/atendimentos" replace />
+          ) : (
+            <CriarConta tema={tema} alternarTema={alternar} />
+          )
+        }
+      />
+
       <Route element={<Protegido />}>
         <Route path="/bases" element={<SelecaoBase />} />
 
@@ -60,6 +80,14 @@ function Rotas() {
             element={<Atendimento modo="consulta" />}
           />
           <Route path="/atendimentos/:id/odontologia" element={<Atendimento modo="odontologia" />} />
+
+          {/*
+            A tela some para quem não é administrador, mas quem garante a
+            restrição é o servidor: a API responde 403 de qualquer forma.
+          */}
+          <Route element={<SomenteAdministrador />}>
+            <Route path="/contas" element={<GestaoContas />} />
+          </Route>
         </Route>
       </Route>
 

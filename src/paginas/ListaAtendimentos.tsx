@@ -52,7 +52,7 @@ export function ListaAtendimentos() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">{t('atendimentos')}</h1>
+        <h1 className="titulo">{t('atendimentos')}</h1>
         <button type="button" className="botao w-auto px-5" onClick={() => navegar('/atendimentos/novo')}>
           {t('novo')}
         </button>

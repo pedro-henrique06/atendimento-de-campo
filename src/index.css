@@ -7,29 +7,38 @@
   sao de primeira classe: o escuro e o padrao porque a maior parte dos plantoes
   observados acontece no fim do dia.
 */
+/*
+  `--cor-marca` e o azul lido do proprio arquivo do logotipo (#143771), igual
+  nos dois temas: e a marca, nao uma cor de tela. O que muda entre os temas sao
+  os apoios em volta dela.
+*/
 :root,
 [data-tema='escuro'] {
-  --cor-fundo: 13 21 32;
-  --cor-superficie: 22 33 46;
-  --cor-superficie-2: 28 41 56;
-  --cor-borda: 45 62 80;
-  --cor-texto: 233 239 245;
-  --cor-texto-suave: 143 160 178;
-  --cor-marca: 47 125 109;
-  --cor-marca-clara: 90 191 168;
-  --cor-marca-escura: 26 77 67;
+  --cor-fundo: 8 16 30;
+  --cor-superficie: 15 27 48;
+  --cor-superficie-2: 22 37 62;
+  --cor-borda: 38 57 89;
+  --cor-texto: 232 238 247;
+  --cor-texto-suave: 144 161 187;
+  --cor-marca: 20 55 113;
+  --cor-marca-clara: 126 168 232;
+  --cor-marca-escura: 10 28 61;
 }
 
+/*
+  No tema claro `marca-clara` e mais escura que `marca`: ela e usada em texto de
+  link e foco sobre fundo branco, onde clarear reduziria o contraste.
+*/
 [data-tema='claro'] {
-  --cor-fundo: 244 247 249;
+  --cor-fundo: 243 246 250;
   --cor-superficie: 255 255 255;
-  --cor-superficie-2: 237 242 246;
-  --cor-borda: 209 219 228;
-  --cor-texto: 17 28 39;
-  --cor-texto-suave: 90 106 122;
-  --cor-marca: 34 106 92;
-  --cor-marca-clara: 26 77 67;
-  --cor-marca-escura: 18 58 51;
+  --cor-superficie-2: 236 241 247;
+  --cor-borda: 205 215 229;
+  --cor-texto: 12 24 43;
+  --cor-texto-suave: 85 101 125;
+  --cor-marca: 20 55 113;
+  --cor-marca-clara: 15 41 85;
+  --cor-marca-escura: 9 26 55;
 }
 
 html,
@@ -69,6 +78,22 @@ body {
 
   .cartao {
     @apply rounded-card border border-borda bg-superficie p-4;
+  }
+
+  /*
+    Titulo de pagina. Estava escrito a mao em cada tela, metade com
+    `tracking-tight` e metade sem, o que aparecia ao trocar de aba.
+  */
+  .titulo {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  /*
+    Linha de apoio em versalete espacado, o registro que a identidade do
+    hospital usa acima do nome.
+  */
+  .sobretitulo {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-texto-suave;
   }
 }
 

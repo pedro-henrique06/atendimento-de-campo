@@ -149,7 +149,7 @@ export function NovoAtendimento() {
 
   return (
     <form onSubmit={aoEnviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="text-3xl font-bold">{t('novoAtendimento')}</h1>
+      <h1 className="titulo">{t('novoAtendimento')}</h1>
 
       {recuperado ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-marca-clara/40 bg-marca-clara/10 px-4 py-3 text-sm">

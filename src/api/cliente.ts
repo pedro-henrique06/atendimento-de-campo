@@ -5,9 +5,13 @@ import type {
   ClassificacaoRisco,
   Especialidade,
   ItemCatalogo,
+  MotivoRecusaLogin,
+  Profissional,
   Prontuario,
   RespostaLogin,
+  StatusConta,
   SugestaoStart,
+  UsuarioDisponivel,
 } from './tipos';
 
 const CHAVE_TOKEN = 'atendimento.token';
@@ -35,6 +39,23 @@ export class ErroApi extends Error {
     this.name = 'ErroApi';
     this.status = status;
     this.erros = erros;
+  }
+}
+
+/**
+ * Login recusado. Carrega o motivo em código para a tela poder explicar o que
+ * houve — conta ainda pendente é bem diferente de senha errada, e tratar as
+ * duas como a mesma coisa faria a pessoa tentar de novo sem entender.
+ */
+export class ErroLogin extends Error {
+  readonly motivo: MotivoRecusaLogin;
+  readonly detalhe: string | null;
+
+  constructor(motivo: MotivoRecusaLogin, detalhe: string | null) {
+    super(motivo);
+    this.name = 'ErroLogin';
+    this.motivo = motivo;
+    this.detalhe = detalhe;
   }
 }
 
@@ -84,6 +105,15 @@ async function requisitar<T>(
   }
 
   if (resposta.status === 401) {
+    const corpo = await lerCorpo(resposta);
+
+    // No login o 401 significa credencial ou situação da conta, e o corpo traz
+    // o motivo. Fora dele, significa sessão expirada.
+    if (typeof corpo?.motivo === 'string') {
+      const detalhe = typeof corpo.detalhe === 'string' ? corpo.detalhe : '';
+      throw new ErroApi(401, [corpo.motivo, detalhe]);
+    }
+
     limparToken();
     throw new ErroApi(401, ['sessao_expirada']);
   }
@@ -98,6 +128,14 @@ async function requisitar<T>(
   }
 
   return (await resposta.json()) as T;
+}
+
+async function lerCorpo(resposta: Response): Promise<Record<string, unknown> | null> {
+  try {
+    return (await resposta.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }
 
 async function extrairErros(resposta: Response): Promise<string[]> {
@@ -124,16 +162,90 @@ async function extrairErros(resposta: Response): Promise<string[]> {
 }
 
 export const api = {
-  login(dados: {
-    nome: string;
-    funcao: string;
-    registro?: string;
+  async login(dados: {
+    usuario: string;
     senha: string;
     idioma: string;
   }): Promise<RespostaLogin> {
-    return requisitar<RespostaLogin>('/auth/login', {
+    try {
+      return await requisitar<RespostaLogin>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(dados),
+      });
+    } catch (erro) {
+      // O 401 do login não é sessão expirada: é credencial ou situação da
+      // conta, e a tela precisa dessa distinção para orientar a pessoa.
+      if (erro instanceof ErroApi && erro.status === 401) {
+        throw new ErroLogin(
+          (erro.erros[0] as MotivoRecusaLogin) ?? 'CredenciaisInvalidas',
+          erro.erros[1] ?? null,
+        );
+      }
+
+      throw erro;
+    }
+  },
+
+  registrar(dados: {
+    usuario: string;
+    nome: string;
+    email?: string | null;
+    funcao: string;
+    registro?: string | null;
+    senha: string;
+    confirmacaoSenha: string;
+    idioma: string;
+  }): Promise<Profissional> {
+    return requisitar<Profissional>('/auth/registrar', {
       method: 'POST',
       body: JSON.stringify(dados),
+    });
+  },
+
+  usuarioDisponivel(usuario: string): Promise<UsuarioDisponivel> {
+    return requisitar<UsuarioDisponivel>(
+      `/auth/usuario-disponivel?usuario=${encodeURIComponent(usuario)}`,
+    );
+  },
+
+  profissionais(filtros: { status?: StatusConta | null; busca?: string }): Promise<Profissional[]> {
+    const params = new URLSearchParams();
+
+    if (filtros.status) params.set('status', filtros.status);
+    if (filtros.busca) params.set('busca', filtros.busca);
+
+    return requisitar<Profissional[]>(`/profissionais?${params}`);
+  },
+
+  contarPendentes(): Promise<number> {
+    return requisitar<number>('/profissionais/pendentes/total');
+  },
+
+  aprovarConta(id: string): Promise<Profissional> {
+    return requisitar<Profissional>(`/profissionais/${id}/aprovar`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  },
+
+  recusarConta(id: string, motivo: string): Promise<Profissional> {
+    return requisitar<Profissional>(`/profissionais/${id}/recusar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
+  desativarConta(id: string): Promise<Profissional> {
+    return requisitar<Profissional>(`/profissionais/${id}/desativar`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  },
+
+  definirAdministrador(id: string, ehAdministrador: boolean): Promise<Profissional> {
+    return requisitar<Profissional>(`/profissionais/${id}/administrador`, {
+      method: 'POST',
+      body: JSON.stringify({ ehAdministrador }),
     });
   },
 

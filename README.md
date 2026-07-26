@@ -30,14 +30,37 @@ arquivos estáticos e o Caddy os serve.
 | Variável | Valor |
 |---|---|
 | `VITE_API_URL` | URL do serviço da API, sem barra final |
+| `VITE_LOGO_URL` | Logotipo da instituição que opera a base — opcional |
+| `VITE_INSTITUICAO` | Nome da instituição — opcional |
 
-**Ela é lida em tempo de build, não de execução.** O Vite embute o valor no
+**Elas são lidas em tempo de build, não de execução.** O Vite embute o valor no
 bundle, então precisa estar definida no serviço do front *antes* de publicar —
 defini-la depois não muda nada até um novo deploy. No Railway, adicione também
 como *build arg* se o serviço não repassar as variáveis automaticamente.
 
 Em desenvolvimento deixe vazia: o proxy do Vite encaminha `/api` para
 `http://localhost:5080`.
+
+### Marca da instituição
+
+A marca do Hospital Israelita Albert Einstein vem empacotada em `src/ativos/`, e
+o azul da interface (`#143771`) foi lido do próprio arquivo do logotipo. A arte
+vai junto do bundle em vez de ser buscada de uma URL: em campo a rede cai e o
+logotipo precisa continuar aparecendo.
+
+São **duas artes, não uma reduzida**. O lockup é empilhado — símbolo em cima,
+nome embaixo — e no cabeçalho do celular o nome sairia com poucos pixels de
+altura, ilegível. Ali entra `simbolo-instituicao.png`; o lockup inteiro fica nas
+telas abertas, onde há largura para ele ser lido. As duas ficam sobre placa
+branca, porque marca institucional é desenhada para fundo claro e sumiria no
+azul do cabeçalho e no tema escuro.
+
+Para servir uma operação de outra instituição, `VITE_LOGO_URL` e
+`VITE_INSTITUICAO` trocam a marca sem tocar no código — aí uma arte só serve os
+dois usos. Prefira um arquivo em `public/` (ex.: `VITE_LOGO_URL=/logo.png`) a uma
+URL externa, que depende do servidor de origem estar no ar.
+
+O direito de uso da marca que aparece aqui é de quem publica o app.
 
 ### Rotas do lado do cliente
 
@@ -55,7 +78,8 @@ navegador, com erro que não explica o motivo.
 
 | Rota | Tela |
 |---|---|
-| `/entrar` | Login com nome, função, registro do conselho e senha |
+| `/entrar` | Login com usuário e senha |
+| `/criar-conta` | Registro de nova conta, sujeito a aprovação |
 | `/bases` | Seleção da base de atendimento |
 | `/atendimentos` | Fila, com filtro por especialidade, risco e busca |
 | `/atendimentos/novo` | Cadastro do paciente e abertura |
@@ -63,8 +87,28 @@ navegador, com erro que não explica o motivo.
 | `/atendimentos/:id/triagem` | Triagem e classificação START |
 | `/atendimentos/:id/consulta/:especialidade` | Consulta médica |
 | `/atendimentos/:id/odontologia` | Odontologia com odontograma |
+| `/contas` | Gestão de contas — só para administradores |
 
 ## Decisões
+
+### Contas e acesso
+
+Login e registro são telas separadas. Antes eram a mesma: se o nome não
+existisse e a senha batesse com a da equipe, a conta era criada em silêncio — e
+um erro de digitação no nome virava uma conta nova em vez de um erro de login.
+
+A conta nasce **pendente** e não acessa nada até um administrador aprovar. A
+tela de recusa diz o motivo, porque sem isso a pessoa fica sem saber se errou
+algum dado e volta a tentar criar conta.
+
+A identidade é um **usuário curto**, sugerido a partir do nome
+("Cláudia Cândido da Luz" → `claudia.luz`) e editável. O modelo anterior
+identificava por nome + função, o que impedia duas pessoas homônimas na mesma
+função de terem conta e obrigava a digitar o nome completo a cada plantão.
+
+A tela `/contas` some para quem não é administrador, mas quem garante a
+restrição é o servidor: a API responde 403 independentemente do que a interface
+mostre.
 
 ### Offline parcial
 
