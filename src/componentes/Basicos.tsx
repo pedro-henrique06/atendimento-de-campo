@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { ClassificacaoRisco, Idioma } from '../api/tipos';
 import { useI18n, traduzir } from '../i18n';
 import { classificacoesCurtas } from '../i18n/enums';
+import { IconeAlerta } from './Icones';
 
 export function Cartao({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`cartao ${className}`}>{children}</div>;
@@ -119,7 +120,7 @@ export function AlertaAlergia({ exibir, texto }: { exibir: boolean; texto: strin
       role="alert"
       className="flex items-start gap-2 rounded-xl border border-vermelho/50 bg-vermelho/10 px-3 py-2 text-sm font-semibold text-vermelho"
     >
-      <span aria-hidden>⚠️</span>
+      <IconeAlerta className="mt-0.5 h-5 w-5 shrink-0" />
       <span>
         {t('alertaAlergia')}: {texto}
       </span>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroDeRede } from '../api/cliente';
 import type { AtendimentoResumo, ClassificacaoRisco, Especialidade } from '../api/tipos';
 import { Carregando, Erros, Etiqueta, PontoRisco, Vazio } from '../componentes/Basicos';
+import { IconeConcluido, IconePendente } from '../componentes/Icones';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
 import { classificacoesCurtas, especialidades, statusAtendimento } from '../i18n/enums';
@@ -128,11 +129,11 @@ export function ListaAtendimentos() {
                   {atendimento.etapas.map((etapa) => (
                     <span
                       key={etapa.id}
-                      className={
+                      className={`inline-flex items-center gap-1 ${
                         etapa.status === 'Concluida' ? 'text-verde' : 'text-texto-suave'
-                      }
+                      }`}
                     >
-                      {etapa.status === 'Concluida' ? '✓' : '○'}{' '}
+                      {etapa.status === 'Concluida' ? <IconeConcluido /> : <IconePendente />}
                       {traduzir(especialidades, idioma, etapa.especialidade)}
                     </span>
                   ))}
