@@ -16,7 +16,7 @@ O Vite faz proxy de `/api` para `http://localhost:5080`, onde roda a API do
 repositório `atendimento-de-campo-back`. Suba o backend antes.
 
 ```bash
-npm test               # 121 testes
+npm test               # 129 testes
 npm run build
 ```
 
@@ -108,6 +108,21 @@ fica sem saber a quem perguntar. O botão para o evento de clique: o cartão int
 Em "Todas" não há botão — a lista mistura filas e a etapa a assumir seria uma
 escolha arbitrária — mas quem está com o paciente continua aparecendo, que é
 justamente o que a coordenação olha ali.
+
+### Encaminhar para outra fila
+
+No prontuário, quando há fila aberta, aparece qual é e um botão para mandar o
+paciente para outra. É ali que a decisão acontece: o profissional abre o
+paciente, vê que não é para ele, e redireciona.
+
+Fica separado do desfecho da consulta de propósito. Fechar a consulta torna o
+CID-10 obrigatório — e quando a triagem errou a fila, isso obrigaria a inventar
+um diagnóstico para uma consulta que não aconteceu. É também o único caminho
+saindo da odontologia e da enfermagem, cujas fichas não têm campo de
+encaminhamento.
+
+O motivo é obrigatório, a fila de origem não é oferecida como destino, e o
+histórico mostra a troca de fila e o motivo já traduzidos.
 
 ### Cadastro de bases
 

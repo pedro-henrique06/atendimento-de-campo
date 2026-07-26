@@ -196,7 +196,10 @@ export type AcaoAuditoria =
   | 'FinalizouAtendimento'
   | 'ReabriuAtendimento'
   | 'EditouAposFinalizacao'
-  | 'Cancelou';
+  | 'Cancelou'
+  | 'AssumiuEtapa'
+  | 'LiberouEtapa'
+  | 'EncaminhouParaOutraFila';
 
 // ---------------------------------------------------------------------------
 
@@ -431,6 +434,7 @@ export interface Prontuario {
   consultas: Consulta[];
   odontologia: Odontologia | null;
   enfermagem: Enfermagem | null;
+  etapas: EtapaResumo[];
   tempoNasFilas: EsperaFila[];
   historico: RegistroAuditoria[];
 }

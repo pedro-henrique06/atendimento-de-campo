@@ -288,6 +288,18 @@ export const api = {
     );
   },
 
+  /** Manda o paciente desta fila para outra, sem fechar consulta nenhuma. */
+  encaminhar(
+    id: string,
+    especialidade: Especialidade,
+    dados: { destino: Especialidade; motivo: string },
+  ): Promise<Prontuario> {
+    return requisitar<Prontuario>(`/atendimentos/${id}/etapas/${especialidade}/encaminhar`, {
+      method: 'POST',
+      body: JSON.stringify(dados),
+    });
+  },
+
   liberarEtapa(id: string, especialidade: Especialidade): Promise<AtendimentoResumo> {
     return requisitar<AtendimentoResumo>(
       `/atendimentos/${id}/etapas/${especialidade}/liberar`,

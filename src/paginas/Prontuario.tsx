@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { Dispensacao, EsperaFila, Prontuario as ProntuarioDto } from '../api/tipos';
 import { AlertaAlergia, Carregando, Erros, Etiqueta, PontoRisco, Secao } from '../componentes/Basicos';
+import { Encaminhar } from '../componentes/Encaminhar';
 import { Odontograma } from '../componentes/Odontograma';
 import { useI18n, traduzir } from '../i18n';
 import { traduzirCampoAuditoria, traduzirValorAuditoria } from '../i18n/auditoria';
@@ -176,6 +177,8 @@ export function Prontuario() {
       </div>
 
       <Erros erros={erros} />
+
+      <Encaminhar prontuario={prontuario} aoEncaminhar={setProntuario} />
 
       <Secao titulo={t('dadosPessoais')} autor={prontuario.criadoPor}>
         <dl className="divide-y divide-borda">
