@@ -281,17 +281,49 @@ export const api = {
     return requisitar<Base[]>('/bases');
   },
 
+  assumirEtapa(id: string, especialidade: Especialidade): Promise<AtendimentoResumo> {
+    return requisitar<AtendimentoResumo>(
+      `/atendimentos/${id}/etapas/${especialidade}/assumir`,
+      { method: 'POST', body: '{}' },
+    );
+  },
+
+  /** Manda o paciente desta fila para outra, sem fechar consulta nenhuma. */
+  encaminhar(
+    id: string,
+    especialidade: Especialidade,
+    dados: { destino: Especialidade; motivo: string },
+  ): Promise<Prontuario> {
+    return requisitar<Prontuario>(`/atendimentos/${id}/etapas/${especialidade}/encaminhar`, {
+      method: 'POST',
+      body: JSON.stringify(dados),
+    });
+  },
+
+  liberarEtapa(id: string, especialidade: Especialidade): Promise<AtendimentoResumo> {
+    return requisitar<AtendimentoResumo>(
+      `/atendimentos/${id}/etapas/${especialidade}/liberar`,
+      { method: 'POST', body: '{}' },
+    );
+  },
+
   atendimentos(filtros: {
     baseId: string;
     fila?: Especialidade | null;
     risco?: ClassificacaoRisco | null;
     busca?: string;
+    /** Só o que este profissional assumiu e ainda não concluiu. */
+    meus?: boolean;
+    /** Esconde o que já está na mão de outra pessoa. */
+    ocultarAssumidos?: boolean;
   }): Promise<AtendimentoResumo[]> {
     const params = new URLSearchParams({ baseId: filtros.baseId });
 
     if (filtros.fila) params.set('fila', filtros.fila);
     if (filtros.risco) params.set('risco', filtros.risco);
     if (filtros.busca) params.set('busca', filtros.busca);
+    if (filtros.meus) params.set('meus', 'true');
+    if (filtros.ocultarAssumidos) params.set('ocultarAssumidos', 'true');
 
     return requisitar<AtendimentoResumo[]>(`/atendimentos?${params}`);
   },

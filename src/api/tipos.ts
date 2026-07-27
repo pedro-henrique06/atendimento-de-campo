@@ -196,7 +196,10 @@ export type AcaoAuditoria =
   | 'FinalizouAtendimento'
   | 'ReabriuAtendimento'
   | 'EditouAposFinalizacao'
-  | 'Cancelou';
+  | 'Cancelou'
+  | 'AssumiuEtapa'
+  | 'LiberouEtapa'
+  | 'EncaminhouParaOutraFila';
 
 // ---------------------------------------------------------------------------
 
@@ -213,6 +216,11 @@ export interface Profissional {
   ehAdministrador: boolean;
   motivoRecusa: string | null;
   criadoEm: string;
+  /**
+   * Filas que interessam a esta funcao, na ordem em que a tela deve oferece-las.
+   * A primeira e a que abre por padrao. Nao e permissao: "Todas" continua ali.
+   */
+  filas: Especialidade[];
 }
 
 export interface RespostaLogin {
@@ -426,6 +434,7 @@ export interface Prontuario {
   consultas: Consulta[];
   odontologia: Odontologia | null;
   enfermagem: Enfermagem | null;
+  etapas: EtapaResumo[];
   tempoNasFilas: EsperaFila[];
   historico: RegistroAuditoria[];
 }

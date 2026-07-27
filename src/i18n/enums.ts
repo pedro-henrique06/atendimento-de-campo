@@ -632,6 +632,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     ReabriuAtendimento: 'reabriu o atendimento',
     EditouAposFinalizacao: 'editou após a finalização',
     Cancelou: 'cancelou',
+    AssumiuEtapa: 'assumiu o atendimento',
+    LiberouEtapa: 'devolveu à fila',
+    EncaminhouParaOutraFila: 'encaminhou para outra fila',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -642,6 +645,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     ReabriuAtendimento: 'reabrió la atención',
     EditouAposFinalizacao: 'editó después de finalizar',
     Cancelou: 'canceló',
+    AssumiuEtapa: 'asumió la atención',
+    LiberouEtapa: 'devolvió a la fila',
+    EncaminhouParaOutraFila: 'derivó a otra fila',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -652,6 +658,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     ReabriuAtendimento: 'reopened the encounter',
     EditouAposFinalizacao: 'edited after finishing',
     Cancelou: 'cancelled',
+    AssumiuEtapa: 'took the encounter',
+    LiberouEtapa: 'returned it to the queue',
+    EncaminhouParaOutraFila: 'referred to another queue',
   },
 };
 

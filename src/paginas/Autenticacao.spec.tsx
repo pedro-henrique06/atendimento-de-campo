@@ -194,6 +194,7 @@ describe('Criar conta', () => {
       ehAdministrador: false,
       motivoRecusa: null,
       criadoEm: new Date().toISOString(),
+      filas: ['Triagem', 'Enfermagem'],
     });
 
     const usuario = userEvent.setup();
