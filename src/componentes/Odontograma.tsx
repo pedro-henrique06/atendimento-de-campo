@@ -1,13 +1,10 @@
 import { useMemo, useState } from 'react';
+import { Odontogram } from 'react-odontogram';
+import 'react-odontogram/style.css';
 import type { EstadoDente, FaceDentaria, MarcacaoDente } from '../api/tipos';
 import { useI18n, traduzir } from '../i18n';
 import { estadosDente as tabelaEstados, faces as tabelaFaces } from '../i18n/enums';
 
-/** Quadrantes na disposição anatômica, como o profissional vê o paciente. */
-const SUPERIOR_DIREITO = [18, 17, 16, 15, 14, 13, 12, 11];
-const SUPERIOR_ESQUERDO = [21, 22, 23, 24, 25, 26, 27, 28];
-const INFERIOR_DIREITO = [48, 47, 46, 45, 44, 43, 42, 41];
-const INFERIOR_ESQUERDO = [31, 32, 33, 34, 35, 36, 37, 38];
 
 export const ESTADOS_SELECIONAVEIS: EstadoDente[] = [
   'Carie',
@@ -22,9 +19,12 @@ export const ESTADOS_SELECIONAVEIS: EstadoDente[] = [
 ];
 
 /**
- * Cor de cada estado. Serve para a legenda e para as faixas do dente — nunca
- * como único portador da informação: o dente também exibe as iniciais dos
- * estados, e a lista textual embaixo repete tudo por extenso.
+ * Cor de cada estado.
+ *
+ * A cor nunca é o único portador da informação. A arcada desenhada não permite
+ * escrever nada dentro do dente, então quem carrega o conteúdo por extenso é a
+ * legenda logo abaixo dela, o resumo em texto e o painel do dente selecionado —
+ * três lugares, nenhum deles dependente de enxergar cor.
  */
 const CORES: Record<EstadoDente, string> = {
   Higido: 'transparent',
@@ -39,18 +39,6 @@ const CORES: Record<EstadoDente, string> = {
   RestoRadicular: '#f97316',
 };
 
-const INICIAIS: Record<EstadoDente, string> = {
-  Higido: '',
-  Carie: 'C',
-  Restaurado: 'R',
-  Ausente: 'A',
-  ExtracaoIndicada: 'E',
-  Fratura: 'F',
-  Selante: 'S',
-  Protese: 'P',
-  Implante: 'I',
-  RestoRadicular: 'RR',
-};
 
 function facesValidas(dente: number): FaceDentaria[] {
   const posicao = dente % 10;
@@ -97,6 +85,34 @@ const ORDEM_ESTADOS: EstadoDente[] = [
 ];
 
 /**
+ * Prioridade de exibição no desenho, do mais grave para o menos.
+ *
+ * A arcada só consegue pintar **uma** cor por dente. Um dente com cárie e
+ * extração indicada aparece com a cor de "vários estados" — nunca com uma das
+ * duas, porque foi exatamente assim que o odontograma de referência fazia a
+ * cárie sumir do desenho. Quando há um estado só, a cor é a dele.
+ */
+const PRIORIDADE: EstadoDente[] = [
+  'Ausente',
+  'ExtracaoIndicada',
+  'RestoRadicular',
+  'Fratura',
+  'Carie',
+  'Protese',
+  'Implante',
+  'Restaurado',
+  'Selante',
+  'Higido',
+];
+
+/** Cor do dente que carrega mais de um estado ao mesmo tempo. */
+const COR_VARIOS = '#7c3aed';
+
+/** A biblioteca identifica cada dente por `teeth-<FDI>`. */
+const idDente = (numero: number) => `teeth-${numero}`;
+const numeroDoId = (id: string) => Number(id.replace('teeth-', ''));
+
+/**
  * Monta o resumo textual, no mesmo formato do backend:
  * "Cárie: 38(M,O); Extração indicada: 38".
  */
@@ -131,89 +147,6 @@ export function resumirOdontograma(
     .join('; ');
 }
 
-function Dente({
-  numero,
-  marcacoes,
-  selecionado,
-  aoTocar,
-  rotuloEstados,
-}: {
-  numero: number;
-  marcacoes: MarcacaoDente[];
-  selecionado: boolean;
-  aoTocar: () => void;
-  rotuloEstados: string;
-}) {
-  const ausente = marcacoes.some((m) => m.estado === 'Ausente');
-
-  return (
-    <button
-      type="button"
-      onClick={aoTocar}
-      aria-pressed={selecionado}
-      aria-label={`${numero}${rotuloEstados ? `: ${rotuloEstados}` : ''}`}
-      className={`flex h-12 w-9 shrink-0 flex-col items-center justify-between rounded-md border p-0.5 transition ${
-        selecionado ? 'border-marca-clara ring-2 ring-marca-clara/50' : 'border-borda'
-      } ${ausente ? 'opacity-50' : ''} bg-superficie-2`}
-    >
-      <span className="text-[10px] font-semibold text-texto-suave">{numero}</span>
-
-      {/*
-        Um dente pode carregar vários estados ao mesmo tempo — cárie e extração
-        indicada, por exemplo. Cada estado ganha a sua própria faixa, em vez de
-        uma cor sobrescrever a outra e apagar a informação do desenho.
-      */}
-      <span className="flex w-full flex-1 flex-col justify-end gap-px pb-0.5">
-        {marcacoes.map((m) => (
-          <span
-            key={m.estado}
-            className="block h-1.5 w-full rounded-sm"
-            style={{ backgroundColor: CORES[m.estado] }}
-            aria-hidden
-          />
-        ))}
-      </span>
-
-      <span className="text-[9px] font-bold leading-none text-texto" aria-hidden>
-        {marcacoes.map((m) => INICIAIS[m.estado]).join('')}
-      </span>
-    </button>
-  );
-}
-
-function Arcada({
-  dentes,
-  marcacoesPorDente,
-  selecionado,
-  aoSelecionar,
-  rotularEstados,
-}: {
-  dentes: number[];
-  marcacoesPorDente: Map<number, MarcacaoDente[]>;
-  selecionado: number | null;
-  aoSelecionar: (dente: number) => void;
-  rotularEstados: (marcacoes: MarcacaoDente[]) => string;
-}) {
-  return (
-    <div className="flex gap-1">
-      {dentes.map((numero) => {
-        const marcacoes = marcacoesPorDente.get(numero) ?? [];
-
-        return (
-          <Dente
-            key={numero}
-            numero={numero}
-            marcacoes={marcacoes}
-            selecionado={selecionado === numero}
-            aoTocar={() => aoSelecionar(numero)}
-            rotuloEstados={rotularEstados(marcacoes)}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 export function Odontograma({
   marcacoes,
   aoMudar,
@@ -239,9 +172,6 @@ export function Odontograma({
 
     return mapa;
   }, [marcacoes]);
-
-  const rotularEstados = (lista: MarcacaoDente[]) =>
-    lista.map((m) => traduzirEstado(m.estado)).join(', ');
 
   const estadosDoSelecionado = selecionado ? (porDente.get(selecionado) ?? []) : [];
 
@@ -291,50 +221,76 @@ export function Odontograma({
     (e) => e !== 'Higido',
   );
 
+  /*
+    A arcada pinta uma cor por dente. Dente com mais de um estado ganha a cor de
+    "vários estados" em vez de uma das duas: no odontograma de referência a
+    segunda condição sobrescrevia a primeira e a cárie sumia do desenho. A lista
+    completa continua no painel do dente e no resumo em texto.
+  */
+  const condicoes = useMemo(() => {
+    const porEstado = new Map<EstadoDente, number[]>();
+    const varios: number[] = [];
+
+    for (const [dente, lista] of porDente) {
+      const estados = lista.map((m) => m.estado).filter((e) => e !== 'Higido');
+
+      if (estados.length === 0) continue;
+
+      if (estados.length > 1) {
+        varios.push(dente);
+        continue;
+      }
+
+      const acc = porEstado.get(estados[0]) ?? [];
+      acc.push(dente);
+      porEstado.set(estados[0], acc);
+    }
+
+    const grupos = [...porEstado.entries()]
+      .sort(([a], [b]) => PRIORIDADE.indexOf(a) - PRIORIDADE.indexOf(b))
+      .map(([estado, dentes]) => ({
+        label: traduzirEstado(estado),
+        teeth: dentes.map(idDente),
+        fillColor: CORES[estado],
+        outlineColor: CORES[estado],
+      }));
+
+    if (varios.length > 0) {
+      grupos.push({
+        label: t('variosEstados'),
+        teeth: varios.map(idDente),
+        fillColor: COR_VARIOS,
+        outlineColor: COR_VARIOS,
+      });
+    }
+
+    return grupos;
+  }, [porDente, idioma, t]);
+
+  const temVariosEstados = condicoes.some((g) => g.label === t('variosEstados'));
+
   return (
     <div className="space-y-4">
-      {/* A arcada é larga; no celular ela rola dentro do próprio contêiner e a
-          página nunca ganha rolagem horizontal. */}
-      <div className="-mx-1 overflow-x-auto px-1 pb-2">
-        <div className="inline-flex min-w-full flex-col items-center gap-3">
-          <div className="flex gap-3">
-            <Arcada
-              dentes={SUPERIOR_DIREITO}
-              marcacoesPorDente={porDente}
-              selecionado={selecionado}
-              aoSelecionar={setSelecionado}
-              rotularEstados={rotularEstados}
-            />
-            <Arcada
-              dentes={SUPERIOR_ESQUERDO}
-              marcacoesPorDente={porDente}
-              selecionado={selecionado}
-              aoSelecionar={setSelecionado}
-              rotularEstados={rotularEstados}
-            />
-          </div>
+      <Odontogram
+        notation="FDI"
+        layout="circle"
+        singleSelect
+        readOnly={somenteLeitura}
+        showTooltip={false}
+        theme="light"
+        defaultSelected={selecionado ? [idDente(selecionado)] : []}
+        onChange={(escolhidos) => {
+          const ultimo = escolhidos.at(-1);
+          setSelecionado(ultimo ? numeroDoId(ultimo.id) : null);
+        }}
+        teethConditions={condicoes}
+      />
 
-          <div className="h-px w-full bg-borda" />
-
-          <div className="flex gap-3">
-            <Arcada
-              dentes={INFERIOR_DIREITO}
-              marcacoesPorDente={porDente}
-              selecionado={selecionado}
-              aoSelecionar={setSelecionado}
-              rotularEstados={rotularEstados}
-            />
-            <Arcada
-              dentes={INFERIOR_ESQUERDO}
-              marcacoesPorDente={porDente}
-              selecionado={selecionado}
-              aoSelecionar={setSelecionado}
-              rotularEstados={rotularEstados}
-            />
-          </div>
-        </div>
-      </div>
-
+      {/*
+        Legenda própria, e não a da biblioteca: é ela que garante que nenhum
+        estado desapareça, e essa garantia não pode depender de um detalhe
+        opcional de renderização de terceiro.
+      */}
       {estadosPresentes.length > 0 ? (
         <div className="flex flex-wrap gap-3 text-xs">
           {estadosPresentes.map((estado) => (
@@ -347,6 +303,17 @@ export function Odontograma({
               {traduzirEstado(estado)}
             </span>
           ))}
+
+          {temVariosEstados ? (
+            <span className="flex items-center gap-1.5">
+              <span
+                className="inline-block h-3 w-3 rounded-sm"
+                style={{ backgroundColor: COR_VARIOS }}
+                aria-hidden
+              />
+              {t('variosEstados')}
+            </span>
+          ) : null}
         </div>
       ) : null}
 

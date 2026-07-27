@@ -200,14 +200,29 @@ deixa de ser lido justamente por quem precisa dele.
 
 ### Odontograma
 
-Cada dente pode carregar vários estados ao mesmo tempo, e cada estado ganha a
-sua própria faixa de cor. No odontograma de referência um dente com cárie **e**
-extração indicada era pintado de uma cor só, e a cárie sumia do desenho.
+A arcada vem de [`react-odontogram`](https://www.npmjs.com/package/react-odontogram)
+(MIT, sem dependências de runtime), no layout `circle` e notação FDI — o desenho
+anatômico no lugar dos quadrados numerados de antes. No celular cada dente fica
+com cerca de 56 px, acima do mínimo de toque que o resto do app usa.
 
-A cor nunca é o único portador da informação: o dente também mostra as iniciais
-dos estados, o `aria-label` lista todos por extenso, e o resumo textual repete
-tudo. Faces só são oferecidas para estados que se localizam em faces — extração
+**A biblioteca só pinta uma cor por dente**, e cada dente aqui pode carregar
+vários estados ao mesmo tempo. Um dente com cárie **e** extração indicada não
+recebe a cor de nenhuma das duas: recebe a cor de **"vários estados"**. Era
+exatamente assim — a segunda condição sobrescrevendo a primeira — que a cárie
+sumia do desenho no sistema de referência.
+
+A cor nunca é o único portador da informação. Como não dá para escrever dentro do
+dente desenhado, quem carrega o conteúdo por extenso é a legenda logo abaixo da
+arcada, o resumo em texto e o painel do dente selecionado — três lugares, nenhum
+deles dependente de enxergar cor. A legenda é nossa, e não a da biblioteca: essa
+garantia não pode depender de um detalhe opcional de renderização de terceiro.
+
+Faces só são oferecidas para estados que se localizam em faces — extração
 indicada, prótese e implante são do dente inteiro.
+
+**O que se perdeu:** o `aria-label` de cada dente passa a ser "Tooth 38", em
+inglês e sem os estados, porque vem da biblioteca. A informação continua no
+resumo em texto, mas não mais no próprio desenho.
 
 ### Nada de enum na tela
 

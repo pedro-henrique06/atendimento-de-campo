@@ -6,6 +6,18 @@ import type { MarcacaoDente } from '../api/tipos';
 import { ProvedorI18n } from '../i18n';
 import { Odontograma, resumirOdontograma } from './Odontograma';
 
+/**
+ * Seleciona um dente na arcada.
+ *
+ * A arcada vem de `react-odontogram`, que expõe cada dente como
+ * `role="option"` com `aria-label="Tooth <FDI>"` — sempre em inglês, qualquer
+ * que seja o idioma da tela. Concentrar isso aqui evita espalhar o DOM de uma
+ * biblioteca de terceiro por todos os testes.
+ */
+async function selecionarDente(usuario: ReturnType<typeof userEvent.setup>, numero: number) {
+  await usuario.click(screen.getByRole('option', { name: `Tooth ${numero}` }));
+}
+
 function Anfitriao({ inicial = [] }: { inicial?: MarcacaoDente[] }) {
   const [marcacoes, setMarcacoes] = useState<MarcacaoDente[]>(inicial);
 
@@ -60,8 +72,9 @@ describe('Odontograma', () => {
     render(<Anfitriao />);
 
     // 32 dentes permanentes na notação FDI.
-    expect(screen.getByRole('button', { name: /^11/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^48/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(32);
+    expect(screen.getByRole('option', { name: 'Tooth 11' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Tooth 48' })).toBeInTheDocument();
   });
 
   it('mantém cárie e extração indicada no mesmo dente', async () => {
@@ -75,13 +88,15 @@ describe('Odontograma', () => {
       />,
     );
 
-    await usuario.click(screen.getByRole('button', { name: /^38/ }));
+    await selecionarDente(usuario, 38);
     await usuario.click(screen.getByRole('button', { name: 'Extração indicada' }));
 
-    const dente = screen.getByRole('button', { name: /^38/ });
+    // A arcada só pinta uma cor por dente, então quem garante que nenhum estado
+    // sumiu é o resumo em texto — não o desenho.
+    expect(screen.getByText(/Cárie: 38\(M,O\); Extração indicada: 38/)).toBeInTheDocument();
 
-    expect(dente).toHaveAccessibleName(expect.stringContaining('Cárie'));
-    expect(dente).toHaveAccessibleName(expect.stringContaining('Extração indicada'));
+    // E o desenho não finge que há um estado só: o dente entra em "vários".
+    expect(screen.getByText('Vários estados')).toBeInTheDocument();
   });
 
   it('marcar ausente remove os demais estados do dente', async () => {
@@ -89,13 +104,13 @@ describe('Odontograma', () => {
 
     render(<Anfitriao inicial={[{ dente: 36, estado: 'Carie', faces: [] }]} />);
 
-    await usuario.click(screen.getByRole('button', { name: /^36/ }));
+    await selecionarDente(usuario, 36);
     await usuario.click(screen.getByRole('button', { name: 'Ausente' }));
 
-    const dente = screen.getByRole('button', { name: /^36/ });
+    const resumo = screen.getByText(/Ausente: 36/);
 
-    expect(dente).toHaveAccessibleName(expect.stringContaining('Ausente'));
-    expect(dente).not.toHaveAccessibleName(expect.stringContaining('Cárie'));
+    expect(resumo).toBeInTheDocument();
+    expect(resumo.textContent).not.toContain('Cárie');
   });
 
   it('tocar duas vezes no mesmo estado desmarca', async () => {
@@ -103,14 +118,12 @@ describe('Odontograma', () => {
 
     render(<Anfitriao />);
 
-    await usuario.click(screen.getByRole('button', { name: /^21/ }));
+    await selecionarDente(usuario, 21);
     await usuario.click(screen.getByRole('button', { name: 'Cárie' }));
-    expect(screen.getByRole('button', { name: /^21/ })).toHaveAccessibleName(
-      expect.stringContaining('Cárie'),
-    );
+    expect(screen.getByText(/Cárie: 21/)).toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: 'Cárie' }));
-    expect(screen.getByRole('button', { name: /^21/ })).toHaveAccessibleName('21');
+    expect(screen.queryByText(/Cárie: 21/)).not.toBeInTheDocument();
   });
 
   it('oferece face oclusal em molar e incisal em incisivo', async () => {
@@ -118,13 +131,13 @@ describe('Odontograma', () => {
 
     render(<Anfitriao />);
 
-    await usuario.click(screen.getByRole('button', { name: /^36/ }));
+    await selecionarDente(usuario, 36);
     await usuario.click(screen.getByRole('button', { name: 'Cárie' }));
 
     expect(screen.getByRole('button', { name: 'Oclusal' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Incisal' })).not.toBeInTheDocument();
 
-    await usuario.click(screen.getByRole('button', { name: /^11/ }));
+    await selecionarDente(usuario, 11);
     await usuario.click(screen.getByRole('button', { name: 'Cárie' }));
 
     expect(screen.getByRole('button', { name: 'Incisal' })).toBeInTheDocument();
@@ -136,22 +149,25 @@ describe('Odontograma', () => {
 
     render(<Anfitriao inicial={[{ dente: 38, estado: 'Carie', faces: ['Mesial', 'Oclusal'] }]} />);
 
-    await usuario.click(screen.getByRole('button', { name: /^38/ }));
+    await selecionarDente(usuario, 38);
     await usuario.click(screen.getByRole('button', { name: 'Extração indicada' }));
 
     expect(screen.getByText(/Cárie: 38\(M,O\); Extração indicada: 38/)).toBeInTheDocument();
   });
 
-  it('cada dente descreve seus estados por texto, não só por cor', async () => {
+  it('descreve os estados por texto, não só por cor', async () => {
     // Quem não distingue as cores, ou usa leitor de tela, precisa da informação.
+    // A arcada desenhada não permite escrever dentro do dente, então quem
+    // carrega isso são a legenda e o resumo — os dois em texto.
     const usuario = userEvent.setup();
 
     render(<Anfitriao />);
 
-    await usuario.click(screen.getByRole('button', { name: /^47/ }));
+    await selecionarDente(usuario, 47);
     await usuario.click(screen.getByRole('button', { name: 'Restaurado' }));
 
-    expect(screen.getByRole('button', { name: '47: Restaurado' })).toBeInTheDocument();
+    expect(screen.getByText(/Restaurado: 47/)).toBeInTheDocument();
+    expect(screen.getAllByText('Restaurado').length).toBeGreaterThan(1);
   });
 
   it('limpar dente remove todas as marcações dele', async () => {
@@ -167,12 +183,14 @@ describe('Odontograma', () => {
       />,
     );
 
-    await usuario.click(screen.getByRole('button', { name: /^38/ }));
+    await selecionarDente(usuario, 38);
     await usuario.click(screen.getByRole('button', { name: 'Limpar dente' }));
 
-    expect(screen.getByRole('button', { name: '38' })).toBeInTheDocument();
+    // O painel ainda mostra "Dente 38"; o que tem de sumir é o resumo dele.
+    expect(screen.queryByText(/Cárie: 38/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Cárie: 11/)).toBeInTheDocument();
     // O outro dente não é afetado.
-    expect(screen.getByRole('button', { name: '11: Cárie' })).toBeInTheDocument();
+
   });
 
   it('em modo somente leitura não oferece edição', () => {
@@ -198,7 +216,7 @@ describe('faces por estado', () => {
 
     render(<Anfitriao />);
 
-    await usuario.click(screen.getByRole('button', { name: /^38/ }));
+    await selecionarDente(usuario, 38);
     await usuario.click(screen.getByRole('button', { name: 'Extração indicada' }));
 
     expect(screen.queryByText(/Faces — Extração indicada/)).not.toBeInTheDocument();
@@ -210,7 +228,7 @@ describe('faces por estado', () => {
 
     render(<Anfitriao />);
 
-    await usuario.click(screen.getByRole('button', { name: /^38/ }));
+    await selecionarDente(usuario, 38);
     await usuario.click(screen.getByRole('button', { name: /^Cárie$/ }));
 
     expect(screen.getByText(/Faces — Cárie/)).toBeInTheDocument();
