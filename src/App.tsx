@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { AvisoAtualizacao } from './componentes/AvisoAtualizacao';
 import { Cabecalho } from './componentes/Cabecalho';
 import { ProvedorSessao, useSessao } from './hooks/useSessao';
 import { useTema } from './hooks/useTema';
@@ -103,6 +104,7 @@ export function App() {
     <ProvedorI18n>
       <ProvedorSessao>
         <BrowserRouter>
+          <AvisoAtualizacao />
           <Rotas />
         </BrowserRouter>
       </ProvedorSessao>

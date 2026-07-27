@@ -16,7 +16,7 @@ O Vite faz proxy de `/api` para `http://localhost:5080`, onde roda a API do
 repositório `atendimento-de-campo-back`. Suba o backend antes.
 
 ```bash
-npm test               # 129 testes
+npm test               # 135 testes
 npm run build
 ```
 
@@ -61,6 +61,33 @@ dois usos. Prefira um arquivo em `public/` (ex.: `VITE_LOGO_URL=/logo.png`) a um
 URL externa, que depende do servidor de origem estar no ar.
 
 O direito de uso da marca que aparece aqui é de quem publica o app.
+
+### Instalar como aplicativo (PWA)
+
+O app é instalável na tela inicial do celular: `manifest.webmanifest` com ícones
+(inclusive *maskable*, para o Android recortar sem cortar o símbolo), modo
+`standalone` — sem barra do navegador — e orientação travada em retrato, porque
+o celular vai para o bolso e volta de qualquer jeito.
+
+No Android o próprio Chrome oferece "Instalar app". No iPhone é pelo Safari:
+**Compartilhar → Adicionar à Tela de Início**.
+
+**O service worker guarda só a casca** — HTML, JS, CSS e as artes da marca. É por
+isso que a tela abre sem sinal.
+
+**Nenhuma resposta da API é cacheada, de propósito.** Servir prontuário guardado
+mostraria alergia, medicação e classificação de risco possivelmente
+desatualizadas, sem a pessoa saber que está olhando algo velho. Numa tela clínica
+isso é pior que não abrir.
+
+Ou seja: **abrir funciona offline; salvar não.** O `useRascunho` já guarda o
+formulário em andamento no aparelho, então o que foi digitado não se perde — mas
+só sobe quando o sinal volta. A faixa no topo avisa da falta de rede antes de
+alguém perder o trabalho.
+
+A atualização é **oferecida, não imposta**: recarregar sozinho apagaria o
+formulário aberto. Mas também não fica em silêncio — num prontuário, rodar versão
+velha sem saber é o tipo de coisa que só aparece depois do problema.
 
 ### Rotas do lado do cliente
 
