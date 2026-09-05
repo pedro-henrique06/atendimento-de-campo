@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { Profissional, StatusConta } from '../api/tipos';
+import { FUNCOES_PARA_CADASTRO } from '../api/tipos';
+import type { ContaCriada, FuncaoProfissional, Profissional, StatusConta } from '../api/tipos';
 import { Carregando, Erros, Etiqueta, Vazio } from '../componentes/Basicos';
+import { CredencialProvisoria } from '../componentes/CredencialProvisoria';
+import { NovaConta } from '../componentes/NovaConta';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
-import { conselhos, funcoes, statusConta } from '../i18n/enums';
+import { conselhos, especialidades, funcoes, statusConta } from '../i18n/enums';
 import type { ChaveTexto } from '../i18n/textos';
 
 const FILTROS: { status: StatusConta | null; rotulo: ChaveTexto }[] = [
@@ -25,6 +28,12 @@ export function GestaoContas() {
   const [erros, setErros] = useState<string[]>([]);
   const [recusando, setRecusando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState('');
+  const [reclassificando, setReclassificando] = useState<string | null>(null);
+  const [novaFuncao, setNovaFuncao] = useState<FuncaoProfissional>('ClinicoGeral');
+  const [novoRegistro, setNovoRegistro] = useState('');
+
+  /** Senha recém-sorteada numa redefinição. Some assim que a coordenação fecha. */
+  const [credencial, setCredencial] = useState<ContaCriada | null>(null);
 
   const carregar = useCallback(() => {
     setErros([]);
@@ -59,6 +68,23 @@ export function GestaoContas() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <h1 className="titulo">{t('gestaoContas')}</h1>
+
+      {/*
+        O cadastro fica aqui, no topo, porque é a única porta de entrada do
+        sistema: não existe auto-registro, e quem não for cadastrado aqui não
+        entra.
+      */}
+      <NovaConta aoCriar={carregar} />
+
+      {credencial ? (
+        <CredencialProvisoria
+          titulo={t('senhaProvisoria')}
+          nome={credencial.profissional.nome}
+          usuario={credencial.profissional.usuario}
+          senha={credencial.senhaProvisoria}
+          aoFechar={() => setCredencial(null)}
+        />
+      ) : null}
 
       <input
         className="campo"
@@ -108,6 +134,15 @@ export function GestaoContas() {
                       {conta.registro
                         ? ` · ${traduzir(conselhos, idioma, conta.conselhoTipo)} ${conta.registro}`
                         : ''}
+                    </p>
+                    {/*
+                      A fila é a consequência prática da profissão: sem mostrar
+                      aqui, a coordenação não tem como conferir se a pessoa está
+                      caindo onde deveria.
+                    */}
+                    <p className="text-sm text-texto-suave">
+                      {t('filaDaProfissao')}:{' '}
+                      {conta.filas.map((f) => traduzir(especialidades, idioma, f)).join(' · ')}
                     </p>
                     {conta.email ? (
                       <p className="text-sm text-texto-suave">{conta.email}</p>
@@ -170,6 +205,68 @@ export function GestaoContas() {
                       </button>
                     </div>
                   </div>
+                ) : reclassificando === conta.id ? (
+                  <div className="space-y-2">
+                    <label className="block">
+                      <span className="rotulo">{t('profissao')}</span>
+                      <select
+                        className="campo"
+                        value={novaFuncao}
+                        onChange={(e) => setNovaFuncao(e.target.value as FuncaoProfissional)}
+                      >
+                        {FUNCOES_PARA_CADASTRO.map((f) => (
+                          <option key={f} value={f}>
+                            {traduzir(funcoes, idioma, f)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    {/*
+                      Opcional: mudar de clínico geral para pediatra mantém o
+                      mesmo CRM. Só é exigido quando o conselho muda, e aí a API
+                      recusa sem ele.
+                    */}
+                    <label className="block">
+                      <span className="rotulo">{t('registro')}</span>
+                      <input
+                        className="campo"
+                        value={novoRegistro}
+                        onChange={(e) => setNovoRegistro(e.target.value)}
+                        inputMode="numeric"
+                      />
+                    </label>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="botao w-auto px-5"
+                        onClick={() =>
+                          executar(async () => {
+                            await api.alterarProfissao(
+                              conta.id,
+                              novaFuncao,
+                              novoRegistro.trim() || null,
+                            );
+                            setReclassificando(null);
+                            setNovoRegistro('');
+                          })
+                        }
+                      >
+                        {t('salvar')}
+                      </button>
+                      <button
+                        type="button"
+                        className="botao-secundario"
+                        onClick={() => {
+                          setReclassificando(null);
+                          setNovoRegistro('');
+                        }}
+                      >
+                        {t('cancelar')}
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {conta.status !== 'Ativa' ? (
@@ -196,6 +293,44 @@ export function GestaoContas() {
                       Sem ações sobre a própria conta: o servidor recusa, e
                       oferecer o botão só produziria erro na cara de quem clicou.
                     */}
+                    <button
+                      type="button"
+                      className="botao-secundario"
+                      onClick={() => {
+                        setNovaFuncao(
+                          FUNCOES_PARA_CADASTRO.includes(conta.funcao)
+                            ? conta.funcao
+                            : // "Médico" sem especialidade não está na lista de
+                              // cadastro: é justamente a conta que precisa ser
+                              // reclassificada, e o clínico geral é o palpite
+                              // menos arriscado para a coordenação corrigir.
+                              'ClinicoGeral',
+                        );
+                        setNovoRegistro(conta.registro ?? '');
+                        setReclassificando(conta.id);
+                      }}
+                    >
+                      {t('alterarProfissao')}
+                    </button>
+
+                    {/*
+                      Em campo não há e-mail de recuperação. Sem esta saída, uma
+                      senha esquecida deixaria a conta inútil para sempre.
+                    */}
+                    <button
+                      type="button"
+                      className="botao-secundario"
+                      onClick={() => {
+                        if (!window.confirm(t('redefinirSenhaConfirmar'))) return;
+
+                        executar(async () => {
+                          setCredencial(await api.redefinirSenha(conta.id));
+                        });
+                      }}
+                    >
+                      {t('redefinirSenha')}
+                    </button>
+
                     {conta.status === 'Ativa' && !souEu ? (
                       <>
                         <button

@@ -1,24 +1,41 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { AvisoAtualizacao } from './componentes/AvisoAtualizacao';
 import { Cabecalho } from './componentes/Cabecalho';
 import { ProvedorSessao, useSessao } from './hooks/useSessao';
 import { useTema } from './hooks/useTema';
 import { ProvedorI18n } from './i18n';
 import { Atendimento } from './paginas/Atendimento';
 import { ListaAtendimentos } from './paginas/ListaAtendimentos';
-import { CriarConta } from './paginas/CriarConta';
 import { GestaoBases } from './paginas/GestaoBases';
 import { GestaoContas } from './paginas/GestaoContas';
 import { Login } from './paginas/Login';
 import { NovoAtendimento } from './paginas/NovoAtendimento';
+import { Producao } from './paginas/Producao';
 import { Prontuario } from './paginas/Prontuario';
 import { SelecaoBase } from './paginas/SelecaoBase';
+import { TrocarSenha } from './paginas/TrocarSenha';
 import { Triagem } from './paginas/Triagem';
 import type { Tema } from './hooks/useTema';
 
-/** Exige sessão; sem ela, volta para o login. */
+/**
+ * Exige sessão; sem ela, volta para o login.
+ *
+ * Quem ainda está com a senha provisória vai para a troca e não passa daqui: a
+ * API recusaria tudo de qualquer forma, e sem o desvio a pessoa colecionaria
+ * 403 sem entender o motivo.
+ */
 function Protegido() {
-  const { autenticado } = useSessao();
-  return autenticado ? <Outlet /> : <Navigate to="/entrar" replace />;
+  const { autenticado, profissional } = useSessao();
+
+  if (!autenticado) {
+    return <Navigate to="/entrar" replace />;
+  }
+
+  return profissional?.precisaTrocarSenha ? (
+    <Navigate to="/trocar-senha" replace />
+  ) : (
+    <Outlet />
+  );
 }
 
 /** Restringe a rota a quem administra contas. */
@@ -46,24 +63,36 @@ function ComBase({ tema, alternarTema }: { tema: Tema; alternarTema: () => void 
 
 function Rotas() {
   const { tema, alternar } = useTema();
-  const { autenticado } = useSessao();
+  const { autenticado, profissional } = useSessao();
+
+  const precisaTrocarSenha = profissional?.precisaTrocarSenha ?? false;
 
   return (
     <Routes>
       <Route
         path="/entrar"
         element={
-          autenticado ? <Navigate to="/atendimentos" replace /> : <Login tema={tema} alternarTema={alternar} />
+          !autenticado ? (
+            <Login tema={tema} alternarTema={alternar} />
+          ) : (
+            <Navigate to={precisaTrocarSenha ? '/trocar-senha' : '/atendimentos'} replace />
+          )
         }
       />
 
+      {/*
+        Fora de <Protegido> de propósito: é justamente a tela para onde ele
+        desvia, e aninhar produziria um redirecionamento em círculo.
+      */}
       <Route
-        path="/criar-conta"
+        path="/trocar-senha"
         element={
-          autenticado ? (
-            <Navigate to="/atendimentos" replace />
+          !autenticado ? (
+            <Navigate to="/entrar" replace />
+          ) : precisaTrocarSenha ? (
+            <TrocarSenha tema={tema} alternarTema={alternar} />
           ) : (
-            <CriarConta tema={tema} alternarTema={alternar} />
+            <Navigate to="/atendimentos" replace />
           )
         }
       />
@@ -81,6 +110,13 @@ function Rotas() {
             element={<Atendimento modo="consulta" />}
           />
           <Route path="/atendimentos/:id/odontologia" element={<Atendimento modo="odontologia" />} />
+
+          {/*
+            Aberta a todo mundo de propósito: quem não é coordenação recebe da
+            API só a própria produção, e ver o próprio trabalho somado não é
+            privilégio de ninguém.
+          */}
+          <Route path="/producao" element={<Producao />} />
 
           {/*
             A tela some para quem não é administrador, mas quem garante a
@@ -103,6 +139,7 @@ export function App() {
     <ProvedorI18n>
       <ProvedorSessao>
         <BrowserRouter>
+          <AvisoAtualizacao />
           <Rotas />
         </BrowserRouter>
       </ProvedorSessao>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { AtendimentoResumo, ClassificacaoRisco, Especialidade } from '../api/tipos';
@@ -19,6 +19,16 @@ const FILAS: Especialidade[] = [
 ];
 
 const RISCOS: ClassificacaoRisco[] = ['Vermelho', 'Amarelo', 'Verde', 'Preto'];
+
+/**
+ * De quanto em quanto tempo a fila se atualiza sozinha.
+ *
+ * Sem isso, quem recebia um encaminhamento não tinha como saber: a lista era
+ * carregada uma vez e ficava parada até alguém recarregar a página. Quinze
+ * segundos deixa a fila viva sem transformar o plantão em tráfego constante —
+ * e é bem menos do que o tempo de atravessar o posto até a próxima sala.
+ */
+export const INTERVALO_ATUALIZACAO = 15_000;
 
 /** "Meus" é uma fila a mais na barra, mas filtra por quem assumiu, não por especialidade. */
 type Aba = Especialidade | 'Todas' | 'Meus';
@@ -45,33 +55,94 @@ export function ListaAtendimentos() {
   const [busca, setBusca] = useState('');
   const [erros, setErros] = useState<string[]>([]);
 
-  const carregar = useCallback(() => {
-    if (!base) return;
+  /*
+    Toda busca leva um número e só a mais recente pode escrever na tela. Com a
+    atualização periódica ligada há sempre duas em voo: a resposta lenta da fila
+    anterior chega depois da troca de aba e mostraria a fila errada.
+  */
+  const requisicao = useRef(0);
 
-    setErros([]);
+  const carregar = useCallback(
+    async (silenciosa = false) => {
+      if (!base) return;
+      if (!silenciosa) setErros([]);
 
-    api
-      .atendimentos({
-        baseId: base.id,
-        fila: aba === 'Todas' || aba === 'Meus' ? null : aba,
-        risco,
-        busca: busca.trim() || undefined,
-        meus: aba === 'Meus',
-        // Só a fila de uma especialidade esconde o que já está com outra
-        // pessoa. Em "Todas" a coordenação precisa enxergar a operação inteira.
-        ocultarAssumidos: aba !== 'Todas' && aba !== 'Meus',
-      })
-      .then(setAtendimentos)
-      .catch((erro) => {
+      const minha = ++requisicao.current;
+
+      try {
+        const lista = await api.atendimentos({
+          baseId: base.id,
+          fila: aba === 'Todas' || aba === 'Meus' ? null : aba,
+          risco,
+          busca: busca.trim() || undefined,
+          meus: aba === 'Meus',
+          // Só a fila de uma especialidade esconde o que já está com outra
+          // pessoa. Em "Todas" a coordenação precisa enxergar a operação inteira.
+          ocultarAssumidos: aba !== 'Todas' && aba !== 'Meus',
+        });
+
+        if (minha !== requisicao.current) return;
+        setAtendimentos(lista);
+      } catch (erro) {
+        if (minha !== requisicao.current) return;
+
+        /*
+          Falha na atualização de fundo não apaga a lista nem acusa erro: em
+          campo o sinal cai o tempo todo, e uma fila que some sozinha a cada
+          quinze segundos é pior que uma fila desatualizada.
+        */
+        if (silenciosa) return;
+
         setAtendimentos([]);
         setErros([erro instanceof ErroDeRede ? t('semConexao') : t('erroInesperado')]);
-      });
-  }, [base, aba, risco, busca, t]);
+      }
+    },
+    [base, aba, risco, busca, t],
+  );
 
   useEffect(() => {
-    const timer = setTimeout(carregar, busca ? 300 : 0);
+    const timer = setTimeout(() => carregar(), busca ? 300 : 0);
     return () => clearTimeout(timer);
   }, [carregar, busca]);
+
+  /*
+    A atualização periódica só corre com a aba à vista. O aparelho passa boa
+    parte do plantão no bolso, e buscar uma lista que ninguém está olhando gasta
+    bateria e dados à toa. Ao voltar, busca na hora — é justamente o momento em
+    que a pessoa olha a fila.
+  */
+  useEffect(() => {
+    let intervalo: ReturnType<typeof setInterval> | null = null;
+
+    function parar() {
+      if (intervalo === null) return;
+      clearInterval(intervalo);
+      intervalo = null;
+    }
+
+    function comecar() {
+      parar();
+      intervalo = setInterval(() => carregar(true), INTERVALO_ATUALIZACAO);
+    }
+
+    function aoMudarVisibilidade() {
+      if (document.visibilityState !== 'visible') {
+        parar();
+        return;
+      }
+
+      carregar(true);
+      comecar();
+    }
+
+    if (document.visibilityState === 'visible') comecar();
+    document.addEventListener('visibilitychange', aoMudarVisibilidade);
+
+    return () => {
+      parar();
+      document.removeEventListener('visibilitychange', aoMudarVisibilidade);
+    };
+  }, [carregar]);
 
   async function alternarPosse(
     atendimentoId: string,
@@ -85,7 +156,7 @@ export function ListaAtendimentos() {
       if (souEu) await api.liberarEtapa(atendimentoId, especialidade);
       else await api.assumirEtapa(atendimentoId, especialidade);
 
-      carregar();
+      await carregar();
     } catch (erro) {
       // A recusa do servidor diz com quem o atendimento está. Trocar isso por
       // um erro genérico deixaria a equipe sem saber a quem perguntar.

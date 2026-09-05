@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import type { ClassificacaoRisco, Idioma } from '../api/tipos';
+import type { Autor, ClassificacaoRisco, Idioma } from '../api/tipos';
 import { useI18n, traduzir } from '../i18n';
-import { classificacoesCurtas } from '../i18n/enums';
+import { classificacoesCurtas, conselhos } from '../i18n/enums';
 import { IconeAlerta } from './Icones';
 
 export function Cartao({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -12,12 +12,48 @@ export function Titulo({ children }: { children: ReactNode }) {
   return <h1 className="titulo">{children}</h1>;
 }
 
-export function Secao({ titulo, autor, children }: { titulo: string; autor?: string | null; children: ReactNode }) {
+/**
+ * Assinatura da ficha: quem atendeu, com o registro do conselho.
+ *
+ * O registro já estava no cadastro do profissional e nunca chegava aqui — a
+ * ficha mostrava só o nome, que é o que menos identifica alguém fora do sistema.
+ * É o que a equipe, a auditoria e o serviço de referência procuram.
+ */
+function Assinatura({ autor }: { autor: Autor }) {
+  const { idioma } = useI18n();
+  const conselho = autor.conselho === 'Nenhum' ? null : traduzir(conselhos, idioma, autor.conselho);
+
+  return (
+    <span className="text-sm text-texto-suave">
+      {autor.nome}
+      {conselho && autor.registro ? (
+        <span className="ml-1.5 whitespace-nowrap font-medium">
+          {conselho} {autor.registro}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+export function Secao({
+  titulo,
+  autor,
+  children,
+}: {
+  titulo: string;
+  /** Texto puro para as seções sem ficha clínica; `Autor` onde há assinatura. */
+  autor?: string | Autor | null;
+  children: ReactNode;
+}) {
   return (
     <section className="cartao space-y-4">
       <header className="flex items-baseline justify-between gap-3 border-b border-borda pb-2">
         <h2 className="text-lg font-bold text-marca-clara">{titulo}</h2>
-        {autor ? <span className="text-sm text-texto-suave">{autor}</span> : null}
+        {typeof autor === 'string' ? (
+          <span className="text-sm text-texto-suave">{autor}</span>
+        ) : autor ? (
+          <Assinatura autor={autor} />
+        ) : null}
       </header>
       {children}
     </section>

@@ -4,10 +4,13 @@ import type {
   BaseAdmin,
   Cid10,
   ClassificacaoRisco,
+  ContaCriada,
   Especialidade,
+  FuncaoProfissional,
   ItemCatalogo,
   MotivoRecusaLogin,
   PacienteConhecido,
+  ProducaoProfissional,
   Profissional,
   Prontuario,
   RespostaLogin,
@@ -188,17 +191,36 @@ export const api = {
     }
   },
 
-  registrar(dados: {
+  /**
+   * Troca a própria senha. Devolve um token novo: o antigo diz "precisa trocar"
+   * e continuaria barrado pela API mesmo depois da troca.
+   */
+  trocarSenha(dados: {
+    senhaAtual: string;
+    novaSenha: string;
+    confirmacaoSenha: string;
+  }): Promise<RespostaLogin> {
+    return requisitar<RespostaLogin>('/auth/trocar-senha', {
+      method: 'POST',
+      body: JSON.stringify(dados),
+    });
+  },
+
+  /**
+   * Cadastra um profissional. Só a coordenação pode — é a única porta de
+   * entrada no sistema, já que não existe auto-registro.
+   *
+   * A senha provisória vem na resposta e só nela: o servidor guarda o hash.
+   */
+  criarConta(dados: {
     usuario: string;
     nome: string;
     email?: string | null;
-    funcao: string;
+    funcao: FuncaoProfissional;
     registro?: string | null;
-    senha: string;
-    confirmacaoSenha: string;
     idioma: string;
-  }): Promise<Profissional> {
-    return requisitar<Profissional>('/auth/registrar', {
+  }): Promise<ContaCriada> {
+    return requisitar<ContaCriada>('/profissionais', {
       method: 'POST',
       body: JSON.stringify(dados),
     });
@@ -206,8 +228,43 @@ export const api = {
 
   usuarioDisponivel(usuario: string): Promise<UsuarioDisponivel> {
     return requisitar<UsuarioDisponivel>(
-      `/auth/usuario-disponivel?usuario=${encodeURIComponent(usuario)}`,
+      `/profissionais/usuario-disponivel?usuario=${encodeURIComponent(usuario)}`,
     );
+  },
+
+  /** Muda a profissão e, com ela, a fila que a pessoa passa a ver. */
+  alterarProfissao(
+    id: string,
+    funcao: FuncaoProfissional,
+    registro?: string | null,
+  ): Promise<Profissional> {
+    return requisitar<Profissional>(`/profissionais/${id}/profissao`, {
+      method: 'POST',
+      body: JSON.stringify({ funcao, registro }),
+    });
+  },
+
+  /** Sorteia uma senha provisória nova, para quem perdeu a de acesso. */
+  redefinirSenha(id: string): Promise<ContaCriada> {
+    return requisitar<ContaCriada>(`/profissionais/${id}/redefinir-senha`, {
+      method: 'POST',
+      body: '{}',
+    });
+  },
+
+  /**
+   * Produção por profissional na base, no período.
+   *
+   * A coordenação recebe a equipe inteira; qualquer outra pessoa recebe só a
+   * própria — a API é que decide, não a tela.
+   */
+  producao(filtros: { baseId: string; de?: Date; ate?: Date }): Promise<ProducaoProfissional[]> {
+    const params = new URLSearchParams({ baseId: filtros.baseId });
+
+    if (filtros.de) params.set('de', filtros.de.toISOString());
+    if (filtros.ate) params.set('ate', filtros.ate.toISOString());
+
+    return requisitar<ProducaoProfissional[]>(`/relatorios/producao?${params}`);
   },
 
   profissionais(filtros: { status?: StatusConta | null; busca?: string }): Promise<Profissional[]> {

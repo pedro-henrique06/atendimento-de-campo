@@ -3,6 +3,13 @@
 
 export type Idioma = 'Pt' | 'Es' | 'En';
 
+/**
+ * Profissao de quem opera o sistema. E ela que decide em que fila a pessoa cai.
+ *
+ * `Medico` sem especialidade existe apenas para as contas criadas antes de
+ * clinico geral, pediatra e ortopedista serem profissoes separadas — a API
+ * recusa em cadastro novo. Ver `FUNCOES_PARA_CADASTRO`.
+ */
 export type FuncaoProfissional =
   | 'Medico'
   | 'Enfermeiro'
@@ -13,7 +20,29 @@ export type FuncaoProfissional =
   | 'Farmaceutico'
   | 'Recepcao'
   | 'Coordenacao'
-  | 'Outro';
+  | 'Outro'
+  | 'ClinicoGeral'
+  | 'Pediatra'
+  | 'Ortopedista';
+
+/**
+ * Profissoes oferecidas num cadastro novo, na ordem em que a tela lista.
+ * Espelha `FilasDaFuncao.ParaCadastro` no backend.
+ */
+export const FUNCOES_PARA_CADASTRO: FuncaoProfissional[] = [
+  'ClinicoGeral',
+  'Pediatra',
+  'Ortopedista',
+  'Dentista',
+  'Enfermeiro',
+  'TecnicoEnfermagem',
+  'Psicologo',
+  'Fisioterapeuta',
+  'Farmaceutico',
+  'Recepcao',
+  'Coordenacao',
+  'Outro',
+];
 
 export type ConselhoTipo = 'Nenhum' | 'Crm' | 'Coren' | 'Cro' | 'Crp' | 'Crefito' | 'Crf';
 
@@ -199,7 +228,13 @@ export type AcaoAuditoria =
   | 'Cancelou'
   | 'AssumiuEtapa'
   | 'LiberouEtapa'
-  | 'EncaminhouParaOutraFila';
+  | 'EncaminhouParaOutraFila'
+  /**
+   * Assumiu um paciente numa fila que não é da profissão dele. É permitido — em
+   * campo as funções se cobrem — mas fica registrado, porque exceção sem rastro
+   * vira rotina silenciosa.
+   */
+  | 'AssumiuForaDaSuaFila';
 
 // ---------------------------------------------------------------------------
 
@@ -217,10 +252,30 @@ export interface Profissional {
   motivoRecusa: string | null;
   criadoEm: string;
   /**
-   * Filas que interessam a esta funcao, na ordem em que a tela deve oferece-las.
-   * A primeira e a que abre por padrao. Nao e permissao: "Todas" continua ali.
+   * Filas da profissao, na ordem em que a tela deve oferece-las. A primeira e a
+   * que abre por padrao.
+   *
+   * Nao e tranca: ver e agir fora dela continua possivel, porque em campo as
+   * funcoes se cobrem. O que muda e o rastro — assumir um paciente fora daqui
+   * fica gravado no historico do atendimento.
    */
   filas: Especialidade[];
+  /**
+   * A senha ainda e a provisoria que a coordenacao entregou. Enquanto for
+   * verdadeiro, a API recusa tudo menos a troca de senha.
+   */
+  precisaTrocarSenha: boolean;
+}
+
+/**
+ * Conta recem-criada e a senha do primeiro acesso.
+ *
+ * A senha aparece so nesta resposta: nao ha como consulta-la depois, porque o
+ * servidor guarda apenas o hash.
+ */
+export interface ContaCriada {
+  profissional: Profissional;
+  senhaProvisoria: string;
 }
 
 export interface RespostaLogin {
@@ -287,6 +342,19 @@ export interface PacienteConhecido {
   ultimaBase: string | null;
 }
 
+/**
+ * Quem assinou o ato clínico.
+ *
+ * O nome sozinho não basta numa ficha: o registro no conselho é o que identifica
+ * a pessoa fora do sistema, e é o que a equipe e a auditoria procuram quando
+ * precisam saber quem atendeu.
+ */
+export interface Autor {
+  nome: string;
+  conselho: ConselhoTipo;
+  registro: string | null;
+}
+
 export interface EtapaResumo {
   id: string;
   especialidade: Especialidade;
@@ -333,7 +401,7 @@ export interface Localizacao {
 
 export interface Triagem {
   etapaId: string;
-  profissional: string | null;
+  profissional: Autor | null;
   pressaoSistolica: number | null;
   pressaoDiastolica: number | null;
   frequenciaCardiaca: number | null;
@@ -372,7 +440,7 @@ export interface Ortopedia {
 export interface Consulta {
   etapaId: string;
   especialidade: Especialidade;
-  profissional: string | null;
+  profissional: Autor | null;
   sintomasDescricao: string | null;
   cid10Codigo: string | null;
   cid10Descricao: string | null;
@@ -393,7 +461,7 @@ export interface MarcacaoDente {
 
 export interface Odontologia {
   etapaId: string;
-  profissional: string | null;
+  profissional: Autor | null;
   queixa: string | null;
   cid10Codigo: string | null;
   cid10Descricao: string | null;
@@ -408,7 +476,7 @@ export interface Odontologia {
 
 export interface Enfermagem {
   etapaId: string;
-  profissional: string | null;
+  profissional: Autor | null;
   procedimentos: ProcedimentoEnfermagem[];
   outroProcedimento: string | null;
   observacoes: string | null;
@@ -460,4 +528,30 @@ export interface Cid10 {
   codigo: string;
   descricao: string;
   capitulo: string | null;
+}
+
+/** Quanto uma pessoa produziu numa fila, no período. */
+export interface ProducaoPorFila {
+  especialidade: Especialidade;
+  atendimentos: number;
+  minutosTotais: number;
+}
+
+/**
+ * Produção de um profissional no período.
+ *
+ * Conta etapas concluídas, e não pacientes: quem viu a mesma pessoa na triagem e
+ * depois na enfermagem fez dois atendimentos, porque foram dois atos.
+ */
+export interface ProducaoProfissional {
+  profissionalId: string;
+  nome: string;
+  funcao: FuncaoProfissional;
+  conselho: ConselhoTipo;
+  registro: string | null;
+  atendimentos: number;
+  minutosTotais: number;
+  /** Mediana, e não média: uma ficha esquecida aberta deformaria a média. */
+  minutosMedianos: number | null;
+  porFila: ProducaoPorFila[];
 }
