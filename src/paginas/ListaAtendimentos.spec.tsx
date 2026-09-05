@@ -1,12 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api, ErroApi } from '../api/cliente';
+import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { AtendimentoResumo, Profissional } from '../api/tipos';
 import { ProvedorSessao } from '../hooks/useSessao';
 import { ProvedorI18n } from '../i18n';
-import { ListaAtendimentos } from './ListaAtendimentos';
+import { INTERVALO_ATUALIZACAO, ListaAtendimentos } from './ListaAtendimentos';
 
 const DENTISTA: Profissional = {
   id: 'p1',
@@ -242,6 +242,123 @@ describe('Fila de atendimentos', () => {
     await waitFor(() =>
       expect(api.atendimentos).toHaveBeenCalledWith(expect.objectContaining({ meus: true })),
     );
+  });
+});
+
+/**
+ * A fila se atualizando sozinha é o que faz o encaminhamento chegar: sem isso,
+ * quem recebe o paciente só descobre ao recarregar a página.
+ *
+ * Estes testes correm com relógio falso e sem `waitFor` de propósito — o
+ * `waitFor` da testing-library não reconhece os timers do vitest e ficaria
+ * esperando um relógio que não anda.
+ */
+describe('Atualização da fila', () => {
+  /** Anda com o relógio e deixa as respostas pendentes chegarem à tela. */
+  async function avancar(ms: number) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+  }
+
+  async function definirVisibilidade(estado: DocumentVisibilityState) {
+    Object.defineProperty(document, 'visibilityState', {
+      value: estado,
+      configurable: true,
+    });
+
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(async () => {
+    await definirVisibilidade('visible');
+    vi.useRealTimers();
+  });
+
+  it('busca a fila de novo sem ninguém recarregar a página', async () => {
+    renderizar();
+    await avancar(0);
+
+    expect(api.atendimentos).toHaveBeenCalledTimes(1);
+
+    await avancar(INTERVALO_ATUALIZACAO);
+
+    expect(api.atendimentos).toHaveBeenCalledTimes(2);
+  });
+
+  it('para de buscar quando a aba sai de vista', async () => {
+    renderizar();
+    await avancar(0);
+
+    await definirVisibilidade('hidden');
+    await avancar(INTERVALO_ATUALIZACAO * 3);
+
+    // O aparelho passa boa parte do plantão no bolso. Buscar uma lista que
+    // ninguém está olhando gasta bateria e dados à toa.
+    expect(api.atendimentos).toHaveBeenCalledTimes(1);
+  });
+
+  it('busca na hora quando a aba volta', async () => {
+    renderizar();
+    await avancar(0);
+
+    await definirVisibilidade('hidden');
+    await definirVisibilidade('visible');
+    await avancar(0);
+
+    // Esperar mais quinze segundos justo quando a pessoa olha a fila seria a
+    // hora errada de estar desatualizado.
+    expect(api.atendimentos).toHaveBeenCalledTimes(2);
+  });
+
+  it('falha na atualização de fundo não apaga a fila', async () => {
+    renderizar();
+    await avancar(0);
+
+    expect(screen.getByText(/Yesenia Navarro/)).toBeInTheDocument();
+
+    vi.mocked(api.atendimentos).mockRejectedValueOnce(new ErroDeRede());
+    await avancar(INTERVALO_ATUALIZACAO);
+
+    // Em campo o sinal cai o tempo todo. Uma fila que some sozinha a cada
+    // quinze segundos é pior que uma fila desatualizada.
+    expect(screen.getByText(/Yesenia Navarro/)).toBeInTheDocument();
+    expect(screen.queryByText(/Sem conexão/)).not.toBeInTheDocument();
+  });
+
+  it('resposta atrasada não sobrescreve a fila que está na tela', async () => {
+    let responderAtrasada: (lista: AtendimentoResumo[]) => void = () => {};
+
+    vi.mocked(api.atendimentos)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            responderAtrasada = resolve;
+          }),
+      )
+      .mockResolvedValue([atendimento({ id: 'a2', pacienteNome: 'Paciente Atual' })]);
+
+    renderizar();
+    await avancar(0);
+
+    // A segunda busca responde primeiro e é a que vale.
+    await avancar(INTERVALO_ATUALIZACAO);
+    expect(screen.getByText(/Paciente Atual/)).toBeInTheDocument();
+
+    await act(async () => {
+      responderAtrasada([atendimento({ id: 'a3', pacienteNome: 'Resposta Antiga' })]);
+    });
+
+    // Com duas buscas em voo o tempo todo, deixar a mais lenta escrever na tela
+    // mostraria a fila de antes como se fosse a de agora.
+    expect(screen.queryByText(/Resposta Antiga/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Paciente Atual/)).toBeInTheDocument();
   });
 });
 
