@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type {
+  Comunidade,
   CondicaoCronica,
   PacienteConhecido,
   Sexo,
@@ -66,6 +67,10 @@ interface Formulario {
   nome: string;
   tipoDocumento: TipoDocumento;
   numeroDocumento: string;
+  cartaoSus: string;
+  comunidadeId: string;
+  nomeDaMae: string;
+  endereco: string;
   semDataNascimento: boolean;
   dataNascimento: string;
   idadeAproximada: string;
@@ -84,6 +89,10 @@ const INICIAL: Formulario = {
   nome: '',
   tipoDocumento: 'SemDocumento',
   numeroDocumento: '',
+  cartaoSus: '',
+  comunidadeId: '',
+  nomeDaMae: '',
+  endereco: '',
   semDataNascimento: false,
   dataNascimento: '',
   idadeAproximada: '',
@@ -95,6 +104,28 @@ const INICIAL: Formulario = {
   consentimento: false,
   queixaPrincipal: '',
 };
+
+/** Maioridade civil no Brasil, no Panamá e na Venezuela. Espelha `RegrasDoMenor`. */
+const MAIORIDADE = 18;
+
+/** Anos completos desde a data informada; nulo se ela estiver vazia ou inválida. */
+function anosDesde(dataIso: string): number | null {
+  if (!dataIso) return null;
+
+  const nascimento = new Date(dataIso);
+  if (Number.isNaN(nascimento.getTime())) return null;
+
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - nascimento.getFullYear();
+
+  const aniversario = new Date(nascimento);
+  aniversario.setFullYear(nascimento.getFullYear() + anos);
+
+  // Ainda não fez aniversário neste ano.
+  if (hoje < aniversario) anos--;
+
+  return anos;
+}
 
 export function NovoAtendimento() {
   const { t, idioma } = useI18n();
@@ -108,6 +139,28 @@ export function NovoAtendimento() {
 
   const [erros, setErros] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [comunidades, setComunidades] = useState<Comunidade[]>([]);
+
+  useEffect(() => {
+    // Falha silenciosa de propósito: a comunidade é opcional, e sem sinal o
+    // cadastro precisa seguir em vez de travar num campo que não é obrigatório.
+    api.comunidades().then(setComunidades).catch(() => setComunidades([]));
+  }, []);
+
+  /*
+    A regra do menor vale pela idade calculada, e não por um campo à parte:
+    assim ela pega tanto quem informou a data de nascimento quanto quem só soube
+    dizer a idade aproximada.
+
+    Idade desconhecida não presume menor — em campo boa parte dos pacientes
+    chega sem saber a própria idade, e exigir nome da mãe de um adulto ensinaria
+    a recepção a inventar dado.
+  */
+  const idade = form.semDataNascimento
+    ? Number(form.idadeAproximada) || null
+    : anosDesde(form.dataNascimento);
+
+  const ehMenor = idade !== null && idade < MAIORIDADE;
 
   function alterar(mudanca: Partial<Formulario>) {
     setForm({ ...form, ...mudanca });
@@ -131,6 +184,10 @@ export function NovoAtendimento() {
       nome: paciente.nome,
       tipoDocumento: paciente.tipoDocumento,
       numeroDocumento: paciente.numeroDocumento ?? '',
+      cartaoSus: paciente.cartaoSus ?? '',
+      comunidadeId: paciente.comunidadeId ?? '',
+      nomeDaMae: paciente.nomeDaMae ?? '',
+      endereco: paciente.endereco ?? '',
       semDataNascimento: paciente.dataNascimento === null,
       dataNascimento: paciente.dataNascimento ?? '',
       idadeAproximada: paciente.dataNascimento === null ? String(paciente.idade ?? '') : '',
@@ -169,6 +226,10 @@ export function NovoAtendimento() {
           nome: form.nome.trim(),
           tipoDocumento: form.tipoDocumento,
           numeroDocumento: form.numeroDocumento.trim() || null,
+          cartaoSus: form.cartaoSus.trim() || null,
+          comunidadeId: form.comunidadeId || null,
+          nomeDaMae: form.nomeDaMae.trim() || null,
+          endereco: form.endereco.trim() || null,
           dataNascimento: form.semDataNascimento ? null : form.dataNascimento || null,
           idadeAproximada: form.semDataNascimento ? Number(form.idadeAproximada) || null : null,
           sexo: form.sexo,
@@ -289,6 +350,41 @@ export function NovoAtendimento() {
           </Campo>
         )}
 
+        {/*
+          Fora do bloco do documento de propósito: a pessoa pode ter RG *e*
+          cartão do SUS, e como tipo de documento um excluiria o outro.
+        */}
+        <Campo rotulo={t('cartaoSus')}>
+          <input
+            className="campo"
+            inputMode="numeric"
+            value={form.cartaoSus}
+            onChange={(e) => alterar({ cartaoSus: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('comunidade')}>
+          {comunidades.length === 0 ? (
+            // Lista fechada: sem nenhuma cadastrada, não há o que oferecer — e
+            // cair em texto livre aqui produziria as três grafias que a lista
+            // veio evitar.
+            <p className="text-sm text-texto-suave">{t('nenhumaComunidadeCadastrada')}</p>
+          ) : (
+            <select
+              className="campo"
+              value={form.comunidadeId}
+              onChange={(e) => alterar({ comunidadeId: e.target.value })}
+            >
+              <option value="">{t('semComunidade')}</option>
+              {comunidades.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+          )}
+        </Campo>
+
         <Interruptor
           rotulo={t('idadeDesconhecida')}
           valor={form.semDataNascimento}
@@ -319,6 +415,33 @@ export function NovoAtendimento() {
             />
           </Campo>
         )}
+
+        {/*
+          Só para menor de idade. Em campo a criança costuma chegar acompanhada
+          de quem não é o responsável legal, e são estes dois campos que
+          permitem reencontrar a família depois.
+        */}
+        {ehMenor ? (
+          <>
+            <Campo rotulo={t('nomeDaMae')} obrigatorio dica={t('exigidoParaMenor')}>
+              <input
+                className="campo"
+                value={form.nomeDaMae}
+                onChange={(e) => alterar({ nomeDaMae: e.target.value })}
+                required
+              />
+            </Campo>
+
+            <Campo rotulo={t('endereco')} obrigatorio dica={t('exigidoParaMenor')}>
+              <input
+                className="campo"
+                value={form.endereco}
+                onChange={(e) => alterar({ endereco: e.target.value })}
+                required
+              />
+            </Campo>
+          </>
+        ) : null}
 
         <div>
           <span className="rotulo">{t('sexo')}</span>

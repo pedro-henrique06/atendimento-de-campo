@@ -13,6 +13,9 @@ import {
   statusAlergia as tabelaAlergia,
 } from '../i18n/enums';
 
+/** Notas da escala de dor. Zero entra: "sem dor" é resposta. */
+const NOTAS_DOR = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
 const SINTOMAS: Sintoma[] = [
   'Dor',
   'Tosse',
@@ -45,6 +48,10 @@ interface Formulario {
   saturacaoO2: string;
   temperatura: string;
   glicemia: string;
+  peso: string;
+  altura: string;
+  /** Vazio significa "não perguntei"; "0" significa "sem dor". */
+  escalaDor: string;
   sintomas: Sintoma[];
   outroSintoma: string;
   medicamentosEmUso: string;
@@ -69,6 +76,9 @@ const INICIAL: Formulario = {
   saturacaoO2: '',
   temperatura: '',
   glicemia: '',
+  peso: '',
+  altura: '',
+  escalaDor: '',
   sintomas: [],
   outroSintoma: '',
   medicamentosEmUso: '',
@@ -104,6 +114,22 @@ export function Triagem() {
   const [enviando, setEnviando] = useState(false);
   const [divergencia, setDivergencia] = useState<string | null>(null);
 
+  /*
+    O IMC aparece assim que peso e altura existem, ainda antes de salvar: é
+    conferência, e conferir depois de gravar chega tarde. A faixa (adequado,
+    sobrepeso) não é mostrada aqui de propósito — ela depende da idade e o corte
+    da OMS é de adulto; quem decide isso é o servidor, no prontuário.
+  */
+  const imc = (() => {
+    const peso = Number(form.peso);
+    const altura = Number(form.altura);
+
+    if (!(peso > 0) || !(altura > 0)) return null;
+
+    const metros = altura / 100;
+    return peso / (metros * metros);
+  })();
+
   function alterar(mudanca: Partial<Formulario>) {
     setForm({ ...form, ...mudanca });
   }
@@ -126,6 +152,9 @@ export function Triagem() {
         saturacaoO2: numero(form.saturacaoO2),
         temperaturaCelsius: numero(form.temperatura),
         glicemiaCapilar: numero(form.glicemia),
+        pesoKg: numero(form.peso),
+        alturaCm: numero(form.altura),
+        escalaDor: numero(form.escalaDor),
         sintomas: form.sintomas,
         outroSintoma: form.outroSintoma.trim() || null,
         medicamentosEmUso: form.medicamentosEmUso.trim() || null,
@@ -252,6 +281,88 @@ export function Triagem() {
             onChange={(e) => alterar({ glicemia: e.target.value })}
           />
         </Campo>
+
+        <div className="grid grid-cols-2 gap-3">
+          {/*
+            Peso não é só estatística: é o que permite conferir dose pediátrica
+            na dispensação, que até agora dependia de alguém lembrar do número.
+          */}
+          <Campo rotulo={t('peso')}>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min={0.5}
+              max={400}
+              className="campo"
+              value={form.peso}
+              onChange={(e) => alterar({ peso: e.target.value })}
+            />
+          </Campo>
+
+          <Campo rotulo={t('altura')}>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={20}
+              max={250}
+              className="campo"
+              value={form.altura}
+              onChange={(e) => alterar({ altura: e.target.value })}
+            />
+          </Campo>
+        </div>
+
+        {imc !== null ? (
+          <p className="text-sm">
+            <span className="text-texto-suave">{t('imc')}: </span>
+            <span className="font-semibold tabular-nums">{imc.toFixed(1)}</span>
+          </p>
+        ) : null}
+      </Secao>
+
+      <Secao titulo={t('escalaDor')}>
+        {/*
+          De 0 a 10, e não de 1: "sem dor" é uma resposta válida e diferente de
+          não ter perguntado — que é o que o campo vazio significa.
+        */}
+        <div className="-mx-4 overflow-x-auto px-4">
+          <div className="flex gap-2 pb-1">
+            <button
+              type="button"
+              aria-pressed={form.escalaDor === ''}
+              onClick={() => alterar({ escalaDor: '' })}
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                form.escalaDor === ''
+                  ? 'border-marca bg-marca text-white'
+                  : 'border-borda bg-superficie-2 text-texto'
+              }`}
+            >
+              {t('naoPerguntado')}
+            </button>
+
+            {NOTAS_DOR.map((nota) => (
+              <button
+                key={nota}
+                type="button"
+                aria-pressed={form.escalaDor === String(nota)}
+                onClick={() => alterar({ escalaDor: String(nota) })}
+                className={`h-11 w-11 shrink-0 rounded-full border text-sm font-semibold tabular-nums transition ${
+                  form.escalaDor === String(nota)
+                    ? 'border-marca bg-marca text-white'
+                    : 'border-borda bg-superficie-2 text-texto'
+                }`}
+              >
+                {nota}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="flex justify-between text-sm text-texto-suave">
+          <span>0 — {t('semDor')}</span>
+          <span>10 — {t('dorMaxima')}</span>
+        </p>
       </Secao>
 
       <Secao titulo={t('sintomasAtuais')}>
