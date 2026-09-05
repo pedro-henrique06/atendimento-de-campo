@@ -116,11 +116,13 @@ export function Login({ tema, alternarTema }: { tema: Tema; alternarTema: () => 
             </button>
           </form>
 
-          <div className="border-t border-borda pt-4 text-center text-sm">
-            <span className="text-texto-suave">{t('naoTenhoConta')}</span>{' '}
-            <Link to="/criar-conta" className="font-semibold text-marca-clara underline">
-              {t('criarConta')}
-            </Link>
+          {/*
+            Não há mais link para criar conta: quem cadastra é a coordenação. O
+            aviso fica, porque sem ele quem chega aqui sem conta não descobre o
+            que fazer — e tentaria de novo achando que errou a senha.
+          */}
+          <div className="border-t border-borda pt-4 text-center text-sm text-texto-suave">
+            {t('semContaFaleComACoordenacao')}
           </div>
         </CartaoPublico>
       </main>

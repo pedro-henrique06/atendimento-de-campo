@@ -70,7 +70,10 @@ export const especialidades: Traducao<Especialidade> = {
 
 export const funcoes: Traducao<FuncaoProfissional> = {
   Pt: {
-    Medico: 'Médico(a)',
+    Medico: 'Médico(a) (sem especialidade)',
+    ClinicoGeral: 'Clínico(a) geral',
+    Pediatra: 'Pediatra',
+    Ortopedista: 'Ortopedista',
     Enfermeiro: 'Enfermeiro(a)',
     TecnicoEnfermagem: 'Técnico(a) de enfermagem',
     Dentista: 'Dentista',
@@ -82,7 +85,10 @@ export const funcoes: Traducao<FuncaoProfissional> = {
     Outro: 'Outro',
   },
   Es: {
-    Medico: 'Médico(a)',
+    Medico: 'Médico(a) (sin especialidad)',
+    ClinicoGeral: 'Médico(a) general',
+    Pediatra: 'Pediatra',
+    Ortopedista: 'Traumatólogo(a)',
     Enfermeiro: 'Enfermero(a)',
     TecnicoEnfermagem: 'Técnico(a) de enfermería',
     Dentista: 'Dentista',
@@ -94,7 +100,10 @@ export const funcoes: Traducao<FuncaoProfissional> = {
     Outro: 'Otro',
   },
   En: {
-    Medico: 'Doctor',
+    Medico: 'Doctor (no specialty)',
+    ClinicoGeral: 'General practitioner',
+    Pediatra: 'Paediatrician',
+    Ortopedista: 'Orthopaedist',
     Enfermeiro: 'Nurse',
     TecnicoEnfermagem: 'Nursing technician',
     Dentista: 'Dentist',
@@ -635,6 +644,7 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     AssumiuEtapa: 'assumiu o atendimento',
     LiberouEtapa: 'devolveu à fila',
     EncaminhouParaOutraFila: 'encaminhou para outra fila',
+    AssumiuForaDaSuaFila: 'assumiu fora da própria fila',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -648,6 +658,7 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     AssumiuEtapa: 'asumió la atención',
     LiberouEtapa: 'devolvió a la fila',
     EncaminhouParaOutraFila: 'derivó a otra fila',
+    AssumiuForaDaSuaFila: 'asumió fuera de su propia fila',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -661,6 +672,7 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     AssumiuEtapa: 'took the encounter',
     LiberouEtapa: 'returned it to the queue',
     EncaminhouParaOutraFila: 'referred to another queue',
+    AssumiuForaDaSuaFila: 'took it outside their own queue',
   },
 };
 
