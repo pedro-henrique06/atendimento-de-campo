@@ -10,6 +10,7 @@ import type {
   ItemCatalogo,
   MotivoRecusaLogin,
   PacienteConhecido,
+  ProducaoProfissional,
   Profissional,
   Prontuario,
   RespostaLogin,
@@ -249,6 +250,21 @@ export const api = {
       method: 'POST',
       body: '{}',
     });
+  },
+
+  /**
+   * Produção por profissional na base, no período.
+   *
+   * A coordenação recebe a equipe inteira; qualquer outra pessoa recebe só a
+   * própria — a API é que decide, não a tela.
+   */
+  producao(filtros: { baseId: string; de?: Date; ate?: Date }): Promise<ProducaoProfissional[]> {
+    const params = new URLSearchParams({ baseId: filtros.baseId });
+
+    if (filtros.de) params.set('de', filtros.de.toISOString());
+    if (filtros.ate) params.set('ate', filtros.ate.toISOString());
+
+    return requisitar<ProducaoProfissional[]>(`/relatorios/producao?${params}`);
   },
 
   profissionais(filtros: { status?: StatusConta | null; busca?: string }): Promise<Profissional[]> {

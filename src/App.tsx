@@ -10,6 +10,7 @@ import { GestaoBases } from './paginas/GestaoBases';
 import { GestaoContas } from './paginas/GestaoContas';
 import { Login } from './paginas/Login';
 import { NovoAtendimento } from './paginas/NovoAtendimento';
+import { Producao } from './paginas/Producao';
 import { Prontuario } from './paginas/Prontuario';
 import { SelecaoBase } from './paginas/SelecaoBase';
 import { TrocarSenha } from './paginas/TrocarSenha';
@@ -109,6 +110,13 @@ function Rotas() {
             element={<Atendimento modo="consulta" />}
           />
           <Route path="/atendimentos/:id/odontologia" element={<Atendimento modo="odontologia" />} />
+
+          {/*
+            Aberta a todo mundo de propósito: quem não é coordenação recebe da
+            API só a própria produção, e ver o próprio trabalho somado não é
+            privilégio de ninguém.
+          */}
+          <Route path="/producao" element={<Producao />} />
 
           {/*
             A tela some para quem não é administrador, mas quem garante a

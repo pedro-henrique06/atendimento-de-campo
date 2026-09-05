@@ -174,6 +174,16 @@ export function Prontuario() {
           <PontoRisco risco={prontuario.classificacaoRisco} />
           <span>{traduzir(classificacoes, idioma, prontuario.classificacaoRisco)}</span>
         </div>
+
+        {/*
+          Quando o atendimento foi aberto e por quem. O dado já estava gravado
+          desde sempre e nunca aparecia — e é o que responde "há quanto tempo
+          essa pessoa está aqui", que é a primeira pergunta de quem chega no
+          meio do plantão.
+        */}
+        <p className="border-t border-borda pt-3 text-sm text-texto-suave">
+          {t('abertoEm')} {new Date(prontuario.criadoEm).toLocaleString()} · {prontuario.criadoPor}
+        </p>
       </div>
 
       <Erros erros={erros} />

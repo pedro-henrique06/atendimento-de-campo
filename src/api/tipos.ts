@@ -342,6 +342,19 @@ export interface PacienteConhecido {
   ultimaBase: string | null;
 }
 
+/**
+ * Quem assinou o ato clínico.
+ *
+ * O nome sozinho não basta numa ficha: o registro no conselho é o que identifica
+ * a pessoa fora do sistema, e é o que a equipe e a auditoria procuram quando
+ * precisam saber quem atendeu.
+ */
+export interface Autor {
+  nome: string;
+  conselho: ConselhoTipo;
+  registro: string | null;
+}
+
 export interface EtapaResumo {
   id: string;
   especialidade: Especialidade;
@@ -388,7 +401,7 @@ export interface Localizacao {
 
 export interface Triagem {
   etapaId: string;
-  profissional: string | null;
+  profissional: Autor | null;
   pressaoSistolica: number | null;
   pressaoDiastolica: number | null;
   frequenciaCardiaca: number | null;
@@ -427,7 +440,7 @@ export interface Ortopedia {
 export interface Consulta {
   etapaId: string;
   especialidade: Especialidade;
-  profissional: string | null;
+  profissional: Autor | null;
   sintomasDescricao: string | null;
   cid10Codigo: string | null;
   cid10Descricao: string | null;
@@ -448,7 +461,7 @@ export interface MarcacaoDente {
 
 export interface Odontologia {
   etapaId: string;
-  profissional: string | null;
+  profissional: Autor | null;
   queixa: string | null;
   cid10Codigo: string | null;
   cid10Descricao: string | null;
@@ -463,7 +476,7 @@ export interface Odontologia {
 
 export interface Enfermagem {
   etapaId: string;
-  profissional: string | null;
+  profissional: Autor | null;
   procedimentos: ProcedimentoEnfermagem[];
   outroProcedimento: string | null;
   observacoes: string | null;
@@ -515,4 +528,30 @@ export interface Cid10 {
   codigo: string;
   descricao: string;
   capitulo: string | null;
+}
+
+/** Quanto uma pessoa produziu numa fila, no período. */
+export interface ProducaoPorFila {
+  especialidade: Especialidade;
+  atendimentos: number;
+  minutosTotais: number;
+}
+
+/**
+ * Produção de um profissional no período.
+ *
+ * Conta etapas concluídas, e não pacientes: quem viu a mesma pessoa na triagem e
+ * depois na enfermagem fez dois atendimentos, porque foram dois atos.
+ */
+export interface ProducaoProfissional {
+  profissionalId: string;
+  nome: string;
+  funcao: FuncaoProfissional;
+  conselho: ConselhoTipo;
+  registro: string | null;
+  atendimentos: number;
+  minutosTotais: number;
+  /** Mediana, e não média: uma ficha esquecida aberta deformaria a média. */
+  minutosMedianos: number | null;
+  porFila: ProducaoPorFila[];
 }

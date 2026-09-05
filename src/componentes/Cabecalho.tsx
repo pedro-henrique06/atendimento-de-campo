@@ -61,6 +61,22 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
 
             {menuAberto ? (
               <div className="absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-borda bg-superficie text-texto shadow-lg">
+                {/*
+                  Para todo mundo: quem não é coordenação recebe da API só a
+                  própria produção, e ver o próprio trabalho somado não é
+                  privilégio de ninguém.
+                */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuAberto(false);
+                    navegar('/producao');
+                  }}
+                  className="w-full border-b border-borda px-4 py-3 text-left text-sm hover:bg-superficie-2"
+                >
+                  {t('producao')}
+                </button>
+
                 {profissional?.ehAdministrador ? (
                   <button
                     type="button"
