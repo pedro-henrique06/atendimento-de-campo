@@ -63,6 +63,26 @@ export function Encaminhar({
     (e) => e.id !== aberta.id && e.status !== 'Concluida' && e.status !== 'Cancelada',
   );
 
+  /*
+    Da triagem não se volta.
+
+    Quem já passou por ela tem risco classificado e lugar na fila; reabri-la joga
+    o paciente para o começo da linha e faz o risco ser classificado de novo,
+    possivelmente para outra cor. A API recusa, e a tela não oferece — botão que
+    só serve para receber erro é pior que botão nenhum.
+
+    Quem nunca foi triado é outro caso: mandar para lá não é voltar, é ir pela
+    primeira vez, e continua permitido.
+  */
+  const jaFoiTriado =
+    prontuario.etapas.find((e) => e.especialidade === 'Triagem')?.status === 'Concluida';
+
+  const podeDevolver = aberta.encaminhadaDe !== null && aberta.encaminhadaDe !== 'Triagem';
+
+  const destinosPossiveis = FILAS.filter(
+    (f) => f !== aberta.especialidade && !(f === 'Triagem' && jaFoiTriado),
+  );
+
   function fechar() {
     setAcao('nenhuma');
     setDestino('');
@@ -138,7 +158,7 @@ export function Encaminhar({
             {t('darAlta')}
           </button>
 
-          {aberta.encaminhadaDe ? (
+          {podeDevolver ? (
             <button
               type="button"
               className="botao-secundario"
@@ -258,8 +278,11 @@ export function Encaminhar({
           required
         >
           <option value="">—</option>
-          {/* A fila de origem fica fora: encaminhar para ela mesma não é encaminhar. */}
-          {FILAS.filter((f) => f !== aberta!.especialidade).map((f) => (
+          {/*
+            Fora da lista: a própria fila, porque encaminhar para ela mesma não é
+            encaminhar; e a triagem, para quem já foi triado.
+          */}
+          {destinosPossiveis.map((f) => (
             <option key={f} value={f}>
               {traduzir(especialidades, idioma, f)}
             </option>

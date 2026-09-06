@@ -201,6 +201,82 @@ describe('Desfecho do atendimento', () => {
     expect(screen.getByRole('button', { name: /^Devolver a quem/ })).toBeDisabled();
   });
 
+  it('não devolve para a triagem quem já foi triado', () => {
+    renderizar(
+      prontuario({
+        etapas: [
+          {
+            id: 'e1',
+            especialidade: 'Triagem',
+            status: 'Concluida',
+            profissional: 'Ana Enfermeira',
+            iniciadaEm: '2026-07-26T12:05:00Z',
+            concluidaEm: '2026-07-26T12:10:00Z',
+            assumidaEm: null,
+            encaminhadaPor: null,
+            encaminhadaDe: null,
+          },
+          etapa({ encaminhadaPor: 'Ana Enfermeira', encaminhadaDe: 'Triagem' }),
+        ],
+      }),
+    );
+
+    // Reabrir a triagem joga o paciente para o começo da fila e faz o risco ser
+    // classificado de novo. A API recusa, e botão que só serve para receber
+    // erro é pior que botão nenhum.
+    expect(screen.queryByRole('button', { name: /Devolver a quem/ })).not.toBeInTheDocument();
+  });
+
+  it('a triagem sai da lista de destinos de quem já foi triado', async () => {
+    const usuario = userEvent.setup();
+
+    renderizar(
+      prontuario({
+        etapas: [
+          {
+            id: 'e1',
+            especialidade: 'Triagem',
+            status: 'Concluida',
+            profissional: 'Ana Enfermeira',
+            iniciadaEm: '2026-07-26T12:05:00Z',
+            concluidaEm: '2026-07-26T12:10:00Z',
+            assumidaEm: null,
+            encaminhadaPor: null,
+            encaminhadaDe: null,
+          },
+          etapa(),
+        ],
+      }),
+    );
+
+    await usuario.click(screen.getByRole('button', { name: /Encaminhar/ }));
+
+    // Bloquear só a devolução deixaria o mesmo efeito a um clique de distância.
+    expect(screen.queryByRole('option', { name: 'Triagem' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Pediatria' })).toBeInTheDocument();
+  });
+
+  it('quem nunca foi triado ainda pode ser mandado para a triagem', async () => {
+    const usuario = userEvent.setup();
+
+    renderizar(
+      prontuario({
+        // A clínica geral primeiro: é ela a fila aberta em que o profissional
+        // está: a triagem, nunca feita, é o destino possível.
+        etapas: [
+          etapa(),
+          etapa({ id: 'e1', especialidade: 'Triagem', status: 'Aguardando', profissional: null }),
+        ],
+      }),
+    );
+
+    await usuario.click(screen.getByRole('button', { name: /Encaminhar/ }));
+
+    // Acontece quando o médico atende direto quem chega passando mal: mandar
+    // para a triagem depois não é voltar, é ir pela primeira vez.
+    expect(screen.getByRole('option', { name: 'Triagem' })).toBeInTheDocument();
+  });
+
   it('a alta avisa que encerra o atendimento inteiro', async () => {
     const usuario = userEvent.setup();
     renderizar();
