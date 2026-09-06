@@ -671,6 +671,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     LiberouEtapa: 'devolveu à fila',
     EncaminhouParaOutraFila: 'encaminhou para outra fila',
     AssumiuForaDaSuaFila: 'assumiu fora da própria fila',
+    DeuAlta: 'deu alta',
+    DevolveuParaOrigem: 'devolveu a quem encaminhou',
+    CancelouFilaPendente: 'cancelou a fila pendente',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -685,6 +688,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     LiberouEtapa: 'devolvió a la fila',
     EncaminhouParaOutraFila: 'derivó a otra fila',
     AssumiuForaDaSuaFila: 'asumió fuera de su propia fila',
+    DeuAlta: 'dio el alta',
+    DevolveuParaOrigem: 'devolvió a quien derivó',
+    CancelouFilaPendente: 'canceló la fila pendiente',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -699,6 +705,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     LiberouEtapa: 'returned it to the queue',
     EncaminhouParaOutraFila: 'referred to another queue',
     AssumiuForaDaSuaFila: 'took it outside their own queue',
+    DeuAlta: 'discharged the patient',
+    DevolveuParaOrigem: 'sent it back to the referrer',
+    CancelouFilaPendente: 'cancelled the pending queue',
   },
 };
 

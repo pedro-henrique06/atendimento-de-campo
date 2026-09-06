@@ -11,6 +11,7 @@ import type {
   Prontuario,
 } from '../api/tipos';
 import { AlertaAlergia, Campo, Carregando, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
+import { Cronometro } from '../componentes/Cronometro';
 import { ListaDispensacao, novaLinha, paraEnvio } from '../componentes/Dispensacao';
 import type { LinhaDispensacao } from '../componentes/Dispensacao';
 import { Odontograma } from '../componentes/Odontograma';
@@ -284,13 +285,26 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
     return <Carregando texto={t('carregando')} />;
   }
 
+  /*
+    A etapa em que este profissional está trabalhando. É dela que sai o
+    cronômetro: o tempo é do atendimento em curso, não do atendimento inteiro,
+    que incluiria o que as outras filas levaram.
+  */
+  const etapaEmCurso = prontuario.etapas.find(
+    (e) => e.status !== 'Concluida' && e.status !== 'Cancelada',
+  );
+
   const cabecalhoPaciente = (
     <div className="cartao space-y-2">
-      <div className="flex flex-wrap items-baseline gap-x-2">
-        <span className="font-bold">{prontuario.paciente.nome}</span>
-        <span className="text-sm text-texto-suave">
-          {prontuario.paciente.idade !== null ? `${prontuario.paciente.idade} ${t('anos')}` : ''}
-        </span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <span className="font-bold">{prontuario.paciente.nome}</span>
+          <span className="text-sm text-texto-suave">
+            {prontuario.paciente.idade !== null ? `${prontuario.paciente.idade} ${t('anos')}` : ''}
+          </span>
+        </div>
+
+        <Cronometro assumidaEm={etapaEmCurso?.assumidaEm ?? null} />
       </div>
       <AlertaAlergia
         exibir={prontuario.paciente.alerta.exibir}
