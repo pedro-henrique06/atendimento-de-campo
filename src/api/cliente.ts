@@ -394,6 +394,36 @@ export const api = {
     });
   },
 
+  /**
+   * Devolve o paciente para a fila que o encaminhou.
+   *
+   * O destino não vai no corpo: quem devolve não precisa lembrar de onde o
+   * paciente veio, e o servidor tira isso da passagem pela fila.
+   */
+  devolver(id: string, especialidade: Especialidade, motivo: string): Promise<Prontuario> {
+    return requisitar<Prontuario>(`/atendimentos/${id}/etapas/${especialidade}/devolver`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
+  /**
+   * Dá alta: encerra esta etapa e o atendimento junto.
+   *
+   * Com fila pendente e sem `cancelarPendentes`, a API recusa com a lista — é
+   * o que permite a tela perguntar antes de tirar o paciente da fila.
+   */
+  darAlta(
+    id: string,
+    especialidade: Especialidade,
+    cancelarPendentes = false,
+  ): Promise<Prontuario> {
+    return requisitar<Prontuario>(`/atendimentos/${id}/etapas/${especialidade}/alta`, {
+      method: 'POST',
+      body: JSON.stringify({ cancelarPendentes }),
+    });
+  },
+
   liberarEtapa(id: string, especialidade: Especialidade): Promise<AtendimentoResumo> {
     return requisitar<AtendimentoResumo>(
       `/atendimentos/${id}/etapas/${especialidade}/liberar`,

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { AtendimentoResumo, ClassificacaoRisco, Especialidade } from '../api/tipos';
 import { Carregando, Erros, Etiqueta, PontoRisco, Vazio } from '../componentes/Basicos';
+import { Cronometro } from '../componentes/Cronometro';
 import { IconeConcluido, IconePendente } from '../componentes/Icones';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
@@ -347,7 +348,7 @@ function BlocoPosse({
 
   return (
     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-borda pt-3">
-      <span className="text-sm text-texto-suave">
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-texto-suave">
         {souEu ? t('comigo') : null}
         {deOutro ? (
           <>
@@ -355,6 +356,12 @@ function BlocoPosse({
             <span className="font-medium text-texto">{etapa.profissional}</span>
           </>
         ) : null}
+
+        {/*
+          O tempo aparece na fila, e não só na ficha: é aqui que se vê o
+          atendimento que ficou esquecido aberto desde a manhã.
+        */}
+        {etapa.profissional ? <Cronometro assumidaEm={etapa.assumidaEm} /> : null}
       </span>
 
       {deOutro || !podeAgir ? null : (

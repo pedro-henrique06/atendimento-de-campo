@@ -139,6 +139,11 @@ export function Prontuario() {
   const paciente = prontuario.paciente;
   const finalizado = prontuario.status === 'Finalizado';
 
+  /** Há fila aberta? Se há, quem encerra é a alta, e não o botão de finalizar. */
+  const temFilaAberta = prontuario.etapas.some(
+    (e) => e.status !== 'Concluida' && e.status !== 'Cancelada',
+  );
+
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -499,9 +504,17 @@ export function Prontuario() {
             </Link>
           </div>
 
-          <button type="button" className="botao" onClick={finalizar}>
-            {t('finalizar')}
-          </button>
+          {/*
+            Com fila aberta, quem encerra é a alta, no cartão de desfecho ali em
+            cima. Este botão só aparece quando não há nenhuma: deixar os dois
+            juntos ofereceria um caminho que a API recusaria com "há etapas
+            pendentes", e a pessoa não teria como adivinhar qual dos dois usar.
+          */}
+          {temFilaAberta ? null : (
+            <button type="button" className="botao" onClick={finalizar}>
+              {t('finalizar')}
+            </button>
+          )}
         </div>
       )}
     </div>

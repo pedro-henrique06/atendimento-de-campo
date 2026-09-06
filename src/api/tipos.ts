@@ -237,7 +237,17 @@ export type AcaoAuditoria =
    * campo as funções se cobrem — mas fica registrado, porque exceção sem rastro
    * vira rotina silenciosa.
    */
-  | 'AssumiuForaDaSuaFila';
+  | 'AssumiuForaDaSuaFila'
+  /** Deu alta: encerrou a própria etapa e o atendimento junto. */
+  | 'DeuAlta'
+  /** Devolveu o paciente para a fila que o encaminhou. */
+  | 'DevolveuParaOrigem'
+  /**
+   * Cancelou uma fila que ficou pendente ao dar alta. Fica como ação própria
+   * porque tirar o paciente da fila da odontologia é decisão de alguém, e daqui
+   * a um mês a pergunta vai ser quem tirou.
+   */
+  | 'CancelouFilaPendente';
 
 // ---------------------------------------------------------------------------
 
@@ -375,6 +385,12 @@ export interface EtapaResumo {
   profissional: string | null;
   iniciadaEm: string | null;
   concluidaEm: string | null;
+  /** Quando o profissional assumiu. É daqui que o cronômetro conta. */
+  assumidaEm: string | null;
+  /** Quem encaminhou o paciente para esta fila, se veio de outra. */
+  encaminhadaPor: string | null;
+  /** De qual fila veio: o destino do botão de devolver. */
+  encaminhadaDe: Especialidade | null;
 }
 
 export interface AtendimentoResumo {
