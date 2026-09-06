@@ -108,6 +108,19 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
                   </button>
                 ) : null}
 
+                {profissional?.ehAdministrador ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuAberto(false);
+                      navegar('/comunidades');
+                    }}
+                    className="w-full border-b border-borda px-4 py-3 text-left text-sm hover:bg-superficie-2"
+                  >
+                    {t('gestaoComunidades')}
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={() => {

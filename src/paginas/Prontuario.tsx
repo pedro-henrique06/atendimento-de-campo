@@ -12,6 +12,7 @@ import {
   classificacoes,
   desfechos,
   especialidades,
+  faixasImc,
   procedimentosOdontologicos,
   sexos,
   sintomas as tabelaSintomas,
@@ -196,6 +197,8 @@ export function Prontuario() {
           <Linha rotulo={t('nome')} valor={paciente.nome} />
           <Linha rotulo={t('tipoDocumento')} valor={traduzir(tiposDocumento, idioma, paciente.tipoDocumento)} />
           <Linha rotulo={t('numeroDocumento')} valor={paciente.numeroDocumento} />
+          <Linha rotulo={t('cartaoSus')} valor={paciente.cartaoSus} />
+          <Linha rotulo={t('comunidade')} valor={paciente.comunidade} />
           <Linha
             rotulo={t('dataNascimento')}
             valor={
@@ -205,6 +208,16 @@ export function Prontuario() {
             }
           />
           <Linha rotulo={t('sexo')} valor={traduzir(sexos, idioma, paciente.sexo)} />
+          {/*
+            Só aparecem para menor: num adulto seriam duas linhas vazias em toda
+            ficha, e linha vazia treina a equipe a parar de ler.
+          */}
+          {paciente.ehMenor ? (
+            <>
+              <Linha rotulo={t('nomeDaMae')} valor={paciente.nomeDaMae} />
+              <Linha rotulo={t('endereco')} valor={paciente.endereco} />
+            </>
+          ) : null}
         </dl>
       </Secao>
 
@@ -223,6 +236,34 @@ export function Prontuario() {
             <Linha rotulo={t('frequenciaRespiratoria')} valor={prontuario.triagem.frequenciaRespiratoria} />
             <Linha rotulo={t('saturacaoO2')} valor={prontuario.triagem.saturacaoO2} />
             <Linha rotulo={t('temperatura')} valor={prontuario.triagem.temperaturaCelsius} />
+            <Linha rotulo={t('glicemia')} valor={prontuario.triagem.glicemiaCapilar} />
+            <Linha rotulo={t('peso')} valor={prontuario.triagem.pesoKg} />
+            <Linha rotulo={t('altura')} valor={prontuario.triagem.alturaCm} />
+            <Linha
+              rotulo={t('imc')}
+              valor={
+                prontuario.triagem.imc === null
+                  ? null
+                  : /*
+                      A faixa só vem do servidor quando a idade permite lê-la: em
+                      criança o IMC se lê em curva, e o corte de adulto diria
+                      "baixo peso" para uma criança saudável.
+                    */
+                    `${prontuario.triagem.imc.toFixed(1)}${
+                      prontuario.triagem.faixaImc
+                        ? ` · ${traduzir(faixasImc, idioma, prontuario.triagem.faixaImc)}`
+                        : ''
+                    }`
+              }
+            />
+            <Linha
+              rotulo={t('escalaDor')}
+              valor={
+                // Zero é resposta, e `?? null` deixaria o 0 passar como valor —
+                // que é o que se quer. Só o nulo significa "não perguntei".
+                prontuario.triagem.escalaDor === null ? null : `${prontuario.triagem.escalaDor} / 10`
+              }
+            />
             <Linha
               rotulo={t('sintomasAtuais')}
               valor={prontuario.triagem.sintomas

@@ -6,6 +6,7 @@ import type {
   DesfechoConsulta,
   EstadoDente,
   Especialidade,
+  FaixaImc,
   FaceDentaria,
   FormaFarmaceutica,
   FuncaoProfissional,
@@ -113,6 +114,31 @@ export const funcoes: Traducao<FuncaoProfissional> = {
     Recepcao: 'Reception',
     Coordenacao: 'Coordination',
     Outro: 'Other',
+  },
+};
+
+/**
+ * Faixa de IMC. Só aparece para adulto — em criança o IMC se lê em curva por
+ * idade, e o corte da OMS diria "baixo peso" para uma criança saudável.
+ */
+export const faixasImc: Traducao<FaixaImc> = {
+  Pt: {
+    Baixo: 'Abaixo do peso',
+    Adequado: 'Peso adequado',
+    Sobrepeso: 'Sobrepeso',
+    Obesidade: 'Obesidade',
+  },
+  Es: {
+    Baixo: 'Bajo peso',
+    Adequado: 'Peso adecuado',
+    Sobrepeso: 'Sobrepeso',
+    Obesidade: 'Obesidad',
+  },
+  En: {
+    Baixo: 'Underweight',
+    Adequado: 'Healthy weight',
+    Sobrepeso: 'Overweight',
+    Obesidade: 'Obesity',
   },
 };
 
@@ -738,6 +764,7 @@ export const perdasVivenciadas: Traducao<PerdaVivenciada> = {
 export const tabelasDeEnum = {
   especialidades,
   funcoes,
+  faixasImc,
   conselhos,
   classificacoes,
   classificacoesCurtas,

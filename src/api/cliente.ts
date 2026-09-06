@@ -4,6 +4,8 @@ import type {
   BaseAdmin,
   Cid10,
   ClassificacaoRisco,
+  Comunidade,
+  ComunidadeAdmin,
   ContaCriada,
   Especialidade,
   FuncaoProfissional,
@@ -249,6 +251,41 @@ export const api = {
     return requisitar<ContaCriada>(`/profissionais/${id}/redefinir-senha`, {
       method: 'POST',
       body: '{}',
+    });
+  },
+
+  /** Comunidades ativas, para o cadastro do paciente escolher. */
+  comunidades(): Promise<Comunidade[]> {
+    return requisitar<Comunidade[]>('/comunidades');
+  },
+
+  /** Todas, inclusive as inativas — o que a coordenação precisa ver. */
+  comunidadesAdmin(): Promise<ComunidadeAdmin[]> {
+    return requisitar<ComunidadeAdmin[]>('/comunidades/todas');
+  },
+
+  criarComunidade(nome: string): Promise<ComunidadeAdmin> {
+    return requisitar<ComunidadeAdmin>('/comunidades', {
+      method: 'POST',
+      body: JSON.stringify({ nome }),
+    });
+  },
+
+  renomearComunidade(id: string, nome: string): Promise<ComunidadeAdmin> {
+    return requisitar<ComunidadeAdmin>(`/comunidades/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ nome }),
+    });
+  },
+
+  /**
+   * Desativar tira do cadastro novo sem apagar histórico: o paciente já
+   * atendido continua sendo daquele lugar.
+   */
+  definirComunidadeAtiva(id: string, ativa: boolean): Promise<ComunidadeAdmin> {
+    return requisitar<ComunidadeAdmin>(`/comunidades/${id}/ativa`, {
+      method: 'POST',
+      body: JSON.stringify({ ativa }),
     });
   },
 

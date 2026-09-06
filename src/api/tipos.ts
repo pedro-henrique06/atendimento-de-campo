@@ -208,6 +208,9 @@ export type ProcedimentoEnfermagem =
   | 'Orientacao'
   | 'Outro';
 
+/** Faixa de IMC pelos cortes da OMS para adultos. */
+export type FaixaImc = 'Baixo' | 'Adequado' | 'Sobrepeso' | 'Obesidade';
+
 export type StatusConta = 'Pendente' | 'Ativa' | 'Recusada' | 'Desativada';
 
 /** Por que o login foi recusado. Vem como código; a tela é que traduz. */
@@ -308,8 +311,18 @@ export interface Paciente {
   nome: string;
   tipoDocumento: TipoDocumento;
   numeroDocumento: string | null;
+  /** Campo próprio: a pessoa pode ter RG *e* cartão do SUS. */
+  cartaoSus: string | null;
+  comunidadeId: string | null;
+  comunidade: string | null;
+  /** Obrigatório para menor de idade. */
+  nomeDaMae: string | null;
+  /** Obrigatório para menor de idade. */
+  endereco: string | null;
   dataNascimento: string | null;
   idade: number | null;
+  /** Menor de 18. Falso quando a idade é desconhecida — não se presume menor. */
+  ehMenor: boolean;
   sexo: Sexo;
   statusAlergia: StatusAlergia;
   alergias: string | null;
@@ -409,6 +422,18 @@ export interface Triagem {
   saturacaoO2: number | null;
   temperaturaCelsius: number | null;
   glicemiaCapilar: number | null;
+  pesoKg: number | null;
+  alturaCm: number | null;
+  /** Calculado de peso e altura; não é gravado. */
+  imc: number | null;
+  /**
+   * Faixa do IMC pelos cortes da OMS. Nula em menor de 20 anos: em criança o IMC
+   * se lê em curva por idade, e o corte de adulto diria "baixo peso" para uma
+   * criança saudável.
+   */
+  faixaImc: FaixaImc | null;
+  /** Dor autorreferida de 0 a 10. Nulo significa "não perguntei". */
+  escalaDor: number | null;
   sintomas: Sintoma[];
   outroSintoma: string | null;
   medicamentosEmUso: string | null;
@@ -554,4 +579,24 @@ export interface ProducaoProfissional {
   /** Mediana, e não média: uma ficha esquecida aberta deformaria a média. */
   minutosMedianos: number | null;
   porFila: ProducaoPorFila[];
+}
+
+
+/** Comunidade como o cadastro do paciente a oferece. */
+export interface Comunidade {
+  id: string;
+  nome: string;
+  ativa: boolean;
+}
+
+/**
+ * A comunidade como a coordenação a vê. O total de pacientes é o que responde se
+ * ainda faz sentido manter na lista.
+ */
+export interface ComunidadeAdmin {
+  id: string;
+  nome: string;
+  ativa: boolean;
+  criadaEm: string;
+  totalPacientes: number;
 }
