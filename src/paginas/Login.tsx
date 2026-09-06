@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api, ErroDeRede, ErroLogin } from '../api/cliente';
 import { Campo } from '../componentes/Basicos';
 import { IconeOlho, IconeOlhoFechado } from '../componentes/Icones';

@@ -22,6 +22,7 @@ const DENTISTA: Profissional = {
   motivoRecusa: null,
   criadoEm: '2026-01-01T12:00:00Z',
   filas: ['Odontologia'],
+  precisaTrocarSenha: false,
 };
 
 function atendimento(sobre: Partial<AtendimentoResumo> = {}): AtendimentoResumo {

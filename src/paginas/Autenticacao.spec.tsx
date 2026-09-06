@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../api/cliente';
+import type { Profissional } from '../api/tipos';
 import { NovaConta } from '../componentes/NovaConta';
 import { ProvedorSessao } from '../hooks/useSessao';
 import { ProvedorI18n } from '../i18n';
@@ -28,7 +29,14 @@ function renderizar(rota: string) {
   );
 }
 
-function profissional(sobre: Partial<Parameters<typeof api.criarConta>[0]> = {}) {
+/**
+ * O profissional que a API devolve.
+ *
+ * O tipo é o `Profissional` mesmo, e não o corpo do pedido de criação: são
+ * formatos diferentes, e o pedido não tem `precisaTrocarSenha` nem prende o
+ * idioma a um dos três — foi por aí que o erro passou despercebido.
+ */
+function profissional(sobre: Partial<Profissional> = {}): Profissional {
   return {
     id: '1',
     usuario: 'claudia.luz',

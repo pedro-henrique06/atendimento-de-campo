@@ -16,9 +16,16 @@ O Vite faz proxy de `/api` para `http://localhost:5080`, onde roda a API do
 repositório `atendimento-de-campo-back`. Suba o backend antes.
 
 ```bash
-npm test               # 135 testes
+npm test               # 169 testes
+npm run typecheck      # tsc -b
 npm run build
 ```
+
+`npm run typecheck` roda `tsc -b`, e não `tsc --noEmit`. A diferença importa: o
+`tsconfig.json` da raiz é só um índice (`"files": []` com duas referências), então
+`tsc --noEmit` não confere arquivo nenhum e passa sempre — inclusive com o
+projeto quebrado. Quem confere de verdade é o `-b`, que é também o que o
+`npm run build` e a imagem de produção executam.
 
 ## Deploy no Railway
 
