@@ -7,6 +7,7 @@ import type {
   Comunidade,
   ComunidadeAdmin,
   ContaCriada,
+  DesfechoAtendimento,
   Especialidade,
   FuncaoProfissional,
   ItemCatalogo,
@@ -408,19 +409,24 @@ export const api = {
   },
 
   /**
-   * Dá alta: encerra esta etapa e o atendimento junto.
+   * Encerra o atendimento com o desfecho: alta, transferência, óbito ou outro.
    *
    * Com fila pendente e sem `cancelarPendentes`, a API recusa com a lista — é
    * o que permite a tela perguntar antes de tirar o paciente da fila.
    */
-  darAlta(
+  encerrar(
     id: string,
     especialidade: Especialidade,
-    cancelarPendentes = false,
+    dados: {
+      desfecho: DesfechoAtendimento;
+      /** Para onde foi transferido, ou qual o outro motivo. */
+      detalhe?: string;
+      cancelarPendentes?: boolean;
+    },
   ): Promise<Prontuario> {
-    return requisitar<Prontuario>(`/atendimentos/${id}/etapas/${especialidade}/alta`, {
+    return requisitar<Prontuario>(`/atendimentos/${id}/etapas/${especialidade}/encerrar`, {
       method: 'POST',
-      body: JSON.stringify({ cancelarPendentes }),
+      body: JSON.stringify(dados),
     });
   },
 

@@ -3,6 +3,7 @@ import type {
   ClassificacaoRisco,
   CondicaoCronica,
   ConselhoTipo,
+  DesfechoAtendimento,
   DesfechoConsulta,
   EstadoDente,
   Especialidade,
@@ -235,6 +236,31 @@ export const desfechos: Traducao<DesfechoConsulta> = {
   Pt: { Alta: 'Alta', Encaminhado: 'Encaminhado', Retorno: 'Retorno', Evasao: 'Evasão' },
   Es: { Alta: 'Alta', Encaminhado: 'Derivado', Retorno: 'Control', Evasao: 'Abandono' },
   En: { Alta: 'Discharged', Encaminhado: 'Referred', Retorno: 'Follow-up', Evasao: 'Left' },
+};
+
+/**
+ * Como o atendimento inteiro terminou — o bloco "Desfecho" do formulário de
+ * papel. Distinto de `desfechos`, que é o desfecho de uma consulta.
+ */
+export const desfechosAtendimento: Traducao<DesfechoAtendimento> = {
+  Pt: {
+    Alta: 'Alta',
+    TransferenciaHospitalar: 'Transferência hospitalar',
+    Obito: 'Óbito',
+    Outro: 'Outro',
+  },
+  Es: {
+    Alta: 'Alta',
+    TransferenciaHospitalar: 'Traslado hospitalario',
+    Obito: 'Fallecimiento',
+    Outro: 'Otro',
+  },
+  En: {
+    Alta: 'Discharged',
+    TransferenciaHospitalar: 'Hospital transfer',
+    Obito: 'Death',
+    Outro: 'Other',
+  },
 };
 
 export const sexos: Traducao<Sexo> = {
@@ -674,6 +700,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     DeuAlta: 'deu alta',
     DevolveuParaOrigem: 'devolveu a quem encaminhou',
     CancelouFilaPendente: 'cancelou a fila pendente',
+    RegistrouObito: 'registrou o óbito',
+    TransferiuParaHospital: 'transferiu para hospital',
+    EncerrouPorOutroMotivo: 'encerrou por outro motivo',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -691,6 +720,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     DeuAlta: 'dio el alta',
     DevolveuParaOrigem: 'devolvió a quien derivó',
     CancelouFilaPendente: 'canceló la fila pendiente',
+    RegistrouObito: 'registró el fallecimiento',
+    TransferiuParaHospital: 'transfirió a hospital',
+    EncerrouPorOutroMotivo: 'cerró por otro motivo',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -708,6 +740,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     DeuAlta: 'discharged the patient',
     DevolveuParaOrigem: 'sent it back to the referrer',
     CancelouFilaPendente: 'cancelled the pending queue',
+    RegistrouObito: 'recorded the death',
+    TransferiuParaHospital: 'transferred to hospital',
+    EncerrouPorOutroMotivo: 'closed for another reason',
   },
 };
 
@@ -781,6 +816,7 @@ export const tabelasDeEnum = {
   statusConta,
   statusEtapa,
   desfechos,
+  desfechosAtendimento,
   sexos,
   tiposDocumento,
   statusAlergia,

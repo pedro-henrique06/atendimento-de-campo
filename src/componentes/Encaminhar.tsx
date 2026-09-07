@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { Especialidade, Prontuario } from '../api/tipos';
+import type { DesfechoAtendimento, Especialidade, Prontuario } from '../api/tipos';
 import { Erros } from './Basicos';
 import { Cronometro } from './Cronometro';
 import { useI18n, traduzir } from '../i18n';
-import { especialidades } from '../i18n/enums';
+import { desfechosAtendimento, especialidades } from '../i18n/enums';
 
 const FILAS: Especialidade[] = [
   'Triagem',
@@ -18,7 +18,25 @@ const FILAS: Especialidade[] = [
 ];
 
 /** Qual formulário está aberto. Fechado, o cartão mostra só os botões. */
-type Acao = 'nenhuma' | 'encaminhar' | 'devolver' | 'alta';
+type Acao = 'nenhuma' | 'encaminhar' | 'devolver' | 'encerrar';
+
+/**
+ * Os desfechos, na ordem em que a equipe usa.
+ *
+ * Alta primeiro porque é o caso comum; óbito por último porque é o mais raro e
+ * o mais grave — não é botão para ficar ao lado do polegar.
+ */
+const DESFECHOS: DesfechoAtendimento[] = [
+  'Alta',
+  'TransferenciaHospitalar',
+  'Outro',
+  'Obito',
+];
+
+/** Estes dois não fazem sentido sem uma linha dizendo o quê. */
+function exigeDetalhe(desfecho: DesfechoAtendimento): boolean {
+  return desfecho === 'TransferenciaHospitalar' || desfecho === 'Outro';
+}
 
 /**
  * O que o profissional faz ao terminar com o paciente: encaminhar para outra
@@ -48,6 +66,8 @@ export function Encaminhar({
 
   const [acao, setAcao] = useState<Acao>('nenhuma');
   const [destino, setDestino] = useState<Especialidade | ''>('');
+  const [desfecho, setDesfecho] = useState<DesfechoAtendimento>('Alta');
+  const [detalhe, setDetalhe] = useState('');
   const [motivo, setMotivo] = useState('');
   const [erros, setErros] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -86,6 +106,8 @@ export function Encaminhar({
   function fechar() {
     setAcao('nenhuma');
     setDestino('');
+    setDesfecho('Alta');
+    setDetalhe('');
     setMotivo('');
     setErros([]);
   }
@@ -154,8 +176,8 @@ export function Encaminhar({
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="botao w-auto px-5" onClick={() => setAcao('alta')}>
-            {t('darAlta')}
+          <button type="button" className="botao w-auto px-5" onClick={() => setAcao('encerrar')}>
+            {t('encerrarAtendimento')}
           </button>
 
           {podeDevolver ? (
@@ -180,13 +202,64 @@ export function Encaminhar({
     );
   }
 
-  if (acao === 'alta') {
+  if (acao === 'encerrar') {
+    const faltaDetalhe = exigeDetalhe(desfecho) && detalhe.trim().length === 0;
+
     return (
       <div className="cartao space-y-4">
         <div>
-          <h2 className="font-bold">{t('darAlta')}</h2>
+          <h2 className="font-bold">{t('encerrarAtendimento')}</h2>
           <p className="mt-1 text-sm text-texto-suave">{t('altaEncerra')}</p>
         </div>
+
+        <div>
+          <span className="rotulo">{t('comoTerminou')}</span>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {DESFECHOS.map((opcao) => (
+              <button
+                key={opcao}
+                type="button"
+                aria-pressed={desfecho === opcao}
+                onClick={() => {
+                  setDesfecho(opcao);
+                  setErros([]);
+                }}
+                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  desfecho === opcao
+                    ? 'border-marca bg-marca text-white'
+                    : 'border-borda bg-superficie text-texto'
+                }`}
+              >
+                {traduzir(desfechosAtendimento, idioma, opcao)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/*
+          Transferência sem destino não permite ninguém ir atrás do paciente
+          depois, que é a única razão de registrar a transferência. A API recusa
+          de qualquer forma; pedir aqui evita a viagem.
+        */}
+        {exigeDetalhe(desfecho) ? (
+          <label className="block">
+            <span className="rotulo">
+              {desfecho === 'TransferenciaHospitalar'
+                ? t('paraOndeTransferido')
+                : t('motivoEncerramento')}
+            </span>
+            <input
+              className="campo"
+              value={detalhe}
+              onChange={(e) => setDetalhe(e.target.value)}
+              maxLength={300}
+              required
+            />
+            {desfecho === 'TransferenciaHospitalar' ? (
+              <span className="mt-1 block text-sm text-texto-suave">{t('dicaTransferencia')}</span>
+            ) : null}
+          </label>
+        ) : null}
 
         {pendentes.length > 0 ? (
           <div className="rounded-xl border border-borda bg-superficie-2 p-3">
@@ -206,16 +279,24 @@ export function Encaminhar({
           <button
             type="button"
             className="botao w-auto px-5"
-            disabled={enviando}
+            disabled={enviando || faltaDetalhe}
             onClick={() =>
               executar(() =>
-                // A confirmação já foi dada aqui: a lista acima é justamente o
-                // aviso que a API exige antes de cancelar as filas.
-                api.darAlta(prontuario.id, aberta!.especialidade, pendentes.length > 0),
+                api.encerrar(prontuario.id, aberta!.especialidade, {
+                  desfecho,
+                  detalhe: detalhe.trim() || undefined,
+                  // A confirmação já foi dada aqui: a lista acima é justamente
+                  // o aviso que a API exige antes de cancelar as filas.
+                  cancelarPendentes: pendentes.length > 0,
+                }),
               )
             }
           >
-            {enviando ? t('carregando') : t('altaConfirmar')}
+            {enviando
+              ? t('carregando')
+              : desfecho === 'Alta'
+                ? t('altaConfirmar')
+                : t('confirmarEncerramento')}
           </button>
 
           <button type="button" className="botao-secundario" onClick={fechar}>

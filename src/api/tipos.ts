@@ -75,6 +75,15 @@ export type StatusEtapa = 'Aguardando' | 'EmAndamento' | 'Concluida' | 'Cancelad
 
 export type DesfechoConsulta = 'Alta' | 'Encaminhado' | 'Retorno' | 'Evasao';
 
+/**
+ * Como o atendimento inteiro terminou — o bloco "Desfecho" do formulário de
+ * papel.
+ *
+ * Separado de `StatusAtendimento`: o status responde "ainda está aberto?", e é
+ * o que trava edição; o desfecho responde "terminou como?".
+ */
+export type DesfechoAtendimento = 'Alta' | 'TransferenciaHospitalar' | 'Obito' | 'Outro';
+
 export type Sintoma =
   | 'Dor'
   | 'Tosse'
@@ -247,7 +256,13 @@ export type AcaoAuditoria =
    * porque tirar o paciente da fila da odontologia é decisão de alguém, e daqui
    * a um mês a pergunta vai ser quem tirou.
    */
-  | 'CancelouFilaPendente';
+  | 'CancelouFilaPendente'
+  /** Registrou o óbito do paciente. */
+  | 'RegistrouObito'
+  /** Transferiu o paciente para um hospital. */
+  | 'TransferiuParaHospital'
+  /** Encerrou por outro motivo, descrito no registro. */
+  | 'EncerrouPorOutroMotivo';
 
 // ---------------------------------------------------------------------------
 
@@ -403,6 +418,8 @@ export interface AtendimentoResumo {
   etapas: EtapaResumo[];
   criadoEm: string;
   finalizadoEm: string | null;
+  /** Como terminou: a lista marca óbito e transferência sem abrir a ficha. */
+  desfecho: DesfechoAtendimento | null;
 }
 
 export interface EsperaFila {
@@ -539,6 +556,10 @@ export interface Prontuario {
   criadoEm: string;
   finalizadoPor: string | null;
   finalizadoEm: string | null;
+  /** Nulo enquanto aberto — e nulo também nos fechados antes deste campo existir. */
+  desfecho: DesfechoAtendimento | null;
+  /** Para onde foi transferido, ou qual foi o outro motivo. */
+  desfechoDetalhe: string | null;
   triagem: Triagem | null;
   consultas: Consulta[];
   odontologia: Odontologia | null;

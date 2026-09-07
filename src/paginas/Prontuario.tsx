@@ -11,6 +11,7 @@ import {
   acoesAuditoria,
   classificacoes,
   desfechos,
+  desfechosAtendimento,
   especialidades,
   faixasImc,
   procedimentosOdontologicos,
@@ -450,6 +451,27 @@ export function Prontuario() {
 
       {finalizado ? (
         <div className="cartao space-y-3">
+          {/*
+            Como terminou vem antes de quem fechou: numa ficha encerrada, óbito
+            e transferência são a primeira coisa que alguém precisa ver.
+
+            Fica nulo nos atendimentos fechados antes deste campo existir — não
+            há de onde deduzir o desfecho deles, e chamar todos de alta contaria
+            como alta quem morreu.
+          */}
+          {prontuario.desfecho ? (
+            <p className="font-bold">
+              {t('desfechoRegistrado')}:{' '}
+              {traduzir(desfechosAtendimento, idioma, prontuario.desfecho)}
+              {prontuario.desfechoDetalhe ? (
+                <span className="font-normal text-texto-suave">
+                  {' '}
+                  · {prontuario.desfechoDetalhe}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
+
           <p className="text-sm text-texto-suave">
             {t('finalizadoPor')}: {prontuario.finalizadoPor} ·{' '}
             {prontuario.finalizadoEm ? new Date(prontuario.finalizadoEm).toLocaleString() : ''}

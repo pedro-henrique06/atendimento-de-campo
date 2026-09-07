@@ -48,6 +48,7 @@ function atendimento(sobre: Partial<AtendimentoResumo> = {}): AtendimentoResumo 
     ],
     criadoEm: '2026-07-26T12:00:00Z',
     finalizadoEm: null,
+    desfecho: null,
     ...sobre,
   };
 }

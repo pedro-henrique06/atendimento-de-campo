@@ -194,6 +194,8 @@ describe('Triagem', () => {
       criadoEm: '2026-09-05T12:00:00Z',
       finalizadoPor: null,
       finalizadoEm: null,
+      desfecho: null,
+      desfechoDetalhe: null,
       triagem: null,
       consultas: [],
       odontologia: null,
