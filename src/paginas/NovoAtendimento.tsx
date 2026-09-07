@@ -6,6 +6,7 @@ import type {
   Comunidade,
   CondicaoCronica,
   PacienteConhecido,
+  RacaCor,
   Sexo,
   StatusAlergia,
   TipoDocumento,
@@ -19,6 +20,7 @@ import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
 import {
   condicoesCronicas as tabelaCondicoes,
+  racasCor,
   sexos as tabelaSexos,
   statusAlergia as tabelaAlergia,
   tiposDocumento,
@@ -42,11 +44,25 @@ const ESTADOS_ALERGIA: StatusAlergia[] = ['SemAlergiaConhecida', 'PossuiAlergia'
 const CONDICOES: CondicaoCronica[] = [
   'Hipertensao',
   'Diabetes',
+  // Tabagismo está nos antecedentes de todos os formulários, ao lado de HAS e
+  // DM. Aparece aqui perto delas, mesmo sendo o último valor do enum: a ordem
+  // da tela é da equipe, a do enum é do banco.
+  'Tabagista',
   'Asma',
   'Obesidade',
   'Cardiopatia',
   'Epilepsia',
   'Outro',
+];
+
+/** Raça/cor pela classificação do IBGE, na ordem em que o formulário lista. */
+const RACAS_COR: RacaCor[] = [
+  'NaoInformado',
+  'Indigena',
+  'Branca',
+  'Preta',
+  'Parda',
+  'Amarela',
 ];
 
 const VULNERABILIDADES: Vulnerabilidade[] = [
@@ -68,6 +84,14 @@ interface Formulario {
   tipoDocumento: TipoDocumento;
   numeroDocumento: string;
   cartaoSus: string;
+  cpf: string;
+  racaCor: RacaCor;
+  etnia: string;
+  poloBase: string;
+  dsei: string;
+  municipioNascimento: string;
+  paisNascimento: string;
+  estadoResidencia: string;
   comunidadeId: string;
   nomeDaMae: string;
   endereco: string;
@@ -90,6 +114,14 @@ const INICIAL: Formulario = {
   tipoDocumento: 'SemDocumento',
   numeroDocumento: '',
   cartaoSus: '',
+  cpf: '',
+  racaCor: 'NaoInformado',
+  etnia: '',
+  poloBase: '',
+  dsei: '',
+  municipioNascimento: '',
+  paisNascimento: '',
+  estadoResidencia: '',
   comunidadeId: '',
   nomeDaMae: '',
   endereco: '',
@@ -185,6 +217,14 @@ export function NovoAtendimento() {
       tipoDocumento: paciente.tipoDocumento,
       numeroDocumento: paciente.numeroDocumento ?? '',
       cartaoSus: paciente.cartaoSus ?? '',
+      cpf: paciente.cpf ?? '',
+      racaCor: paciente.racaCor,
+      etnia: paciente.etnia ?? '',
+      poloBase: paciente.poloBase ?? '',
+      dsei: paciente.dsei ?? '',
+      municipioNascimento: paciente.municipioNascimento ?? '',
+      paisNascimento: paciente.paisNascimento ?? '',
+      estadoResidencia: paciente.estadoResidencia ?? '',
       comunidadeId: paciente.comunidadeId ?? '',
       nomeDaMae: paciente.nomeDaMae ?? '',
       endereco: paciente.endereco ?? '',
@@ -227,6 +267,14 @@ export function NovoAtendimento() {
           tipoDocumento: form.tipoDocumento,
           numeroDocumento: form.numeroDocumento.trim() || null,
           cartaoSus: form.cartaoSus.trim() || null,
+          cpf: form.cpf.trim() || null,
+          racaCor: form.racaCor,
+          etnia: form.etnia.trim() || null,
+          poloBase: form.poloBase.trim() || null,
+          dsei: form.dsei.trim() || null,
+          municipioNascimento: form.municipioNascimento.trim() || null,
+          paisNascimento: form.paisNascimento.trim() || null,
+          estadoResidencia: form.estadoResidencia.trim() || null,
           comunidadeId: form.comunidadeId || null,
           nomeDaMae: form.nomeDaMae.trim() || null,
           endereco: form.endereco.trim() || null,
@@ -360,6 +408,83 @@ export function NovoAtendimento() {
             inputMode="numeric"
             value={form.cartaoSus}
             onChange={(e) => alterar({ cartaoSus: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('cpf')}>
+          <input
+            className="campo"
+            inputMode="numeric"
+            value={form.cpf}
+            onChange={(e) => alterar({ cpf: e.target.value })}
+          />
+        </Campo>
+
+        {/*
+          Raça/cor é lista fechada do IBGE; etnia é o povo, e não cabe em lista
+          nenhuma. São dois campos porque juntar apagaria a etnia, que é
+          justamente o dado que orienta o atendimento a população indígena.
+        */}
+        <Campo rotulo={t('racaCor')}>
+          <select
+            className="campo"
+            value={form.racaCor}
+            onChange={(e) => alterar({ racaCor: e.target.value as RacaCor })}
+          >
+            {RACAS_COR.map((r) => (
+              <option key={r} value={r}>
+                {traduzir(racasCor, idioma, r)}
+              </option>
+            ))}
+          </select>
+        </Campo>
+
+        <Campo rotulo={t('etnia')}>
+          <input
+            className="campo"
+            value={form.etnia}
+            onChange={(e) => alterar({ etnia: e.target.value })}
+          />
+          <span className="mt-1 block text-sm text-texto-suave">{t('dicaEtnia')}</span>
+        </Campo>
+
+        <Campo rotulo={t('poloBase')}>
+          <input
+            className="campo"
+            value={form.poloBase}
+            onChange={(e) => alterar({ poloBase: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('dsei')}>
+          <input
+            className="campo"
+            value={form.dsei}
+            onChange={(e) => alterar({ dsei: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('municipioNascimento')}>
+          <input
+            className="campo"
+            value={form.municipioNascimento}
+            onChange={(e) => alterar({ municipioNascimento: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('paisNascimento')}>
+          <input
+            className="campo"
+            value={form.paisNascimento}
+            onChange={(e) => alterar({ paisNascimento: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('estadoResidencia')}>
+          <input
+            className="campo"
+            value={form.estadoResidencia}
+            onChange={(e) => alterar({ estadoResidencia: e.target.value })}
           />
         </Campo>
 

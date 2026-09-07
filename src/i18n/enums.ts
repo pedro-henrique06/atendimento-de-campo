@@ -5,6 +5,8 @@ import type {
   ConselhoTipo,
   DesfechoAtendimento,
   DesfechoConsulta,
+  RacaCor,
+  ResultadoTesteRapido,
   EstadoDente,
   Especialidade,
   FaixaImc,
@@ -263,6 +265,39 @@ export const desfechosAtendimento: Traducao<DesfechoAtendimento> = {
   },
 };
 
+export const racasCor: Traducao<RacaCor> = {
+  Pt: {
+    NaoInformado: 'Não informado',
+    Indigena: 'Indígena',
+    Branca: 'Branca',
+    Preta: 'Preta',
+    Parda: 'Parda',
+    Amarela: 'Amarela',
+  },
+  Es: {
+    NaoInformado: 'No informado',
+    Indigena: 'Indígena',
+    Branca: 'Blanca',
+    Preta: 'Negra',
+    Parda: 'Parda',
+    Amarela: 'Amarilla',
+  },
+  En: {
+    NaoInformado: 'Not stated',
+    Indigena: 'Indigenous',
+    Branca: 'White',
+    Preta: 'Black',
+    Parda: 'Mixed',
+    Amarela: 'Asian',
+  },
+};
+
+export const resultadosTesteRapido: Traducao<ResultadoTesteRapido> = {
+  Pt: { Positivo: 'Positivo', Negativo: 'Negativo' },
+  Es: { Positivo: 'Positivo', Negativo: 'Negativo' },
+  En: { Positivo: 'Positive', Negativo: 'Negative' },
+};
+
 export const sexos: Traducao<Sexo> = {
   Pt: { NaoInformado: 'Não informado', Feminino: 'Feminino', Masculino: 'Masculino', Outro: 'Outro' },
   Es: { NaoInformado: 'No informado', Feminino: 'Femenino', Masculino: 'Masculino', Outro: 'Otro' },
@@ -365,6 +400,7 @@ export const condicoesCronicas: Traducao<CondicaoCronica> = {
     Cardiopatia: 'Cardiopatia',
     Epilepsia: 'Epilepsia',
     Outro: 'Outro',
+    Tabagista: 'Tabagista',
   },
   Es: {
     Hipertensao: 'Hipertensión',
@@ -374,6 +410,7 @@ export const condicoesCronicas: Traducao<CondicaoCronica> = {
     Cardiopatia: 'Cardiopatía',
     Epilepsia: 'Epilepsia',
     Outro: 'Otro',
+    Tabagista: 'Fumador',
   },
   En: {
     Hipertensao: 'Hypertension',
@@ -383,6 +420,7 @@ export const condicoesCronicas: Traducao<CondicaoCronica> = {
     Cardiopatia: 'Heart disease',
     Epilepsia: 'Epilepsy',
     Outro: 'Other',
+    Tabagista: 'Smoker',
   },
 };
 
@@ -817,6 +855,8 @@ export const tabelasDeEnum = {
   statusEtapa,
   desfechos,
   desfechosAtendimento,
+  racasCor,
+  resultadosTesteRapido,
   sexos,
   tiposDocumento,
   statusAlergia,

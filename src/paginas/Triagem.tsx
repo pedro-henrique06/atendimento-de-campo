@@ -2,16 +2,25 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { ClassificacaoRisco, Especialidade, Sintoma, StatusAlergia } from '../api/tipos';
+import type {
+  ClassificacaoRisco,
+  Especialidade,
+  ResultadoTesteRapido,
+  Sintoma,
+  StatusAlergia,
+} from '../api/tipos';
 import { Campo, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
 import {
   classificacoes,
   especialidades,
+  resultadosTesteRapido,
   sintomas as tabelaSintomas,
   statusAlergia as tabelaAlergia,
 } from '../i18n/enums';
+
+const RESULTADOS: ResultadoTesteRapido[] = ['Positivo', 'Negativo'];
 
 /** Notas da escala de dor. Zero entra: "sem dor" é resposta. */
 const NOTAS_DOR = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -50,6 +59,13 @@ interface Formulario {
   glicemia: string;
   peso: string;
   altura: string;
+  circunferenciaCefalica: string;
+  /** Vazio significa "não fiz o teste". */
+  testeRapidoCovid: ResultadoTesteRapido | '';
+  testeRapidoMalaria: ResultadoTesteRapido | '';
+  /** Vazio significa "não perguntei"; distinto de ter respondido que não. */
+  teveCirurgiaPrevia: '' | 'sim' | 'nao';
+  cirurgiasPrevias: string;
   /** Vazio significa "não perguntei"; "0" significa "sem dor". */
   escalaDor: string;
   sintomas: Sintoma[];
@@ -78,6 +94,11 @@ const INICIAL: Formulario = {
   glicemia: '',
   peso: '',
   altura: '',
+  circunferenciaCefalica: '',
+  testeRapidoCovid: '',
+  testeRapidoMalaria: '',
+  teveCirurgiaPrevia: '',
+  cirurgiasPrevias: '',
   escalaDor: '',
   sintomas: [],
   outroSintoma: '',
@@ -154,6 +175,15 @@ export function Triagem() {
         glicemiaCapilar: numero(form.glicemia),
         pesoKg: numero(form.peso),
         alturaCm: numero(form.altura),
+        circunferenciaCefalicaCm: numero(form.circunferenciaCefalica),
+        testeRapidoCovid: form.testeRapidoCovid || null,
+        testeRapidoMalaria: form.testeRapidoMalaria || null,
+        teveCirurgiaPrevia:
+          form.teveCirurgiaPrevia === '' ? null : form.teveCirurgiaPrevia === 'sim',
+        // Só vai quando houve: "quais" junto de "não teve" é contradição
+        // gravada, e alguém vai ler só um dos dois.
+        cirurgiasPrevias:
+          form.teveCirurgiaPrevia === 'sim' ? form.cirurgiasPrevias.trim() || null : null,
         escalaDor: numero(form.escalaDor),
         sintomas: form.sintomas,
         outroSintoma: form.outroSintoma.trim() || null,
@@ -311,7 +341,86 @@ export function Triagem() {
               onChange={(e) => alterar({ altura: e.target.value })}
             />
           </Campo>
+
+          {/* Medida de acompanhamento de criança; sem regra de faixa aqui. */}
+          <Campo rotulo={t('circunferenciaCefalica')}>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min={20}
+              max={80}
+              className="campo"
+              value={form.circunferenciaCefalica}
+              onChange={(e) => alterar({ circunferenciaCefalica: e.target.value })}
+            />
+          </Campo>
         </div>
+
+        {/*
+          Testes rápidos. Vazio já significa "não foi feito" — um terceiro botão
+          para isso criaria duas formas de dizer a mesma coisa.
+        */}
+        <div className="grid grid-cols-2 gap-3">
+          <Campo rotulo={t('testeRapidoCovid')}>
+            <select
+              className="campo"
+              value={form.testeRapidoCovid}
+              onChange={(e) =>
+                alterar({ testeRapidoCovid: e.target.value as ResultadoTesteRapido | '' })
+              }
+            >
+              <option value="">{t('naoFeito')}</option>
+              {RESULTADOS.map((r) => (
+                <option key={r} value={r}>
+                  {traduzir(resultadosTesteRapido, idioma, r)}
+                </option>
+              ))}
+            </select>
+          </Campo>
+
+          <Campo rotulo={t('testeRapidoMalaria')}>
+            <select
+              className="campo"
+              value={form.testeRapidoMalaria}
+              onChange={(e) =>
+                alterar({ testeRapidoMalaria: e.target.value as ResultadoTesteRapido | '' })
+              }
+            >
+              <option value="">{t('naoFeito')}</option>
+              {RESULTADOS.map((r) => (
+                <option key={r} value={r}>
+                  {traduzir(resultadosTesteRapido, idioma, r)}
+                </option>
+              ))}
+            </select>
+          </Campo>
+        </div>
+
+        <Campo rotulo={t('cirurgiasPrevias')}>
+          <select
+            className="campo"
+            value={form.teveCirurgiaPrevia}
+            onChange={(e) =>
+              alterar({ teveCirurgiaPrevia: e.target.value as '' | 'sim' | 'nao' })
+            }
+          >
+            <option value="">{t('naoPerguntado')}</option>
+            <option value="nao">{t('nao')}</option>
+            <option value="sim">{t('sim')}</option>
+          </select>
+        </Campo>
+
+        {/* "Quais" só aparece quando houve: senão é uma linha vazia em toda ficha. */}
+        {form.teveCirurgiaPrevia === 'sim' ? (
+          <Campo rotulo={t('quaisCirurgias')}>
+            <textarea
+              className="campo min-h-16"
+              value={form.cirurgiasPrevias}
+              onChange={(e) => alterar({ cirurgiasPrevias: e.target.value })}
+            />
+          </Campo>
+        ) : null}
 
         {imc !== null ? (
           <p className="text-sm">
