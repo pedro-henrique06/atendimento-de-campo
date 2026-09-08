@@ -147,6 +147,50 @@ describe('Cadastro do paciente', () => {
     expect(await screen.findByLabelText(/Nome da mãe/i)).toBeInTheDocument();
   });
 
+  it('separa raça/cor de etnia', async () => {
+    const usuario = userEvent.setup();
+    comSessao(<NovoAtendimento />);
+    await abrirFormulario(usuario);
+
+    // A lista fechada do IBGE não comporta o povo, e juntar as duas apagaria a
+    // etnia — que é o dado que orienta o atendimento a população indígena.
+    const raca = await screen.findByLabelText(/Raça\/cor/i);
+    expect(raca.tagName).toBe('SELECT');
+    expect(await screen.findByRole('option', { name: 'Indígena' })).toBeInTheDocument();
+
+    const etnia = screen.getByLabelText(/^Etnia/);
+    expect(etnia.tagName).toBe('INPUT');
+  });
+
+  it('pede polo base e DSEI', async () => {
+    const usuario = userEvent.setup();
+    comSessao(<NovoAtendimento />);
+    await abrirFormulario(usuario);
+
+    expect(screen.getByLabelText(/Polo base/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/DSEI/i)).toBeInTheDocument();
+  });
+
+  it('o CPF é campo próprio, e não um tipo de documento', async () => {
+    const usuario = userEvent.setup();
+    comSessao(<NovoAtendimento />);
+    await abrirFormulario(usuario);
+
+    // Como tipo, excluiria o RG — o mesmo problema que o cartão do SUS já teve.
+    expect(screen.getByLabelText(/^CPF/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Cartão do SUS/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Tipo de documento/i)).toBeInTheDocument();
+  });
+
+  it('tabagismo entra nos antecedentes', async () => {
+    const usuario = userEvent.setup();
+    comSessao(<NovoAtendimento />);
+    await abrirFormulario(usuario);
+
+    // Consta dos antecedentes de todos os formulários, ao lado de HAS e DM.
+    expect(screen.getByRole('button', { name: 'Tabagista' })).toBeInTheDocument();
+  });
+
   it('idade desconhecida não presume menor', async () => {
     const usuario = userEvent.setup();
     comSessao(<NovoAtendimento />);
@@ -171,6 +215,14 @@ describe('Triagem', () => {
         tipoDocumento: 'SemDocumento',
         numeroDocumento: null,
         cartaoSus: null,
+        cpf: null,
+        racaCor: 'NaoInformado',
+        etnia: null,
+        poloBase: null,
+        dsei: null,
+        municipioNascimento: null,
+        paisNascimento: null,
+        estadoResidencia: null,
         comunidadeId: null,
         comunidade: null,
         nomeDaMae: null,
@@ -194,6 +246,8 @@ describe('Triagem', () => {
       criadoEm: '2026-09-05T12:00:00Z',
       finalizadoPor: null,
       finalizadoEm: null,
+      desfecho: null,
+      desfechoDetalhe: null,
       triagem: null,
       consultas: [],
       odontologia: null,
@@ -234,6 +288,35 @@ describe('Triagem', () => {
     const titulo = await screen.findByRole('heading', { name: /Dor \(0 a 10\)/i });
     return within(titulo.closest('section')!);
   }
+
+  it('pede perímetro cefálico e os dois testes rápidos', async () => {
+    comSessao(<Triagem />);
+
+    expect(await screen.findByLabelText(/Circunferência cefálica/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/TR COVID-19/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/TR Malária/i)).toBeInTheDocument();
+  });
+
+  it('teste não feito é o estado inicial', async () => {
+    comSessao(<Triagem />);
+
+    // O vazio já significa "não fiz": uma terceira opção criaria duas formas de
+    // dizer a mesma coisa.
+    const covid = await screen.findByLabelText(/TR COVID-19/i);
+    expect(covid).toHaveValue('');
+  });
+
+  it('"quais cirurgias" só aparece depois de responder que sim', async () => {
+    const usuario = userEvent.setup();
+    comSessao(<Triagem />);
+
+    const pergunta = await screen.findByLabelText(/Cirurgias prévias/i);
+    expect(screen.queryByLabelText(/Quais cirurgias/i)).not.toBeInTheDocument();
+
+    await usuario.selectOptions(pergunta, 'sim');
+
+    expect(await screen.findByLabelText(/Quais cirurgias/i)).toBeInTheDocument();
+  });
 
   it('"não perguntado" é o estado inicial da dor', async () => {
     comSessao(<Triagem />);

@@ -57,6 +57,20 @@ export type Especialidade =
 
 export type Sexo = 'NaoInformado' | 'Feminino' | 'Masculino' | 'Outro';
 
+/**
+ * Raça/cor pela classificação do IBGE, que é a que os formulários de campo e o
+ * SUS usam.
+ *
+ * Distinta de `etnia`: raça/cor é uma lista fechada de cinco valores, e etnia é
+ * o povo indígena a que a pessoa pertence, que não cabe em lista nenhuma.
+ * `NaoInformado` existe porque a pergunta é autodeclarada — chutar por aparência
+ * é pior que não ter.
+ */
+export type RacaCor = 'NaoInformado' | 'Indigena' | 'Branca' | 'Preta' | 'Parda' | 'Amarela';
+
+/** Resultado de teste rápido. Nulo já significa "não foi feito". */
+export type ResultadoTesteRapido = 'Positivo' | 'Negativo';
+
 export type TipoDocumento =
   | 'SemDocumento'
   | 'CedulaIdentidade'
@@ -74,6 +88,15 @@ export type StatusAtendimento = 'Aberto' | 'EmAndamento' | 'Finalizado' | 'Evadi
 export type StatusEtapa = 'Aguardando' | 'EmAndamento' | 'Concluida' | 'Cancelada';
 
 export type DesfechoConsulta = 'Alta' | 'Encaminhado' | 'Retorno' | 'Evasao';
+
+/**
+ * Como o atendimento inteiro terminou — o bloco "Desfecho" do formulário de
+ * papel.
+ *
+ * Separado de `StatusAtendimento`: o status responde "ainda está aberto?", e é
+ * o que trava edição; o desfecho responde "terminou como?".
+ */
+export type DesfechoAtendimento = 'Alta' | 'TransferenciaHospitalar' | 'Obito' | 'Outro';
 
 export type Sintoma =
   | 'Dor'
@@ -93,7 +116,8 @@ export type CondicaoCronica =
   | 'Obesidade'
   | 'Cardiopatia'
   | 'Epilepsia'
-  | 'Outro';
+  | 'Outro'
+  | 'Tabagista';
 
 export type Vulnerabilidade =
   | 'Idoso65Mais'
@@ -247,7 +271,13 @@ export type AcaoAuditoria =
    * porque tirar o paciente da fila da odontologia é decisão de alguém, e daqui
    * a um mês a pergunta vai ser quem tirou.
    */
-  | 'CancelouFilaPendente';
+  | 'CancelouFilaPendente'
+  /** Registrou o óbito do paciente. */
+  | 'RegistrouObito'
+  /** Transferiu o paciente para um hospital. */
+  | 'TransferiuParaHospital'
+  /** Encerrou por outro motivo, descrito no registro. */
+  | 'EncerrouPorOutroMotivo';
 
 // ---------------------------------------------------------------------------
 
@@ -323,6 +353,17 @@ export interface Paciente {
   numeroDocumento: string | null;
   /** Campo próprio: a pessoa pode ter RG *e* cartão do SUS. */
   cartaoSus: string | null;
+  /** Campo próprio, pelo mesmo motivo do cartão do SUS. */
+  cpf: string | null;
+  racaCor: RacaCor;
+  /** Povo indígena. Distinto de raça/cor. */
+  etnia: string | null;
+  poloBase: string | null;
+  /** Distrito Sanitário Especial Indígena. */
+  dsei: string | null;
+  municipioNascimento: string | null;
+  paisNascimento: string | null;
+  estadoResidencia: string | null;
   comunidadeId: string | null;
   comunidade: string | null;
   /** Obrigatório para menor de idade. */
@@ -403,6 +444,8 @@ export interface AtendimentoResumo {
   etapas: EtapaResumo[];
   criadoEm: string;
   finalizadoEm: string | null;
+  /** Como terminou: a lista marca óbito e transferência sem abrir a ficha. */
+  desfecho: DesfechoAtendimento | null;
 }
 
 export interface EsperaFila {
@@ -440,6 +483,12 @@ export interface Triagem {
   glicemiaCapilar: number | null;
   pesoKg: number | null;
   alturaCm: number | null;
+  circunferenciaCefalicaCm: number | null;
+  testeRapidoCovid: ResultadoTesteRapido | null;
+  testeRapidoMalaria: ResultadoTesteRapido | null;
+  /** Nulo é "não perguntei", que é diferente de ter respondido que não. */
+  teveCirurgiaPrevia: boolean | null;
+  cirurgiasPrevias: string | null;
   /** Calculado de peso e altura; não é gravado. */
   imc: number | null;
   /**
@@ -483,10 +532,13 @@ export interface Consulta {
   especialidade: Especialidade;
   profissional: Autor | null;
   sintomasDescricao: string | null;
+  historiaClinica: string | null;
+  exameFisico: string | null;
   cid10Codigo: string | null;
   cid10Descricao: string | null;
   diagnosticoObservacao: string | null;
   conduta: string | null;
+  orientacoesGerais: string | null;
   desfecho: DesfechoConsulta | null;
   encaminhadoPara: Especialidade | null;
   ortopedia: Ortopedia | null;
@@ -539,6 +591,10 @@ export interface Prontuario {
   criadoEm: string;
   finalizadoPor: string | null;
   finalizadoEm: string | null;
+  /** Nulo enquanto aberto — e nulo também nos fechados antes deste campo existir. */
+  desfecho: DesfechoAtendimento | null;
+  /** Para onde foi transferido, ou qual foi o outro motivo. */
+  desfechoDetalhe: string | null;
   triagem: Triagem | null;
   consultas: Consulta[];
   odontologia: Odontologia | null;

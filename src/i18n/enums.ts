@@ -3,7 +3,10 @@ import type {
   ClassificacaoRisco,
   CondicaoCronica,
   ConselhoTipo,
+  DesfechoAtendimento,
   DesfechoConsulta,
+  RacaCor,
+  ResultadoTesteRapido,
   EstadoDente,
   Especialidade,
   FaixaImc,
@@ -237,6 +240,64 @@ export const desfechos: Traducao<DesfechoConsulta> = {
   En: { Alta: 'Discharged', Encaminhado: 'Referred', Retorno: 'Follow-up', Evasao: 'Left' },
 };
 
+/**
+ * Como o atendimento inteiro terminou — o bloco "Desfecho" do formulário de
+ * papel. Distinto de `desfechos`, que é o desfecho de uma consulta.
+ */
+export const desfechosAtendimento: Traducao<DesfechoAtendimento> = {
+  Pt: {
+    Alta: 'Alta',
+    TransferenciaHospitalar: 'Transferência hospitalar',
+    Obito: 'Óbito',
+    Outro: 'Outro',
+  },
+  Es: {
+    Alta: 'Alta',
+    TransferenciaHospitalar: 'Traslado hospitalario',
+    Obito: 'Fallecimiento',
+    Outro: 'Otro',
+  },
+  En: {
+    Alta: 'Discharged',
+    TransferenciaHospitalar: 'Hospital transfer',
+    Obito: 'Death',
+    Outro: 'Other',
+  },
+};
+
+export const racasCor: Traducao<RacaCor> = {
+  Pt: {
+    NaoInformado: 'Não informado',
+    Indigena: 'Indígena',
+    Branca: 'Branca',
+    Preta: 'Preta',
+    Parda: 'Parda',
+    Amarela: 'Amarela',
+  },
+  Es: {
+    NaoInformado: 'No informado',
+    Indigena: 'Indígena',
+    Branca: 'Blanca',
+    Preta: 'Negra',
+    Parda: 'Parda',
+    Amarela: 'Amarilla',
+  },
+  En: {
+    NaoInformado: 'Not stated',
+    Indigena: 'Indigenous',
+    Branca: 'White',
+    Preta: 'Black',
+    Parda: 'Mixed',
+    Amarela: 'Asian',
+  },
+};
+
+export const resultadosTesteRapido: Traducao<ResultadoTesteRapido> = {
+  Pt: { Positivo: 'Positivo', Negativo: 'Negativo' },
+  Es: { Positivo: 'Positivo', Negativo: 'Negativo' },
+  En: { Positivo: 'Positive', Negativo: 'Negative' },
+};
+
 export const sexos: Traducao<Sexo> = {
   Pt: { NaoInformado: 'Não informado', Feminino: 'Feminino', Masculino: 'Masculino', Outro: 'Outro' },
   Es: { NaoInformado: 'No informado', Feminino: 'Femenino', Masculino: 'Masculino', Outro: 'Otro' },
@@ -339,6 +400,7 @@ export const condicoesCronicas: Traducao<CondicaoCronica> = {
     Cardiopatia: 'Cardiopatia',
     Epilepsia: 'Epilepsia',
     Outro: 'Outro',
+    Tabagista: 'Tabagista',
   },
   Es: {
     Hipertensao: 'Hipertensión',
@@ -348,6 +410,7 @@ export const condicoesCronicas: Traducao<CondicaoCronica> = {
     Cardiopatia: 'Cardiopatía',
     Epilepsia: 'Epilepsia',
     Outro: 'Otro',
+    Tabagista: 'Fumador',
   },
   En: {
     Hipertensao: 'Hypertension',
@@ -357,6 +420,7 @@ export const condicoesCronicas: Traducao<CondicaoCronica> = {
     Cardiopatia: 'Heart disease',
     Epilepsia: 'Epilepsy',
     Outro: 'Other',
+    Tabagista: 'Smoker',
   },
 };
 
@@ -674,6 +738,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     DeuAlta: 'deu alta',
     DevolveuParaOrigem: 'devolveu a quem encaminhou',
     CancelouFilaPendente: 'cancelou a fila pendente',
+    RegistrouObito: 'registrou o óbito',
+    TransferiuParaHospital: 'transferiu para hospital',
+    EncerrouPorOutroMotivo: 'encerrou por outro motivo',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -691,6 +758,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     DeuAlta: 'dio el alta',
     DevolveuParaOrigem: 'devolvió a quien derivó',
     CancelouFilaPendente: 'canceló la fila pendiente',
+    RegistrouObito: 'registró el fallecimiento',
+    TransferiuParaHospital: 'transfirió a hospital',
+    EncerrouPorOutroMotivo: 'cerró por otro motivo',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -708,6 +778,9 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     DeuAlta: 'discharged the patient',
     DevolveuParaOrigem: 'sent it back to the referrer',
     CancelouFilaPendente: 'cancelled the pending queue',
+    RegistrouObito: 'recorded the death',
+    TransferiuParaHospital: 'transferred to hospital',
+    EncerrouPorOutroMotivo: 'closed for another reason',
   },
 };
 
@@ -781,6 +854,9 @@ export const tabelasDeEnum = {
   statusConta,
   statusEtapa,
   desfechos,
+  desfechosAtendimento,
+  racasCor,
+  resultadosTesteRapido,
   sexos,
   tiposDocumento,
   statusAlergia,

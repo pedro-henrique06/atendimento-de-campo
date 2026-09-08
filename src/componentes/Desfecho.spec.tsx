@@ -34,6 +34,14 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
       tipoDocumento: 'SemDocumento',
       numeroDocumento: null,
       cartaoSus: null,
+      cpf: null,
+      racaCor: 'NaoInformado',
+      etnia: null,
+      poloBase: null,
+      dsei: null,
+      municipioNascimento: null,
+      paisNascimento: null,
+      estadoResidencia: null,
       comunidadeId: null,
       comunidade: null,
       nomeDaMae: null,
@@ -57,6 +65,8 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
     criadoEm: '2026-07-26T12:00:00Z',
     finalizadoPor: null,
     finalizadoEm: null,
+    desfecho: null,
+    desfechoDetalhe: null,
     triagem: null,
     consultas: [],
     odontologia: null,
@@ -137,7 +147,7 @@ describe('Desfecho do atendimento', () => {
 
     renderizar(prontuario({ etapas: [etapa({ assumidaEm: dezMinutos })] }));
 
-    expect(screen.getByRole('button', { name: 'Dar alta' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Encerrar atendimento' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Encaminhar/ })).toBeInTheDocument();
     expect(screen.getByText('10 min')).toBeInTheDocument();
   });
@@ -277,15 +287,15 @@ describe('Desfecho do atendimento', () => {
     expect(screen.getByRole('option', { name: 'Triagem' })).toBeInTheDocument();
   });
 
-  it('a alta avisa que encerra o atendimento inteiro', async () => {
+  it('avisa que o encerramento vale para o atendimento inteiro', async () => {
     const usuario = userEvent.setup();
     renderizar();
 
-    await usuario.click(screen.getByRole('button', { name: 'Dar alta' }));
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
 
-    // Antes a alta fechava só a etapa; quem clica precisa saber que agora fecha
-    // tudo.
-    expect(screen.getByText(/encerra o atendimento inteiro/i)).toBeInTheDocument();
+    // Antes o desfecho fechava só a etapa; quem clica precisa saber que agora
+    // fecha tudo.
+    expect(screen.getByText(/vale para o atendimento inteiro/i)).toBeInTheDocument();
   });
 
   it('lista as filas pendentes antes de cancelá-las', async () => {
@@ -300,7 +310,7 @@ describe('Desfecho do atendimento', () => {
       }),
     );
 
-    await usuario.click(screen.getByRole('button', { name: 'Dar alta' }));
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
 
     // Sumir com a fila da odontologia sem avisar é o tipo de coisa que só se
     // descobre quando o paciente volta procurando o dentista.
@@ -309,7 +319,7 @@ describe('Desfecho do atendimento', () => {
   });
 
   it('confirmada, a alta cancela as pendentes', async () => {
-    const darAlta = vi.spyOn(api, 'darAlta').mockResolvedValue(prontuario());
+    const encerrar = vi.spyOn(api, 'encerrar').mockResolvedValue(prontuario());
     const usuario = userEvent.setup();
 
     renderizar(
@@ -321,39 +331,127 @@ describe('Desfecho do atendimento', () => {
       }),
     );
 
-    await usuario.click(screen.getByRole('button', { name: 'Dar alta' }));
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
     await usuario.click(screen.getByRole('button', { name: 'Dar alta e encerrar' }));
 
-    expect(darAlta).toHaveBeenCalledWith('a1', 'ClinicaGeral', true);
+    expect(encerrar).toHaveBeenCalledWith('a1', 'ClinicaGeral', {
+      desfecho: 'Alta',
+      detalhe: undefined,
+      cancelarPendentes: true,
+    });
   });
 
   it('sem pendência, a alta não pede confirmação de cancelamento', async () => {
-    const darAlta = vi.spyOn(api, 'darAlta').mockResolvedValue(prontuario());
+    const encerrar = vi.spyOn(api, 'encerrar').mockResolvedValue(prontuario());
     const usuario = userEvent.setup();
 
     renderizar();
 
-    await usuario.click(screen.getByRole('button', { name: 'Dar alta' }));
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
 
     expect(screen.queryByText(/ainda está nestas filas/i)).not.toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: 'Dar alta e encerrar' }));
 
-    expect(darAlta).toHaveBeenCalledWith('a1', 'ClinicaGeral', false);
+    expect(encerrar).toHaveBeenCalledWith('a1', 'ClinicaGeral', {
+      desfecho: 'Alta',
+      detalhe: undefined,
+      cancelarPendentes: false,
+    });
   });
 
   it('mostra a recusa do servidor em vez de engolir', async () => {
-    vi.spyOn(api, 'darAlta').mockRejectedValue(
+    vi.spyOn(api, 'encerrar').mockRejectedValue(
       new ErroApi(400, ['Ha filas pendentes: Odontologia.']),
     );
 
     const usuario = userEvent.setup();
     renderizar();
 
-    await usuario.click(screen.getByRole('button', { name: 'Dar alta' }));
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
     await usuario.click(screen.getByRole('button', { name: 'Dar alta e encerrar' }));
 
     expect(await screen.findByText(/Ha filas pendentes/)).toBeInTheDocument();
+  });
+
+  it('oferece os quatro desfechos, com a alta escolhida de saída', async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+
+    // Alta é o caso comum: obrigar a escolher transformaria o clique mais
+    // frequente do plantão em dois.
+    expect(screen.getByRole('button', { name: 'Alta' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Transferência hospitalar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Óbito' })).toBeInTheDocument();
+  });
+
+  it('registra o óbito e encerra', async () => {
+    const encerrar = vi.spyOn(api, 'encerrar').mockResolvedValue(prontuario());
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+    await usuario.click(screen.getByRole('button', { name: 'Óbito' }));
+    await usuario.click(screen.getByRole('button', { name: 'Confirmar encerramento' }));
+
+    expect(encerrar).toHaveBeenCalledWith('a1', 'ClinicaGeral', {
+      desfecho: 'Obito',
+      detalhe: undefined,
+      cancelarPendentes: false,
+    });
+  });
+
+  it('o óbito não pede destino nem motivo', async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+    await usuario.click(screen.getByRole('button', { name: 'Óbito' }));
+
+    expect(screen.queryByLabelText(/Para onde/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Motivo do encerramento/)).not.toBeInTheDocument();
+  });
+
+  it('a transferência não sai sem destino', async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+    await usuario.click(screen.getByRole('button', { name: 'Transferência hospitalar' }));
+
+    // Sem o destino, ninguém consegue ir atrás do paciente depois — que é a
+    // única razão de registrar a transferência.
+    expect(screen.getByRole('button', { name: 'Confirmar encerramento' })).toBeDisabled();
+  });
+
+  it('a transferência leva o destino', async () => {
+    const encerrar = vi.spyOn(api, 'encerrar').mockResolvedValue(prontuario());
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+    await usuario.click(screen.getByRole('button', { name: 'Transferência hospitalar' }));
+    await usuario.type(screen.getByLabelText(/Para onde/), 'Hospital Regional');
+    await usuario.click(screen.getByRole('button', { name: 'Confirmar encerramento' }));
+
+    expect(encerrar).toHaveBeenCalledWith('a1', 'ClinicaGeral', {
+      desfecho: 'TransferenciaHospitalar',
+      detalhe: 'Hospital Regional',
+      cancelarPendentes: false,
+    });
+  });
+
+  it('"outro" pede a descrição', async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+    await usuario.click(screen.getByRole('button', { name: 'Outro' }));
+
+    expect(screen.getByLabelText(/Motivo do encerramento/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmar encerramento' })).toBeDisabled();
   });
 
   it('some quando o atendimento já foi finalizado', () => {

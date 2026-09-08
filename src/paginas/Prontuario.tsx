@@ -11,7 +11,10 @@ import {
   acoesAuditoria,
   classificacoes,
   desfechos,
+  desfechosAtendimento,
   especialidades,
+  racasCor,
+  resultadosTesteRapido,
   faixasImc,
   procedimentosOdontologicos,
   sexos,
@@ -203,6 +206,25 @@ export function Prontuario() {
           <Linha rotulo={t('tipoDocumento')} valor={traduzir(tiposDocumento, idioma, paciente.tipoDocumento)} />
           <Linha rotulo={t('numeroDocumento')} valor={paciente.numeroDocumento} />
           <Linha rotulo={t('cartaoSus')} valor={paciente.cartaoSus} />
+          <Linha rotulo={t('cpf')} valor={paciente.cpf} />
+          {/*
+            Raça/cor só aparece quando declarada: "Não informado" em toda ficha
+            é linha vazia, e linha vazia treina a equipe a parar de ler.
+          */}
+          <Linha
+            rotulo={t('racaCor')}
+            valor={
+              paciente.racaCor === 'NaoInformado'
+                ? null
+                : traduzir(racasCor, idioma, paciente.racaCor)
+            }
+          />
+          <Linha rotulo={t('etnia')} valor={paciente.etnia} />
+          <Linha rotulo={t('poloBase')} valor={paciente.poloBase} />
+          <Linha rotulo={t('dsei')} valor={paciente.dsei} />
+          <Linha rotulo={t('municipioNascimento')} valor={paciente.municipioNascimento} />
+          <Linha rotulo={t('paisNascimento')} valor={paciente.paisNascimento} />
+          <Linha rotulo={t('estadoResidencia')} valor={paciente.estadoResidencia} />
           <Linha rotulo={t('comunidade')} valor={paciente.comunidade} />
           <Linha
             rotulo={t('dataNascimento')}
@@ -244,6 +266,40 @@ export function Prontuario() {
             <Linha rotulo={t('glicemia')} valor={prontuario.triagem.glicemiaCapilar} />
             <Linha rotulo={t('peso')} valor={prontuario.triagem.pesoKg} />
             <Linha rotulo={t('altura')} valor={prontuario.triagem.alturaCm} />
+            <Linha
+              rotulo={t('circunferenciaCefalica')}
+              valor={prontuario.triagem.circunferenciaCefalicaCm}
+            />
+            <Linha
+              rotulo={t('testeRapidoCovid')}
+              valor={
+                prontuario.triagem.testeRapidoCovid
+                  ? traduzir(resultadosTesteRapido, idioma, prontuario.triagem.testeRapidoCovid)
+                  : null
+              }
+            />
+            <Linha
+              rotulo={t('testeRapidoMalaria')}
+              valor={
+                prontuario.triagem.testeRapidoMalaria
+                  ? traduzir(resultadosTesteRapido, idioma, prontuario.triagem.testeRapidoMalaria)
+                  : null
+              }
+            />
+            {/*
+              Só aparece quando a pergunta foi feita: o nulo é "não perguntei",
+              e mostrá-lo como "não" inventaria uma resposta.
+            */}
+            <Linha
+              rotulo={t('cirurgiasPrevias')}
+              valor={
+                prontuario.triagem.teveCirurgiaPrevia === null
+                  ? null
+                  : prontuario.triagem.teveCirurgiaPrevia
+                    ? (prontuario.triagem.cirurgiasPrevias ?? t('sim'))
+                    : t('nao')
+              }
+            />
             <Linha
               rotulo={t('imc')}
               valor={
@@ -302,6 +358,8 @@ export function Prontuario() {
         >
           <dl className="divide-y divide-borda">
             <Linha rotulo={t('sintomas')} valor={consulta.sintomasDescricao} />
+            <Linha rotulo={t('historiaClinica')} valor={consulta.historiaClinica} />
+            <Linha rotulo={t('exameFisico')} valor={consulta.exameFisico} />
             <Linha
               rotulo={t('diagnostico')}
               valor={
@@ -312,6 +370,7 @@ export function Prontuario() {
             />
             <Linha rotulo={t('observacaoDiagnostico')} valor={consulta.diagnosticoObservacao} />
             <Linha rotulo={t('conduta')} valor={consulta.conduta} />
+            <Linha rotulo={t('orientacoesGerais')} valor={consulta.orientacoesGerais} />
             <Linha rotulo={t('localizacaoLesao')} valor={consulta.ortopedia?.localizacao} />
             <Linha rotulo={t('mecanismoTrauma')} valor={consulta.ortopedia?.mecanismoTrauma} />
             <Linha
@@ -450,6 +509,27 @@ export function Prontuario() {
 
       {finalizado ? (
         <div className="cartao space-y-3">
+          {/*
+            Como terminou vem antes de quem fechou: numa ficha encerrada, óbito
+            e transferência são a primeira coisa que alguém precisa ver.
+
+            Fica nulo nos atendimentos fechados antes deste campo existir — não
+            há de onde deduzir o desfecho deles, e chamar todos de alta contaria
+            como alta quem morreu.
+          */}
+          {prontuario.desfecho ? (
+            <p className="font-bold">
+              {t('desfechoRegistrado')}:{' '}
+              {traduzir(desfechosAtendimento, idioma, prontuario.desfecho)}
+              {prontuario.desfechoDetalhe ? (
+                <span className="font-normal text-texto-suave">
+                  {' '}
+                  · {prontuario.desfechoDetalhe}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
+
           <p className="text-sm text-texto-suave">
             {t('finalizadoPor')}: {prontuario.finalizadoPor} ·{' '}
             {prontuario.finalizadoEm ? new Date(prontuario.finalizadoEm).toLocaleString() : ''}

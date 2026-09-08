@@ -129,10 +129,13 @@ function BuscaCid({
 
 interface FormConsulta {
   sintomas: string;
+  historiaClinica: string;
+  exameFisico: string;
   cid10Codigo: string | null;
   cid10Descricao: string | null;
   diagnosticoObservacao: string;
   conduta: string;
+  orientacoesGerais: string;
   desfecho: DesfechoConsulta | null;
   encaminhadoPara: Especialidade | null;
   localizacao: string;
@@ -144,10 +147,13 @@ interface FormConsulta {
 
 const CONSULTA_INICIAL: FormConsulta = {
   sintomas: '',
+  historiaClinica: '',
+  exameFisico: '',
   cid10Codigo: null,
   cid10Descricao: null,
   diagnosticoObservacao: '',
   conduta: '',
+  orientacoesGerais: '',
   desfecho: null,
   encaminhadoPara: null,
   localizacao: '',
@@ -218,9 +224,12 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
       await api.registrarConsulta(id, {
         especialidade: especialidadeAtual,
         sintomasDescricao: form.sintomas.trim() || null,
+        historiaClinica: form.historiaClinica.trim() || null,
+        exameFisico: form.exameFisico.trim() || null,
         cid10Codigo: form.cid10Codigo,
         diagnosticoObservacao: form.diagnosticoObservacao.trim() || null,
         conduta: form.conduta.trim() || null,
+        orientacoesGerais: form.orientacoesGerais.trim() || null,
         desfecho: form.desfecho,
         encaminhadoPara: form.encaminhadoPara,
         ortopedia:
@@ -410,8 +419,33 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
       <Secao titulo={t('sintomas')}>
         <textarea
           className="campo min-h-24"
+          aria-label={t('sintomas')}
           value={form.sintomas}
           onChange={(e) => alterar({ sintomas: e.target.value })}
+        />
+      </Secao>
+
+      {/*
+        História clínica e exame físico são blocos próprios no formulário de
+        papel, e não pedaços da descrição dos sintomas: são perguntas
+        diferentes, e juntar as três numa caixa só faz as duas últimas deixarem
+        de ser preenchidas.
+      */}
+      <Secao titulo={t('historiaClinica')}>
+        <textarea
+          className="campo min-h-24"
+          aria-label={t('historiaClinica')}
+          value={form.historiaClinica}
+          onChange={(e) => alterar({ historiaClinica: e.target.value })}
+        />
+      </Secao>
+
+      <Secao titulo={t('exameFisico')}>
+        <textarea
+          className="campo min-h-24"
+          aria-label={t('exameFisico')}
+          value={form.exameFisico}
+          onChange={(e) => alterar({ exameFisico: e.target.value })}
         />
       </Secao>
 
@@ -469,8 +503,22 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
       <Secao titulo={t('conduta')}>
         <textarea
           className="campo min-h-24"
+          aria-label={t('conduta')}
           value={form.conduta}
           onChange={(e) => alterar({ conduta: e.target.value })}
+        />
+      </Secao>
+
+      {/*
+        Bloco próprio no formulário de papel. Junto da conduta, é a orientação
+        que deixa de ser escrita — e é a parte que o paciente leva para casa.
+      */}
+      <Secao titulo={t('orientacoesGerais')}>
+        <textarea
+          className="campo min-h-20"
+          aria-label={t('orientacoesGerais')}
+          value={form.orientacoesGerais}
+          onChange={(e) => alterar({ orientacoesGerais: e.target.value })}
         />
       </Secao>
 
