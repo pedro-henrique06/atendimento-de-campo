@@ -521,6 +521,20 @@ export const api = {
     });
   },
 
+  registrarUltrassom(id: string, corpo: unknown): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/ultrassom`, {
+      method: 'PUT',
+      body: JSON.stringify(corpo),
+    });
+  },
+
+  registrarFarmacia(id: string, corpo: unknown): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/farmacia`, {
+      method: 'PUT',
+      body: JSON.stringify(corpo),
+    });
+  },
+
   finalizar(id: string): Promise<void> {
     return requisitar<void>(`/atendimentos/${id}/finalizar`, {
       method: 'POST',

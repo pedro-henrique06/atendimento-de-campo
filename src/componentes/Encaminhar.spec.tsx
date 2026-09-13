@@ -41,6 +41,8 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
     consultas: [],
     odontologia: null,
     enfermagem: null,
+    ultrassom: null,
+    farmacia: null,
     etapas: [
       {
         id: 'e1',

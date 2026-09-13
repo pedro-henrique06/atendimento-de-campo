@@ -564,6 +564,26 @@ export interface Ortopedia {
   necessitaRaioX: boolean;
 }
 
+/**
+ * O bloco de ginecologia da consulta.
+ *
+ * Gestações, partos e abortos são três números, e não um texto "3/2/1": em
+ * texto, "G3 P2 A1", "3-2-1" e "III/II/I" contam a mesma coisa de três jeitos e
+ * nenhum deles soma.
+ */
+export interface Ginecologia {
+  /** Data da última menstruação, no formato `aaaa-mm-dd`. */
+  dataUltimaMenstruacao: string | null;
+  gestacoes: number | null;
+  partos: number | null;
+  abortos: number | null;
+  /** Nulo = não foi perguntado, que é diferente de ter respondido que não. */
+  gestante: boolean | null;
+  semanasGestacao: number | null;
+  metodoContraceptivo: string | null;
+  ultimoPreventivo: string | null;
+}
+
 export interface Consulta {
   etapaId: string;
   especialidade: Especialidade;
@@ -579,6 +599,7 @@ export interface Consulta {
   desfecho: DesfechoConsulta | null;
   encaminhadoPara: Especialidade | null;
   ortopedia: Ortopedia | null;
+  ginecologia: Ginecologia | null;
   dispensacoes: Dispensacao[];
   concluidaEm: string | null;
 }
@@ -615,6 +636,41 @@ export interface Enfermagem {
   concluidaEm: string | null;
 }
 
+/**
+ * O laudo do exame de imagem.
+ *
+ * Não tem CID-10 nem conduta: quem faz o exame descreve e conclui; quem decide
+ * o que fazer com isso é quem pediu.
+ */
+export interface Ultrassom {
+  etapaId: string;
+  /** Quem assinou, com o conselho — no papel, "Médico ___ CRM ___". */
+  profissional: Autor | null;
+  exameSolicitado: string | null;
+  indicacao: string | null;
+  analise: string | null;
+  conclusao: string | null;
+  desfecho: DesfechoConsulta | null;
+  concluidaEm: string | null;
+}
+
+/**
+ * A passagem pela farmácia.
+ *
+ * O "por quem" e o "quando" da checagem de papel são o profissional e a
+ * conclusão da própria etapa — não campos digitados, que poderiam divergir do
+ * resto do atendimento.
+ */
+export interface Farmacia {
+  etapaId: string;
+  profissional: Autor | null;
+  orientacoes: string | null;
+  observacoes: string | null;
+  desfecho: DesfechoConsulta | null;
+  dispensacoes: Dispensacao[];
+  concluidaEm: string | null;
+}
+
 export interface Prontuario {
   id: string;
   codigo: string;
@@ -636,6 +692,8 @@ export interface Prontuario {
   consultas: Consulta[];
   odontologia: Odontologia | null;
   enfermagem: Enfermagem | null;
+  ultrassom: Ultrassom | null;
+  farmacia: Farmacia | null;
   etapas: EtapaResumo[];
   tempoNasFilas: EsperaFila[];
   historico: RegistroAuditoria[];

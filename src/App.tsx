@@ -5,6 +5,8 @@ import { ProvedorSessao, useSessao } from './hooks/useSessao';
 import { useTema } from './hooks/useTema';
 import { ProvedorI18n } from './i18n';
 import { Atendimento } from './paginas/Atendimento';
+import { Enfermagem } from './paginas/Enfermagem';
+import { Farmacia } from './paginas/Farmacia';
 import { ListaAtendimentos } from './paginas/ListaAtendimentos';
 import { GestaoBases } from './paginas/GestaoBases';
 import { GestaoComunidades } from './paginas/GestaoComunidades';
@@ -16,6 +18,7 @@ import { Prontuario } from './paginas/Prontuario';
 import { SelecaoBase } from './paginas/SelecaoBase';
 import { TrocarSenha } from './paginas/TrocarSenha';
 import { Triagem } from './paginas/Triagem';
+import { Ultrassom } from './paginas/Ultrassom';
 import type { Tema } from './hooks/useTema';
 
 /**
@@ -111,6 +114,9 @@ function Rotas() {
             element={<Atendimento modo="consulta" />}
           />
           <Route path="/atendimentos/:id/odontologia" element={<Atendimento modo="odontologia" />} />
+          <Route path="/atendimentos/:id/enfermagem" element={<Enfermagem />} />
+          <Route path="/atendimentos/:id/ultrassom" element={<Ultrassom />} />
+          <Route path="/atendimentos/:id/farmacia" element={<Farmacia />} />
 
           {/*
             Aberta a todo mundo de propósito: quem não é coordenação recebe da

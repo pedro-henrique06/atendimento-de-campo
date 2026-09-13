@@ -142,6 +142,18 @@ interface FormConsulta {
   mecanismoTrauma: string;
   imobilizacao: boolean;
   necessitaRaioX: boolean;
+  /*
+    Ginecologia. Os números ficam como texto no formulário porque o campo vazio
+    é uma resposta — "não perguntei" —, e um número não tem como ser vazio.
+  */
+  dataUltimaMenstruacao: string;
+  gestacoes: string;
+  partos: string;
+  abortos: string;
+  gestante: boolean | null;
+  semanasGestacao: string;
+  metodoContraceptivo: string;
+  ultimoPreventivo: string;
   dispensacoes: LinhaDispensacao[];
 }
 
@@ -160,8 +172,25 @@ const CONSULTA_INICIAL: FormConsulta = {
   mecanismoTrauma: '',
   imobilizacao: false,
   necessitaRaioX: false,
+  dataUltimaMenstruacao: '',
+  gestacoes: '',
+  partos: '',
+  abortos: '',
+  gestante: null,
+  semanasGestacao: '',
+  metodoContraceptivo: '',
+  ultimoPreventivo: '',
   dispensacoes: [],
 };
+
+/** Número digitado, ou nulo quando o campo ficou vazio — que é "não perguntei". */
+function numeroOuNulo(texto: string): number | null {
+  const limpo = texto.trim();
+  if (limpo === '') return null;
+
+  const numero = Number(limpo);
+  return Number.isFinite(numero) ? numero : null;
+}
 
 interface FormOdonto {
   queixa: string;
@@ -239,6 +268,19 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
                 mecanismoTrauma: form.mecanismoTrauma.trim() || null,
                 imobilizacao: form.imobilizacao,
                 necessitaRaioX: form.necessitaRaioX,
+              }
+            : null,
+        ginecologia:
+          especialidadeAtual === 'Ginecologia'
+            ? {
+                dataUltimaMenstruacao: form.dataUltimaMenstruacao || null,
+                gestacoes: numeroOuNulo(form.gestacoes),
+                partos: numeroOuNulo(form.partos),
+                abortos: numeroOuNulo(form.abortos),
+                gestante: form.gestante,
+                semanasGestacao: numeroOuNulo(form.semanasGestacao),
+                metodoContraceptivo: form.metodoContraceptivo.trim() || null,
+                ultimoPreventivo: form.ultimoPreventivo.trim() || null,
               }
             : null,
         dispensacoes: paraEnvio(form.dispensacoes),
@@ -475,6 +517,91 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
             valor={form.necessitaRaioX}
             aoMudar={(necessitaRaioX) => alterar({ necessitaRaioX })}
           />
+        </Secao>
+      ) : null}
+
+      {especialidadeAtual === 'Ginecologia' ? (
+        <Secao titulo={traduzir(especialidades, idioma, 'Ginecologia')}>
+          <Campo rotulo={t('dataUltimaMenstruacao')}>
+            <input
+              type="date"
+              className="campo"
+              value={form.dataUltimaMenstruacao}
+              onChange={(e) => alterar({ dataUltimaMenstruacao: e.target.value })}
+            />
+          </Campo>
+
+          {/*
+            Três campos, e não um texto "3/2/1": em texto, "G3 P2 A1", "3-2-1" e
+            "III/II/I" contam a mesma coisa de três jeitos, e nenhum deles soma.
+          */}
+          <div className="grid grid-cols-3 gap-3">
+            <Campo rotulo={t('gestacoes')}>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                className="campo"
+                value={form.gestacoes}
+                onChange={(e) => alterar({ gestacoes: e.target.value })}
+              />
+            </Campo>
+            <Campo rotulo={t('partos')}>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                className="campo"
+                value={form.partos}
+                onChange={(e) => alterar({ partos: e.target.value })}
+              />
+            </Campo>
+            <Campo rotulo={t('abortos')}>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                className="campo"
+                value={form.abortos}
+                onChange={(e) => alterar({ abortos: e.target.value })}
+              />
+            </Campo>
+          </div>
+
+          <Interruptor
+            rotulo={t('gestante')}
+            valor={form.gestante === true}
+            aoMudar={(gestante) => alterar({ gestante })}
+          />
+
+          {form.gestante ? (
+            <Campo rotulo={t('semanasGestacao')}>
+              <input
+                type="number"
+                min={1}
+                max={45}
+                className="campo"
+                value={form.semanasGestacao}
+                onChange={(e) => alterar({ semanasGestacao: e.target.value })}
+              />
+            </Campo>
+          ) : null}
+
+          <Campo rotulo={t('metodoContraceptivo')}>
+            <input
+              className="campo"
+              value={form.metodoContraceptivo}
+              onChange={(e) => alterar({ metodoContraceptivo: e.target.value })}
+            />
+          </Campo>
+
+          <Campo rotulo={t('ultimoPreventivo')}>
+            <input
+              className="campo"
+              value={form.ultimoPreventivo}
+              onChange={(e) => alterar({ ultimoPreventivo: e.target.value })}
+            />
+          </Campo>
         </Secao>
       ) : null}
 
