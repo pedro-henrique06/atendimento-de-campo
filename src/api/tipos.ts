@@ -23,7 +23,13 @@ export type FuncaoProfissional =
   | 'Outro'
   | 'ClinicoGeral'
   | 'Pediatra'
-  | 'Ortopedista';
+  | 'Ortopedista'
+  | 'Ginecologista'
+  | 'Cirurgiao'
+  | 'Anestesista'
+  | 'Cardiologista'
+  /** Quem opera o aparelho e assina o laudo. Conselho: CRM. */
+  | 'Ultrassonografista';
 
 /**
  * Profissoes oferecidas num cadastro novo, na ordem em que a tela lista.
@@ -33,6 +39,11 @@ export const FUNCOES_PARA_CADASTRO: FuncaoProfissional[] = [
   'ClinicoGeral',
   'Pediatra',
   'Ortopedista',
+  'Ginecologista',
+  'Cirurgiao',
+  'Anestesista',
+  'Cardiologista',
+  'Ultrassonografista',
   'Dentista',
   'Enfermeiro',
   'TecnicoEnfermagem',
@@ -53,7 +64,33 @@ export type Especialidade =
   | 'Ortopedia'
   | 'Odontologia'
   | 'Enfermagem'
-  | 'SaudeMental';
+  | 'SaudeMental'
+  | 'Ginecologia'
+  | 'Cirurgia'
+  | 'Anestesia'
+  /** Teleconsulta, como no formulário de missão programada. */
+  | 'Cardiologia'
+  /** Exame de imagem. Fila derivada: ninguém chega sem alguém ter mandado. */
+  | 'Ultrassom'
+  /** Dispensação e checagem do que foi prescrito. */
+  | 'Farmacia';
+
+/** As filas, na ordem em que a barra deve listá-las. */
+export const FILAS: Especialidade[] = [
+  'Triagem',
+  'ClinicaGeral',
+  'Pediatria',
+  'Ortopedia',
+  'Ginecologia',
+  'Cirurgia',
+  'Anestesia',
+  'Cardiologia',
+  'Odontologia',
+  'Enfermagem',
+  'Ultrassom',
+  'Farmacia',
+  'SaudeMental',
+];
 
 export type Sexo = 'NaoInformado' | 'Feminino' | 'Masculino' | 'Outro';
 

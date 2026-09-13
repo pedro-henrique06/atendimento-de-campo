@@ -104,6 +104,29 @@ describe('Fila de atendimentos', () => {
     );
   });
 
+  it('as filas novas aparecem na barra', async () => {
+    renderizar();
+
+    // Ultrassom e farmácia são filas derivadas — ninguém chega nelas sem alguém
+    // ter mandado —, mas precisam estar na barra: é por ali que quem atende
+    // nelas encontra o próprio trabalho.
+    expect(await screen.findByRole('button', { name: 'Ultrassom' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Farmácia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ginecologia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cirurgia' })).toBeInTheDocument();
+  });
+
+  it('a fila da profissão abre primeiro, mesmo sendo nova', async () => {
+    renderizar({ ...DENTISTA, funcao: 'Ultrassonografista', filas: ['Ultrassom'] });
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Ultrassom' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      ),
+    );
+  });
+
   it('não esconde as outras filas — em campo as funções se cobrem', async () => {
     renderizar();
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
+import { FILAS } from '../api/tipos';
 import type {
   AtendimentoResumo,
   ClassificacaoRisco,
@@ -18,16 +19,6 @@ import {
   statusAtendimento,
   statusEtapa,
 } from '../i18n/enums';
-
-const FILAS: Especialidade[] = [
-  'Triagem',
-  'ClinicaGeral',
-  'Pediatria',
-  'Ortopedia',
-  'Odontologia',
-  'Enfermagem',
-  'SaudeMental',
-];
 
 const RISCOS: ClassificacaoRisco[] = ['Vermelho', 'Amarelo', 'Verde', 'Preto'];
 

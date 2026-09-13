@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
+import { FILAS } from '../api/tipos';
 import type {
   Cid10,
   DesfechoConsulta,
@@ -21,14 +22,13 @@ import { desfechos, especialidades, procedimentosOdontologicos } from '../i18n/e
 
 const DESFECHOS: DesfechoConsulta[] = ['Alta', 'Encaminhado', 'Retorno', 'Evasao'];
 
-const DESTINOS: Especialidade[] = [
-  'ClinicaGeral',
-  'Pediatria',
-  'Ortopedia',
-  'Odontologia',
-  'Enfermagem',
-  'SaudeMental',
-];
+/**
+ * Destinos do encaminhamento feito ao fechar a consulta.
+ *
+ * A triagem fica de fora: dela não se volta, e quem nunca foi triado tem o
+ * encaminhamento avulso do prontuário para isso.
+ */
+const DESTINOS: Especialidade[] = FILAS.filter((f) => f !== 'Triagem');
 
 const PROCEDIMENTOS: ProcedimentoOdontologico[] = [
   'ProfilaxiaLimpeza',
