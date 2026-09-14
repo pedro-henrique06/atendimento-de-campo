@@ -543,6 +543,17 @@ export const api = {
     });
   },
 
+  /**
+   * Salva a ficha cirúrgica. Pode ser chamada várias vezes — uma por parada da
+   * lista de verificação —, e só fecha a fila quando vai com desfecho.
+   */
+  registrarCirurgia(id: string, corpo: unknown): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/cirurgia`, {
+      method: 'PUT',
+      body: JSON.stringify(corpo),
+    });
+  },
+
   registrarUltrassom(id: string, corpo: unknown): Promise<void> {
     return requisitar<void>(`/atendimentos/${id}/ultrassom`, {
       method: 'PUT',

@@ -5,6 +5,7 @@ import { ProvedorSessao, useSessao } from './hooks/useSessao';
 import { useTema } from './hooks/useTema';
 import { ProvedorI18n } from './i18n';
 import { Atendimento } from './paginas/Atendimento';
+import { Cirurgia } from './paginas/Cirurgia';
 import { Enfermagem } from './paginas/Enfermagem';
 import { Farmacia } from './paginas/Farmacia';
 import { ListaAtendimentos } from './paginas/ListaAtendimentos';
@@ -119,6 +120,7 @@ function Rotas() {
           <Route path="/atendimentos/:id/ultrassom" element={<Ultrassom />} />
           <Route path="/atendimentos/:id/farmacia" element={<Farmacia />} />
           <Route path="/atendimentos/:id/sinais-vitais" element={<SinaisVitais />} />
+          <Route path="/atendimentos/:id/cirurgia" element={<Cirurgia />} />
 
           {/*
             Aberta a todo mundo de propósito: quem não é coordenação recebe da

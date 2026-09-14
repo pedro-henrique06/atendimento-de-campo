@@ -43,6 +43,7 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
     farmacia: null,
     sinaisVitais: [],
     tipoMissao: null,
+    cirurgia: null,
     etapas: [etapa()],
     tempoNasFilas: [],
     historico: [],
@@ -86,12 +87,16 @@ describe('rota da ficha', () => {
     expect(rotaDaFicha('a1', 'Enfermagem')).toBe('/atendimentos/a1/enfermagem');
     expect(rotaDaFicha('a1', 'Ultrassom')).toBe('/atendimentos/a1/ultrassom');
     expect(rotaDaFicha('a1', 'Farmacia')).toBe('/atendimentos/a1/farmacia');
+
+    // A cirurgia usava a ficha de consulta até ganhar a sua, com a lista de
+    // verificação.
+    expect(rotaDaFicha('a1', 'Cirurgia')).toBe('/atendimentos/a1/cirurgia');
   });
 
   it('manda as filas de consulta para a consulta da especialidade certa', () => {
     expect(rotaDaFicha('a1', 'Ginecologia')).toBe('/atendimentos/a1/consulta/Ginecologia');
     expect(rotaDaFicha('a1', 'Pediatria')).toBe('/atendimentos/a1/consulta/Pediatria');
-    expect(rotaDaFicha('a1', 'Cirurgia')).toBe('/atendimentos/a1/consulta/Cirurgia');
+    expect(rotaDaFicha('a1', 'Cardiologia')).toBe('/atendimentos/a1/consulta/Cardiologia');
   });
 });
 

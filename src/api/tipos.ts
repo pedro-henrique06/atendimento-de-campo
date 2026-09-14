@@ -653,6 +653,70 @@ export interface Enfermagem {
 }
 
 /**
+ * Lado do corpo em que a cirurgia acontece.
+ *
+ * Campo próprio, e não um pedaço do texto do procedimento: cirurgia no lado
+ * errado é um dos erros que a lista de verificação existe para impedir.
+ */
+export type Lateralidade = 'NaoSeAplica' | 'Direito' | 'Esquerdo' | 'Bilateral';
+
+/**
+ * A ficha cirúrgica: pré-operatório, as quatro paradas da lista de verificação
+ * e a recuperação.
+ *
+ * As caixas são `boolean`, e não `boolean | null` como a alergia: numa lista de
+ * verificação a caixa está marcada ou não está, e não marcada já significa
+ * "não conferido".
+ */
+export interface Cirurgia {
+  etapaId: string;
+  profissional: Autor | null;
+
+  indicacao: string | null;
+  procedimentoProposto: string | null;
+  lateralidade: Lateralidade;
+  jejumHoras: number | null;
+  consentimentoAssinado: boolean;
+  observacoesPreOperatorio: string | null;
+
+  checkInIdentidadeConfirmada: boolean;
+  checkInSitioMarcado: boolean;
+  checkInConsentimentoConferido: boolean;
+  checkInAlergiaConferida: boolean;
+  checkInJejumConferido: boolean;
+  /** Carimbada pelo sistema quando a parada fica completa, e nunca reescrita. */
+  checkInEm: string | null;
+
+  timeOutUmEquipeApresentada: boolean;
+  timeOutUmMonitorizacaoOk: boolean;
+  timeOutUmViaAereaAvaliada: boolean;
+  timeOutUmRiscoSangramentoAvaliado: boolean;
+  timeOutUmEm: string | null;
+
+  timeOutDoisPacienteSitioProcedimentoConfirmados: boolean;
+  timeOutDoisAntibioticoProfilatico: boolean;
+  timeOutDoisImagensDisponiveis: boolean;
+  timeOutDoisEventosCriticosRevistos: boolean;
+  timeOutDoisMaterialEsterilizado: boolean;
+  timeOutDoisEm: string | null;
+
+  checkOutProcedimentoRegistrado: boolean;
+  checkOutContagemConfere: boolean;
+  checkOutAmostrasIdentificadas: boolean;
+  checkOutProblemasComEquipamento: boolean;
+  checkOutCuidadosRecuperacao: string | null;
+  checkOutEm: string | null;
+
+  recuperacaoEntradaEm: string | null;
+  recuperacaoSaidaEm: string | null;
+  intercorrencias: string | null;
+  observacoesRecuperacao: string | null;
+
+  desfecho: DesfechoConsulta | null;
+  concluidaEm: string | null;
+}
+
+/**
  * O laudo do exame de imagem.
  *
  * Não tem CID-10 nem conduta: quem faz o exame descreve e conclui; quem decide
@@ -749,6 +813,7 @@ export interface Prontuario {
   enfermagem: Enfermagem | null;
   ultrassom: Ultrassom | null;
   farmacia: Farmacia | null;
+  cirurgia: Cirurgia | null;
   /** A folha de observação, em ordem de hora. */
   sinaisVitais: MedicaoSinaisVitais[];
   etapas: EtapaResumo[];

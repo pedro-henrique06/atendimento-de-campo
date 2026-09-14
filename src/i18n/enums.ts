@@ -5,6 +5,7 @@ import type {
   ConselhoTipo,
   DesfechoAtendimento,
   DesfechoConsulta,
+  Lateralidade,
   RacaCor,
   TipoMissao,
   ResultadoTesteRapido,
@@ -296,6 +297,27 @@ export const desfechosAtendimento: Traducao<DesfechoAtendimento> = {
     TransferenciaHospitalar: 'Hospital transfer',
     Obito: 'Death',
     Outro: 'Other',
+  },
+};
+
+export const lateralidades: Traducao<Lateralidade> = {
+  Pt: {
+    NaoSeAplica: 'Não se aplica',
+    Direito: 'Direito',
+    Esquerdo: 'Esquerdo',
+    Bilateral: 'Bilateral',
+  },
+  Es: {
+    NaoSeAplica: 'No se aplica',
+    Direito: 'Derecho',
+    Esquerdo: 'Izquierdo',
+    Bilateral: 'Bilateral',
+  },
+  En: {
+    NaoSeAplica: 'Not applicable',
+    Direito: 'Right',
+    Esquerdo: 'Left',
+    Bilateral: 'Bilateral',
   },
 };
 
@@ -911,6 +933,7 @@ export const tabelasDeEnum = {
   desfechos,
   desfechosAtendimento,
   tiposMissao,
+  lateralidades,
   racasCor,
   resultadosTesteRapido,
   sexos,

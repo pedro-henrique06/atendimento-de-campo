@@ -41,6 +41,8 @@ export function rotaDaFicha(id: string, especialidade: Especialidade): string {
       return `${base}/ultrassom`;
     case 'Farmacia':
       return `${base}/farmacia`;
+    case 'Cirurgia':
+      return `${base}/cirurgia`;
     default:
       return `${base}/consulta/${especialidade}`;
   }

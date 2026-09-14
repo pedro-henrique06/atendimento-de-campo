@@ -19,6 +19,7 @@ import {
   racasCor,
   resultadosTesteRapido,
   faixasImc,
+  lateralidades,
   procedimentosEnfermagem,
   procedimentosOdontologicos,
   sexos,
@@ -531,6 +532,106 @@ export function Prontuario() {
             <h3 className="rotulo">{t('dispensacao')}</h3>
             <ListaItens itens={prontuario.enfermagem.dispensacoes} />
           </div>
+        </Secao>
+      ) : null}
+
+      {prontuario.cirurgia ? (
+        <Secao
+          titulo={traduzir(especialidades, idioma, 'Cirurgia')}
+          autor={prontuario.cirurgia.profissional}
+        >
+          <dl className="divide-y divide-borda">
+            <Linha rotulo={t('indicacaoCirurgica')} valor={prontuario.cirurgia.indicacao} />
+            <Linha
+              rotulo={t('procedimentoProposto')}
+              valor={
+                prontuario.cirurgia.procedimentoProposto === null
+                  ? null
+                  : prontuario.cirurgia.lateralidade === 'NaoSeAplica'
+                    ? prontuario.cirurgia.procedimentoProposto
+                    : `${prontuario.cirurgia.procedimentoProposto} · ${traduzir(
+                        lateralidades,
+                        idioma,
+                        prontuario.cirurgia.lateralidade,
+                      )}`
+              }
+            />
+            <Linha
+              rotulo={t('jejumHoras')}
+              valor={prontuario.cirurgia.jejumHoras === null ? null : `${prontuario.cirurgia.jejumHoras} h`}
+            />
+            <Linha
+              rotulo={t('consentimentoAssinado')}
+              valor={prontuario.cirurgia.consentimentoAssinado ? t('sim') : t('nao')}
+            />
+            <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesPreOperatorio} />
+          </dl>
+
+          {/*
+            As quatro paradas com a hora de cada uma. É a hora que diz se a
+            lista foi cumprida ao longo da cirurgia ou preenchida de uma vez no
+            fim — quatro carimbos no mesmo minuto contam essa história.
+          */}
+          <div>
+            <h3 className="rotulo">{t('listaDeVerificacao')}</h3>
+            <ul className="space-y-1 text-sm">
+              {(
+                [
+                  ['checkIn', prontuario.cirurgia.checkInEm],
+                  ['timeOutUm', prontuario.cirurgia.timeOutUmEm],
+                  ['timeOutDois', prontuario.cirurgia.timeOutDoisEm],
+                  ['checkOut', prontuario.cirurgia.checkOutEm],
+                ] as const
+              ).map(([chave, quando]) => (
+                <li key={chave} className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span>{t(chave)}</span>
+                  <span className={quando ? 'tabular-nums' : 'text-texto-suave'}>
+                    {quando
+                      ? new Date(quando).toLocaleTimeString(undefined, { timeStyle: 'short' })
+                      : t('paradaPendente')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <dl className="divide-y divide-borda">
+            <Linha
+              rotulo={t('checkOutProblemaEquipamento')}
+              valor={prontuario.cirurgia.checkOutProblemasComEquipamento ? t('sim') : null}
+            />
+            <Linha
+              rotulo={t('cuidadosRecuperacao')}
+              valor={prontuario.cirurgia.checkOutCuidadosRecuperacao}
+            />
+            <Linha
+              rotulo={t('recuperacao')}
+              valor={
+                prontuario.cirurgia.recuperacaoEntradaEm === null
+                  ? null
+                  : `${new Date(prontuario.cirurgia.recuperacaoEntradaEm).toLocaleTimeString(undefined, {
+                      timeStyle: 'short',
+                    })}${
+                      prontuario.cirurgia.recuperacaoSaidaEm
+                        ? ` — ${new Date(prontuario.cirurgia.recuperacaoSaidaEm).toLocaleTimeString(
+                            undefined,
+                            { timeStyle: 'short' },
+                          )}`
+                        : ''
+                    }`
+              }
+            />
+            <Linha rotulo={t('intercorrencias')} valor={prontuario.cirurgia.intercorrencias} />
+            <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesRecuperacao} />
+            <Linha
+              rotulo={t('desfecho')}
+              valor={
+                prontuario.cirurgia.desfecho
+                  ? traduzir(desfechos, idioma, prontuario.cirurgia.desfecho)
+                  : null
+              }
+            />
+          </dl>
         </Secao>
       ) : null}
 
