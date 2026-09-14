@@ -774,6 +774,8 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     RegistrouObito: 'registrou o óbito',
     TransferiuParaHospital: 'transferiu para hospital',
     EncerrouPorOutroMotivo: 'encerrou por outro motivo',
+    RegistrouSinaisVitais: 'registrou sinais vitais',
+    RemoveuSinaisVitais: 'removeu uma medida de sinais vitais',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -794,6 +796,8 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     RegistrouObito: 'registró el fallecimiento',
     TransferiuParaHospital: 'transfirió a hospital',
     EncerrouPorOutroMotivo: 'cerró por otro motivo',
+    RegistrouSinaisVitais: 'registró signos vitales',
+    RemoveuSinaisVitais: 'eliminó una medición de signos vitales',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -814,6 +818,8 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     RegistrouObito: 'recorded the death',
     TransferiuParaHospital: 'transferred to hospital',
     EncerrouPorOutroMotivo: 'closed for another reason',
+    RegistrouSinaisVitais: 'recorded vital signs',
+    RemoveuSinaisVitais: 'removed a vital signs reading',
   },
 };
 

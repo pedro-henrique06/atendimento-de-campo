@@ -16,6 +16,7 @@ import { NovoAtendimento } from './paginas/NovoAtendimento';
 import { Producao } from './paginas/Producao';
 import { Prontuario } from './paginas/Prontuario';
 import { SelecaoBase } from './paginas/SelecaoBase';
+import { SinaisVitais } from './paginas/SinaisVitais';
 import { TrocarSenha } from './paginas/TrocarSenha';
 import { Triagem } from './paginas/Triagem';
 import { Ultrassom } from './paginas/Ultrassom';
@@ -117,6 +118,7 @@ function Rotas() {
           <Route path="/atendimentos/:id/enfermagem" element={<Enfermagem />} />
           <Route path="/atendimentos/:id/ultrassom" element={<Ultrassom />} />
           <Route path="/atendimentos/:id/farmacia" element={<Farmacia />} />
+          <Route path="/atendimentos/:id/sinais-vitais" element={<SinaisVitais />} />
 
           {/*
             Aberta a todo mundo de propósito: quem não é coordenação recebe da

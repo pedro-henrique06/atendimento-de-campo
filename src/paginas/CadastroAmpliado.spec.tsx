@@ -254,6 +254,7 @@ describe('Triagem', () => {
       enfermagem: null,
     ultrassom: null,
     farmacia: null,
+    sinaisVitais: [],
       tempoNasFilas: [],
       historico: [],
       etapas: [],

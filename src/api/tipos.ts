@@ -314,7 +314,11 @@ export type AcaoAuditoria =
   /** Transferiu o paciente para um hospital. */
   | 'TransferiuParaHospital'
   /** Encerrou por outro motivo, descrito no registro. */
-  | 'EncerrouPorOutroMotivo';
+  | 'EncerrouPorOutroMotivo'
+  /** Anotou mais uma medida na folha de observação. */
+  | 'RegistrouSinaisVitais'
+  /** Removeu uma linha da folha de observação. */
+  | 'RemoveuSinaisVitais';
 
 // ---------------------------------------------------------------------------
 
@@ -671,6 +675,37 @@ export interface Farmacia {
   concluidaEm: string | null;
 }
 
+/**
+ * Uma linha da folha de observação: a tabela horária de sinais vitais.
+ *
+ * `foraDaFaixa` marca o que merece um segundo olhar, e nada além disso — não é
+ * escore nem classificação de risco, e vem vazio para criança, cujas
+ * frequências normais são mais altas que o corte de adulto.
+ */
+export interface MedicaoSinaisVitais {
+  id: string;
+  medidaEm: string;
+  registradaPor: string;
+  pressaoSistolica: number | null;
+  pressaoDiastolica: number | null;
+  frequenciaCardiaca: number | null;
+  frequenciaRespiratoria: number | null;
+  saturacaoO2: number | null;
+  temperaturaCelsius: number | null;
+  glicemiaCapilar: number | null;
+  escalaDor: number | null;
+  observacao: string | null;
+  foraDaFaixa: SinalForaDaFaixa[];
+}
+
+export type SinalForaDaFaixa =
+  | 'PressaoSistolica'
+  | 'FrequenciaCardiaca'
+  | 'FrequenciaRespiratoria'
+  | 'SaturacaoO2'
+  | 'Temperatura'
+  | 'Glicemia';
+
 export interface Prontuario {
   id: string;
   codigo: string;
@@ -694,6 +729,8 @@ export interface Prontuario {
   enfermagem: Enfermagem | null;
   ultrassom: Ultrassom | null;
   farmacia: Farmacia | null;
+  /** A folha de observação, em ordem de hora. */
+  sinaisVitais: MedicaoSinaisVitais[];
   etapas: EtapaResumo[];
   tempoNasFilas: EsperaFila[];
   historico: RegistroAuditoria[];

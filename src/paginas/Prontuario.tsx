@@ -5,6 +5,7 @@ import type { EsperaFila, Ginecologia, Prontuario as ProntuarioDto } from '../ap
 import { AlertaAlergia, Carregando, Erros, Etiqueta, PontoRisco, Secao } from '../componentes/Basicos';
 import { ListaItens } from '../componentes/Dispensacao';
 import { Encaminhar } from '../componentes/Encaminhar';
+import { FolhaDeObservacao } from '../componentes/FolhaDeObservacao';
 import { rotaDaFicha } from '../componentes/FichaDeEtapa';
 import { Odontograma } from '../componentes/Odontograma';
 import { useI18n, traduzir } from '../i18n';
@@ -105,6 +106,27 @@ export function Prontuario() {
 
     try {
       await api.finalizar(id);
+      carregar();
+    } catch (erro) {
+      if (erro instanceof ErroApi) setErros(erro.erros);
+      else if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
+      else setErros([t('erroInesperado')]);
+    }
+  }
+
+  /**
+   * Apaga uma linha da folha de observação.
+   *
+   * Pergunta antes porque é medida de paciente, e o histórico guarda quem
+   * apagou — como a linha riscada no papel, que continua lá.
+   */
+  async function removerMedida(medicaoId: string) {
+    if (!window.confirm(t('confirmarRemoverMedida'))) return;
+
+    setErros([]);
+
+    try {
+      await api.removerSinaisVitais(id, medicaoId);
       carregar();
     } catch (erro) {
       if (erro instanceof ErroApi) setErros(erro.erros);
@@ -567,6 +589,21 @@ export function Prontuario() {
           </a>
         </div>
       ) : null}
+
+      {/*
+        A folha de observação fica aberta, e não dentro de um `details` como o
+        tempo nas filas: o que ela mostra é o estado do paciente agora, e
+        escondida atrás de um clique ela deixa de ser olhada.
+      */}
+      <Secao titulo={t('folhaDeObservacao')}>
+        <FolhaDeObservacao medicoes={prontuario.sinaisVitais} aoRemover={removerMedida} />
+
+        {finalizado ? null : (
+          <Link className="botao-secundario inline-block" to={`/atendimentos/${id}/sinais-vitais`}>
+            {t('registrarSinaisVitais')}
+          </Link>
+        )}
+      </Secao>
 
       <details className="cartao">
         <summary className="cursor-pointer font-semibold text-marca-clara">{t('tempoNasFilas')}</summary>

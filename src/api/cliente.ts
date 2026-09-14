@@ -11,6 +11,7 @@ import type {
   Especialidade,
   FuncaoProfissional,
   ItemCatalogo,
+  MedicaoSinaisVitais,
   MotivoRecusaLogin,
   PacienteConhecido,
   ProducaoProfissional,
@@ -518,6 +519,19 @@ export const api = {
     return requisitar<void>(`/atendimentos/${id}/enfermagem`, {
       method: 'PUT',
       body: JSON.stringify(corpo),
+    });
+  },
+
+  registrarSinaisVitais(id: string, corpo: unknown): Promise<MedicaoSinaisVitais> {
+    return requisitar<MedicaoSinaisVitais>(`/atendimentos/${id}/sinais-vitais`, {
+      method: 'POST',
+      body: JSON.stringify(corpo),
+    });
+  },
+
+  removerSinaisVitais(id: string, medicaoId: string): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/sinais-vitais/${medicaoId}`, {
+      method: 'DELETE',
     });
   },
 
