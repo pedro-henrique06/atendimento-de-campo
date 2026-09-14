@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { BaseAdmin } from '../api/tipos';
-import { Campo, Carregando, Erros, Etiqueta, Vazio } from '../componentes/Basicos';
+import type { BaseAdmin, TipoMissao } from '../api/tipos';
+import { Campo, Carregando, Erros, Etiqueta, Opcoes, Vazio } from '../componentes/Basicos';
 import { useSessao } from '../hooks/useSessao';
-import { useI18n } from '../i18n';
+import { useI18n, traduzir } from '../i18n';
+import { tiposMissao } from '../i18n/enums';
+
+const TIPOS: TipoMissao[] = ['Programada', 'Catastrofe'];
 
 /**
  * Formulário aberto: uma base existente sendo editada, ou uma nova.
@@ -18,10 +21,11 @@ type Edicao = {
   nome: string;
   prefixo: string;
   prefixoTocado: boolean;
+  tipoMissao: TipoMissao | null;
 };
 
 export function GestaoBases() {
-  const { t } = useI18n();
+  const { t, idioma } = useI18n();
   const { base: baseAtual, definirBase } = useSessao();
 
   const [bases, setBases] = useState<BaseAdmin[] | null>(null);
@@ -49,7 +53,7 @@ export function GestaoBases() {
 
   function abrirNova() {
     setErros([]);
-    setEdicao({ base: null, nome: '', prefixo: '', prefixoTocado: false });
+    setEdicao({ base: null, nome: '', prefixo: '', prefixoTocado: false, tipoMissao: null });
   }
 
   /*
@@ -87,7 +91,11 @@ export function GestaoBases() {
     setErros([]);
     setSalvando(true);
 
-    const dados = { nome: edicao.nome.trim(), prefixoCodigo: edicao.prefixo.trim().toUpperCase() };
+    const dados = {
+      nome: edicao.nome.trim(),
+      prefixoCodigo: edicao.prefixo.trim().toUpperCase(),
+      tipoMissao: edicao.tipoMissao,
+    };
 
     try {
       if (edicao.base) {
@@ -101,6 +109,7 @@ export function GestaoBases() {
             nome: atualizada.nome,
             prefixoCodigo: atualizada.prefixoCodigo,
             ativa: atualizada.ativa,
+            tipoMissao: atualizada.tipoMissao,
           });
         }
       } else {
@@ -174,6 +183,29 @@ export function GestaoBases() {
             </span>
           </Campo>
 
+          {/*
+            Sem valor padrão: escolher "programada" sozinho chamaria de missão
+            programada uma base montada numa enchente. Cada atendimento guarda
+            o tipo do momento em que foi aberto, então mudar aqui vale da
+            próxima abertura em diante.
+          */}
+          {/*
+            Rótulo solto, e não `Campo`: ele envolve os filhos num `<label>`, e
+            um `<label>` em volta de um grupo de botões faz o leitor de tela
+            anunciar o texto inteiro dele como se fosse o nome de um dos botões.
+          */}
+          <div>
+            <span className="rotulo">{t('tipoMissao')}</span>
+            <Opcoes
+              valor={edicao.tipoMissao}
+              opcoes={TIPOS}
+              aoEscolher={(tipoMissao) => setEdicao({ ...edicao, tipoMissao })}
+              tabela={tiposMissao}
+              idioma={idioma}
+            />
+            <span className="mt-1 block text-sm text-texto-suave">{t('dicaTipoMissao')}</span>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <button type="submit" className="botao w-auto px-5" disabled={salvando}>
               {salvando ? t('carregando') : t('salvar')}
@@ -205,6 +237,7 @@ export function GestaoBases() {
                   <p className="font-bold">{b.nome}</p>
                   <p className="text-sm text-texto-suave">
                     <span className="font-mono tracking-widest">{b.prefixoCodigo}</span>
+                    {b.tipoMissao ? ` · ${traduzir(tiposMissao, idioma, b.tipoMissao)}` : ''}
                     {' · '}
                     {b.totalAtendimentos === 0
                       ? t('nenhumAtendimento')
@@ -233,6 +266,7 @@ export function GestaoBases() {
                       nome: b.nome,
                       prefixo: b.prefixoCodigo,
                       prefixoTocado: true,
+                      tipoMissao: b.tipoMissao,
                     });
                   }}
                 >

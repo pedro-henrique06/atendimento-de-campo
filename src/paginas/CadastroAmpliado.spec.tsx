@@ -31,7 +31,7 @@ function comSessao(children: React.ReactNode) {
   localStorage.setItem('atendimento.profissional', JSON.stringify(ENFERMEIRA));
   localStorage.setItem(
     'atendimento.base',
-    JSON.stringify({ id: 'b1', nome: 'Acampamento Panamá', prefixoCodigo: 'ACA', ativa: true }),
+    JSON.stringify({ id: 'b1', nome: 'Acampamento Panamá', prefixoCodigo: 'ACA', ativa: true, tipoMissao: null }),
   );
 
   return render(
@@ -207,7 +207,7 @@ describe('Triagem', () => {
     vi.spyOn(api, 'prontuario').mockResolvedValue({
       id: 'a1',
       codigo: 'ACA-4K7Z',
-      base: { id: 'b1', nome: 'Acampamento Panamá', prefixoCodigo: 'ACA', ativa: true },
+      base: { id: 'b1', nome: 'Acampamento Panamá', prefixoCodigo: 'ACA', ativa: true, tipoMissao: null },
       paciente: {
         id: 'pa1',
         codigo: 'ACAB-4K7Z',
@@ -255,6 +255,7 @@ describe('Triagem', () => {
     ultrassom: null,
     farmacia: null,
     sinaisVitais: [],
+    tipoMissao: null,
       tempoNasFilas: [],
       historico: [],
       etapas: [],

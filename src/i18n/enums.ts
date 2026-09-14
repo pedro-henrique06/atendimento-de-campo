@@ -6,6 +6,7 @@ import type {
   DesfechoAtendimento,
   DesfechoConsulta,
   RacaCor,
+  TipoMissao,
   ResultadoTesteRapido,
   EstadoDente,
   Especialidade,
@@ -295,6 +296,21 @@ export const desfechosAtendimento: Traducao<DesfechoAtendimento> = {
     TransferenciaHospitalar: 'Hospital transfer',
     Obito: 'Death',
     Outro: 'Other',
+  },
+};
+
+export const tiposMissao: Traducao<TipoMissao> = {
+  Pt: {
+    Programada: 'Missão programada',
+    Catastrofe: 'Catástrofe',
+  },
+  Es: {
+    Programada: 'Misión programada',
+    Catastrofe: 'Catástrofe',
+  },
+  En: {
+    Programada: 'Scheduled mission',
+    Catastrofe: 'Disaster response',
   },
 };
 
@@ -894,6 +910,7 @@ export const tabelasDeEnum = {
   statusEtapa,
   desfechos,
   desfechosAtendimento,
+  tiposMissao,
   racasCor,
   resultadosTesteRapido,
   sexos,

@@ -373,11 +373,22 @@ export interface UsuarioDisponivel {
   disponivel: boolean;
 }
 
+/**
+ * Em que tipo de operação a base está trabalhando.
+ *
+ * São dois formulários de papel e duas operações diferentes: na programada a
+ * equipe vai a uma comunidade combinada, com agenda e especialidades arranjadas
+ * de antemão; na catástrofe ela monta base onde deu, e a triagem é o que manda.
+ */
+export type TipoMissao = 'Programada' | 'Catastrofe';
+
 export interface Base {
   id: string;
   nome: string;
   prefixoCodigo: string;
   ativa: boolean;
+  /** Nulo nas bases criadas antes do campo existir. */
+  tipoMissao: TipoMissao | null;
 }
 
 export interface AlertaAlergia {
@@ -432,6 +443,7 @@ export interface BaseAdmin {
   id: string;
   nome: string;
   prefixoCodigo: string;
+  tipoMissao: TipoMissao | null;
   ativa: boolean;
   criadaEm: string;
   totalAtendimentos: number;
@@ -723,6 +735,14 @@ export interface Prontuario {
   desfecho: DesfechoAtendimento | null;
   /** Para onde foi transferido, ou qual foi o outro motivo. */
   desfechoDetalhe: string | null;
+  /**
+   * Em que operação este atendimento aconteceu, copiado da base na abertura.
+   *
+   * Copiado, e não lido da base: a mesma escola vira base de missão programada
+   * em março e de enchente em novembro, e mudar o tipo da base reescreveria o
+   * passado.
+   */
+  tipoMissao: TipoMissao | null;
   triagem: Triagem | null;
   consultas: Consulta[];
   odontologia: Odontologia | null;

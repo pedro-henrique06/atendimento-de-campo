@@ -267,6 +267,8 @@ export const textos = {
     sinaisVitais: 'Sinais vitais',
     // Folha de observação — a tabela horária de sinais vitais
     folhaDeObservacao: 'Folha de observação',
+    tipoMissao: 'Tipo de missão',
+    dicaTipoMissao: 'Vale para os atendimentos abertos a partir de agora.',
     novaMedida: 'Nova medida',
     registrarSinaisVitais: 'Registrar sinais vitais',
     semSinaisVitais: 'Nenhuma medida registrada.',
@@ -629,6 +631,8 @@ export const textos = {
     sinaisVitais: 'Signos vitales',
     // Hoja de observación — la tabla horaria de signos vitales
     folhaDeObservacao: 'Hoja de observación',
+    tipoMissao: 'Tipo de misión',
+    dicaTipoMissao: 'Vale para las atenciones abiertas de ahora en adelante.',
     novaMedida: 'Nueva medición',
     registrarSinaisVitais: 'Registrar signos vitales',
     semSinaisVitais: 'Ninguna medición registrada.',
@@ -991,6 +995,8 @@ export const textos = {
     sinaisVitais: 'Vital signs',
     // Observation chart — the hourly vital signs table
     folhaDeObservacao: 'Observation chart',
+    tipoMissao: 'Mission type',
+    dicaTipoMissao: 'Applies to attendances opened from now on.',
     novaMedida: 'New reading',
     registrarSinaisVitais: 'Record vital signs',
     semSinaisVitais: 'No readings recorded.',

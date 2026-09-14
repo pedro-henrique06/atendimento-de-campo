@@ -20,6 +20,7 @@ import type {
   RespostaLogin,
   StatusConta,
   SugestaoStart,
+  TipoMissao,
   UsuarioDisponivel,
 } from './tipos';
 
@@ -358,11 +359,18 @@ export const api = {
     );
   },
 
-  criarBase(dados: { nome: string; prefixoCodigo: string }): Promise<BaseAdmin> {
+  criarBase(dados: {
+    nome: string;
+    prefixoCodigo: string;
+    tipoMissao: TipoMissao | null;
+  }): Promise<BaseAdmin> {
     return requisitar<BaseAdmin>('/bases', { method: 'POST', body: JSON.stringify(dados) });
   },
 
-  atualizarBase(id: string, dados: { nome: string; prefixoCodigo: string }): Promise<BaseAdmin> {
+  atualizarBase(
+    id: string,
+    dados: { nome: string; prefixoCodigo: string; tipoMissao: TipoMissao | null },
+  ): Promise<BaseAdmin> {
     return requisitar<BaseAdmin>(`/bases/${id}`, { method: 'PUT', body: JSON.stringify(dados) });
   },
 

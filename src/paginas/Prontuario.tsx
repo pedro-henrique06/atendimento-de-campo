@@ -25,6 +25,7 @@ import {
   sintomas as tabelaSintomas,
   statusAtendimento,
   tiposDocumento,
+  tiposMissao,
 } from '../i18n/enums';
 
 function Linha({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
@@ -189,6 +190,17 @@ export function Prontuario() {
         <Etiqueta tom={finalizado ? 'sucesso' : 'neutro'}>
           {traduzir(statusAtendimento, idioma, prontuario.status)}
         </Etiqueta>
+
+        {/*
+          Em que operação este atendimento aconteceu. É o tipo copiado na
+          abertura, e não o da base agora: a mesma escola vira base de missão
+          programada em março e de enchente em novembro.
+        */}
+        {prontuario.tipoMissao ? (
+          <Etiqueta tom={prontuario.tipoMissao === 'Catastrofe' ? 'aviso' : 'neutro'}>
+            {traduzir(tiposMissao, idioma, prontuario.tipoMissao)}
+          </Etiqueta>
+        ) : null}
       </div>
 
       <div className="cartao space-y-3">

@@ -13,6 +13,7 @@ const NOVA: BaseAdmin = {
   nome: 'Acampamento Panamá',
   prefixoCodigo: 'ACA',
   ativa: true,
+  tipoMissao: null,
   criadaEm: '2026-01-10T12:00:00Z',
   totalAtendimentos: 0,
   atendimentosAbertos: 0,
@@ -24,6 +25,7 @@ const COM_HISTORICO: BaseAdmin = {
   nome: 'Escuela Zoe',
   prefixoCodigo: 'ESC',
   ativa: true,
+  tipoMissao: 'Catastrofe',
   criadaEm: '2026-01-11T12:00:00Z',
   totalAtendimentos: 42,
   atendimentosAbertos: 3,
@@ -136,5 +138,71 @@ describe('Gestão de bases', () => {
 
     expect(await screen.findByRole('button', { name: 'Ativar' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Excluir|Apagar/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('Tipo de missão', () => {
+  it('mostra o tipo na lista, e nada na base que não tem', async () => {
+    renderizar();
+
+    // Sem tipo, nada aparece: "Programada" numa base que ninguém classificou
+    // seria dado inventado.
+    expect(await screen.findByText(/Catástrofe/)).toBeInTheDocument();
+    expect(screen.queryByText(/Missão programada/)).not.toBeInTheDocument();
+  });
+
+  it('não vem escolhido em base nova', async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(await screen.findByRole('button', { name: 'Nova base' }));
+
+    // Um padrão aqui chamaria de missão programada uma base montada numa
+    // enchente.
+    expect(screen.getByRole('button', { name: 'Missão programada' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByRole('button', { name: 'Catástrofe' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('manda o tipo escolhido ao criar', async () => {
+    const usuario = userEvent.setup();
+    const criar = vi.spyOn(api, 'criarBase').mockResolvedValue(NOVA);
+
+    renderizar();
+
+    await usuario.click(await screen.findByRole('button', { name: 'Nova base' }));
+    await usuario.type(screen.getByLabelText(/Nome da base/), 'Abrigo da Enchente');
+    await usuario.click(screen.getByRole('button', { name: 'Catástrofe' }));
+    await usuario.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(criar).toHaveBeenCalled());
+
+    expect(criar.mock.calls[0][0]).toMatchObject({ tipoMissao: 'Catastrofe' });
+  });
+
+  it('abre a edição já com o tipo que a base tem', async () => {
+    const usuario = userEvent.setup();
+    const atualizar = vi.spyOn(api, 'atualizarBase').mockResolvedValue(COM_HISTORICO);
+
+    renderizar();
+
+    const cartao = (await screen.findByText('Escuela Zoe')).closest('li')!;
+    await usuario.click(within(cartao).getByRole('button', { name: 'Editar' }));
+
+    expect(screen.getByRole('button', { name: 'Catástrofe' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    // Salvar sem mexer no tipo não pode apagá-lo.
+    await usuario.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(atualizar).toHaveBeenCalled());
+    expect(atualizar.mock.calls[0][1]).toMatchObject({ tipoMissao: 'Catastrofe' });
   });
 });
