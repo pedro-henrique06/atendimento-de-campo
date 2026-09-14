@@ -5,7 +5,9 @@ import type {
   ConselhoTipo,
   DesfechoAtendimento,
   DesfechoConsulta,
+  Lateralidade,
   RacaCor,
+  TipoMissao,
   ResultadoTesteRapido,
   EstadoDente,
   Especialidade,
@@ -51,6 +53,12 @@ export const especialidades: Traducao<Especialidade> = {
     Odontologia: 'Odontologia',
     Enfermagem: 'Enfermagem',
     SaudeMental: 'Saúde Mental',
+    Ginecologia: 'Ginecologia',
+    Cirurgia: 'Cirurgia',
+    Anestesia: 'Anestesia',
+    Cardiologia: 'Cardiologia',
+    Ultrassom: 'Ultrassom',
+    Farmacia: 'Farmácia',
   },
   Es: {
     Triagem: 'Triaje',
@@ -60,6 +68,12 @@ export const especialidades: Traducao<Especialidade> = {
     Odontologia: 'Odontología',
     Enfermagem: 'Enfermería',
     SaudeMental: 'Salud Mental',
+    Ginecologia: 'Ginecología',
+    Cirurgia: 'Cirugía',
+    Anestesia: 'Anestesia',
+    Cardiologia: 'Cardiología',
+    Ultrassom: 'Ecografía',
+    Farmacia: 'Farmacia',
   },
   En: {
     Triagem: 'Triage',
@@ -69,6 +83,12 @@ export const especialidades: Traducao<Especialidade> = {
     Odontologia: 'Dentistry',
     Enfermagem: 'Nursing',
     SaudeMental: 'Mental Health',
+    Ginecologia: 'Gynaecology',
+    Cirurgia: 'Surgery',
+    Anestesia: 'Anaesthesia',
+    Cardiologia: 'Cardiology',
+    Ultrassom: 'Ultrasound',
+    Farmacia: 'Pharmacy',
   },
 };
 
@@ -78,6 +98,11 @@ export const funcoes: Traducao<FuncaoProfissional> = {
     ClinicoGeral: 'Clínico(a) geral',
     Pediatra: 'Pediatra',
     Ortopedista: 'Ortopedista',
+    Ginecologista: 'Ginecologista',
+    Cirurgiao: 'Cirurgião(ã)',
+    Anestesista: 'Anestesista',
+    Cardiologista: 'Cardiologista',
+    Ultrassonografista: 'Ultrassonografista',
     Enfermeiro: 'Enfermeiro(a)',
     TecnicoEnfermagem: 'Técnico(a) de enfermagem',
     Dentista: 'Dentista',
@@ -93,6 +118,11 @@ export const funcoes: Traducao<FuncaoProfissional> = {
     ClinicoGeral: 'Médico(a) general',
     Pediatra: 'Pediatra',
     Ortopedista: 'Traumatólogo(a)',
+    Ginecologista: 'Ginecólogo(a)',
+    Cirurgiao: 'Cirujano(a)',
+    Anestesista: 'Anestesista',
+    Cardiologista: 'Cardiólogo(a)',
+    Ultrassonografista: 'Ecografista',
     Enfermeiro: 'Enfermero(a)',
     TecnicoEnfermagem: 'Técnico(a) de enfermería',
     Dentista: 'Dentista',
@@ -108,6 +138,11 @@ export const funcoes: Traducao<FuncaoProfissional> = {
     ClinicoGeral: 'General practitioner',
     Pediatra: 'Paediatrician',
     Ortopedista: 'Orthopaedist',
+    Ginecologista: 'Gynaecologist',
+    Cirurgiao: 'Surgeon',
+    Anestesista: 'Anaesthetist',
+    Cardiologista: 'Cardiologist',
+    Ultrassonografista: 'Sonographer',
     Enfermeiro: 'Nurse',
     TecnicoEnfermagem: 'Nursing technician',
     Dentista: 'Dentist',
@@ -262,6 +297,42 @@ export const desfechosAtendimento: Traducao<DesfechoAtendimento> = {
     TransferenciaHospitalar: 'Hospital transfer',
     Obito: 'Death',
     Outro: 'Other',
+  },
+};
+
+export const lateralidades: Traducao<Lateralidade> = {
+  Pt: {
+    NaoSeAplica: 'Não se aplica',
+    Direito: 'Direito',
+    Esquerdo: 'Esquerdo',
+    Bilateral: 'Bilateral',
+  },
+  Es: {
+    NaoSeAplica: 'No se aplica',
+    Direito: 'Derecho',
+    Esquerdo: 'Izquierdo',
+    Bilateral: 'Bilateral',
+  },
+  En: {
+    NaoSeAplica: 'Not applicable',
+    Direito: 'Right',
+    Esquerdo: 'Left',
+    Bilateral: 'Bilateral',
+  },
+};
+
+export const tiposMissao: Traducao<TipoMissao> = {
+  Pt: {
+    Programada: 'Missão programada',
+    Catastrofe: 'Catástrofe',
+  },
+  Es: {
+    Programada: 'Misión programada',
+    Catastrofe: 'Catástrofe',
+  },
+  En: {
+    Programada: 'Scheduled mission',
+    Catastrofe: 'Disaster response',
   },
 };
 
@@ -741,6 +812,8 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     RegistrouObito: 'registrou o óbito',
     TransferiuParaHospital: 'transferiu para hospital',
     EncerrouPorOutroMotivo: 'encerrou por outro motivo',
+    RegistrouSinaisVitais: 'registrou sinais vitais',
+    RemoveuSinaisVitais: 'removeu uma medida de sinais vitais',
   },
   Es: {
     CriouAtendimento: 'creó la atención',
@@ -761,6 +834,8 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     RegistrouObito: 'registró el fallecimiento',
     TransferiuParaHospital: 'transfirió a hospital',
     EncerrouPorOutroMotivo: 'cerró por otro motivo',
+    RegistrouSinaisVitais: 'registró signos vitales',
+    RemoveuSinaisVitais: 'eliminó una medición de signos vitales',
   },
   En: {
     CriouAtendimento: 'created the encounter',
@@ -781,6 +856,8 @@ export const acoesAuditoria: Traducao<AcaoAuditoria> = {
     RegistrouObito: 'recorded the death',
     TransferiuParaHospital: 'transferred to hospital',
     EncerrouPorOutroMotivo: 'closed for another reason',
+    RegistrouSinaisVitais: 'recorded vital signs',
+    RemoveuSinaisVitais: 'removed a vital signs reading',
   },
 };
 
@@ -855,6 +932,8 @@ export const tabelasDeEnum = {
   statusEtapa,
   desfechos,
   desfechosAtendimento,
+  tiposMissao,
+  lateralidades,
   racasCor,
   resultadosTesteRapido,
   sexos,

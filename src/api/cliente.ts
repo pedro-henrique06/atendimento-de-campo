@@ -11,6 +11,7 @@ import type {
   Especialidade,
   FuncaoProfissional,
   ItemCatalogo,
+  MedicaoSinaisVitais,
   MotivoRecusaLogin,
   PacienteConhecido,
   ProducaoProfissional,
@@ -19,6 +20,7 @@ import type {
   RespostaLogin,
   StatusConta,
   SugestaoStart,
+  TipoMissao,
   UsuarioDisponivel,
 } from './tipos';
 
@@ -357,11 +359,18 @@ export const api = {
     );
   },
 
-  criarBase(dados: { nome: string; prefixoCodigo: string }): Promise<BaseAdmin> {
+  criarBase(dados: {
+    nome: string;
+    prefixoCodigo: string;
+    tipoMissao: TipoMissao | null;
+  }): Promise<BaseAdmin> {
     return requisitar<BaseAdmin>('/bases', { method: 'POST', body: JSON.stringify(dados) });
   },
 
-  atualizarBase(id: string, dados: { nome: string; prefixoCodigo: string }): Promise<BaseAdmin> {
+  atualizarBase(
+    id: string,
+    dados: { nome: string; prefixoCodigo: string; tipoMissao: TipoMissao | null },
+  ): Promise<BaseAdmin> {
     return requisitar<BaseAdmin>(`/bases/${id}`, { method: 'PUT', body: JSON.stringify(dados) });
   },
 
@@ -516,6 +525,44 @@ export const api = {
 
   registrarEnfermagem(id: string, corpo: unknown): Promise<void> {
     return requisitar<void>(`/atendimentos/${id}/enfermagem`, {
+      method: 'PUT',
+      body: JSON.stringify(corpo),
+    });
+  },
+
+  registrarSinaisVitais(id: string, corpo: unknown): Promise<MedicaoSinaisVitais> {
+    return requisitar<MedicaoSinaisVitais>(`/atendimentos/${id}/sinais-vitais`, {
+      method: 'POST',
+      body: JSON.stringify(corpo),
+    });
+  },
+
+  removerSinaisVitais(id: string, medicaoId: string): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/sinais-vitais/${medicaoId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  /**
+   * Salva a ficha cirúrgica. Pode ser chamada várias vezes — uma por parada da
+   * lista de verificação —, e só fecha a fila quando vai com desfecho.
+   */
+  registrarCirurgia(id: string, corpo: unknown): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/cirurgia`, {
+      method: 'PUT',
+      body: JSON.stringify(corpo),
+    });
+  },
+
+  registrarUltrassom(id: string, corpo: unknown): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/ultrassom`, {
+      method: 'PUT',
+      body: JSON.stringify(corpo),
+    });
+  },
+
+  registrarFarmacia(id: string, corpo: unknown): Promise<void> {
+    return requisitar<void>(`/atendimentos/${id}/farmacia`, {
       method: 'PUT',
       body: JSON.stringify(corpo),
     });

@@ -5,10 +5,11 @@ import type { Base } from '../api/tipos';
 import { Carregando, Erros } from '../componentes/Basicos';
 import { Marca } from '../componentes/Marca';
 import { useSessao } from '../hooks/useSessao';
-import { useI18n } from '../i18n';
+import { useI18n, traduzir } from '../i18n';
+import { tiposMissao } from '../i18n/enums';
 
 export function SelecaoBase() {
-  const { t } = useI18n();
+  const { t, idioma } = useI18n();
   const { definirBase, sair } = useSessao();
   const navegar = useNavigate();
 
@@ -66,9 +67,17 @@ export function SelecaoBase() {
                   value={escolhida}
                   onChange={(e) => setEscolhida(e.target.value)}
                 >
+                  {/*
+                    O tipo da operação aparece já na escolha: entrar numa base
+                    de catástrofe é um turno diferente de entrar numa missão
+                    programada, e quem chega no meio do plantão precisa saber
+                    disso antes de abrir a primeira ficha.
+                  */}
                   {bases.map((base) => (
                     <option key={base.id} value={base.id}>
-                      {base.nome}
+                      {base.tipoMissao
+                        ? `${base.nome} · ${traduzir(tiposMissao, idioma, base.tipoMissao)}`
+                        : base.nome}
                     </option>
                   ))}
                 </select>

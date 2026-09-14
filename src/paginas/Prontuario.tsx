@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { Dispensacao, EsperaFila, Prontuario as ProntuarioDto } from '../api/tipos';
+import type { EsperaFila, Ginecologia, Prontuario as ProntuarioDto } from '../api/tipos';
 import { AlertaAlergia, Carregando, Erros, Etiqueta, PontoRisco, Secao } from '../componentes/Basicos';
+import { ListaItens } from '../componentes/Dispensacao';
 import { Encaminhar } from '../componentes/Encaminhar';
+import { FolhaDeObservacao } from '../componentes/FolhaDeObservacao';
+import { rotaDaFicha } from '../componentes/FichaDeEtapa';
 import { Odontograma } from '../componentes/Odontograma';
 import { useI18n, traduzir } from '../i18n';
 import { traduzirCampoAuditoria, traduzirValorAuditoria } from '../i18n/auditoria';
@@ -16,13 +19,14 @@ import {
   racasCor,
   resultadosTesteRapido,
   faixasImc,
+  lateralidades,
+  procedimentosEnfermagem,
   procedimentosOdontologicos,
   sexos,
   sintomas as tabelaSintomas,
   statusAtendimento,
   tiposDocumento,
-  unidades,
-  vias,
+  tiposMissao,
 } from '../i18n/enums';
 
 function Linha({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
@@ -36,25 +40,23 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
   );
 }
 
-function ListaItens({ itens }: { itens: Dispensacao[] }) {
-  const { t, idioma } = useI18n();
+/**
+ * "G3 P2 A1", ou nulo quando nada foi preenchido.
+ *
+ * Os três são guardados separados — em texto, "G3 P2 A1", "3-2-1" e "III/II/I"
+ * contariam a mesma coisa de três jeitos e nenhum deles somaria —, mas na
+ * leitura andam juntos.
+ */
+function gpa(ginecologia: Ginecologia | null | undefined): string | null {
+  if (!ginecologia) return null;
 
-  if (itens.length === 0) return <p className="text-sm text-texto-suave">{t('semItens')}</p>;
+  const partes = [
+    ginecologia.gestacoes === null ? null : `G${ginecologia.gestacoes}`,
+    ginecologia.partos === null ? null : `P${ginecologia.partos}`,
+    ginecologia.abortos === null ? null : `A${ginecologia.abortos}`,
+  ].filter((p): p is string => p !== null);
 
-  return (
-    <ul className="space-y-1 text-sm">
-      {itens.map((item) => (
-        <li key={item.id}>
-          · {item.quantidade} {traduzir(unidades, idioma, item.unidade)} — {item.item}
-          {item.via ? ` · ${traduzir(vias, idioma, item.via)}` : ''}
-          {item.posologia ? ` · ${item.posologia}` : ''}
-          {item.foraDoCatalogo ? (
-            <span className="ml-2 text-amarelo">({t('itemForaCatalogo')})</span>
-          ) : null}
-        </li>
-      ))}
-    </ul>
-  );
+  return partes.length === 0 ? null : partes.join(' ');
 }
 
 function TempoNasFilas({ filas }: { filas: EsperaFila[] }) {
@@ -114,6 +116,27 @@ export function Prontuario() {
     }
   }
 
+  /**
+   * Apaga uma linha da folha de observação.
+   *
+   * Pergunta antes porque é medida de paciente, e o histórico guarda quem
+   * apagou — como a linha riscada no papel, que continua lá.
+   */
+  async function removerMedida(medicaoId: string) {
+    if (!window.confirm(t('confirmarRemoverMedida'))) return;
+
+    setErros([]);
+
+    try {
+      await api.removerSinaisVitais(id, medicaoId);
+      carregar();
+    } catch (erro) {
+      if (erro instanceof ErroApi) setErros(erro.erros);
+      else if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
+      else setErros([t('erroInesperado')]);
+    }
+  }
+
   async function reabrir() {
     setErros([]);
 
@@ -142,10 +165,13 @@ export function Prontuario() {
   const paciente = prontuario.paciente;
   const finalizado = prontuario.status === 'Finalizado';
 
-  /** Há fila aberta? Se há, quem encerra é a alta, e não o botão de finalizar. */
-  const temFilaAberta = prontuario.etapas.some(
+  /** As filas em que ainda dá para escrever. Uma ficha por fila aberta. */
+  const fichasAbertas = prontuario.etapas.filter(
     (e) => e.status !== 'Concluida' && e.status !== 'Cancelada',
   );
+
+  /** Há fila aberta? Se há, quem encerra é a alta, e não o botão de finalizar. */
+  const temFilaAberta = fichasAbertas.length > 0;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
@@ -165,6 +191,17 @@ export function Prontuario() {
         <Etiqueta tom={finalizado ? 'sucesso' : 'neutro'}>
           {traduzir(statusAtendimento, idioma, prontuario.status)}
         </Etiqueta>
+
+        {/*
+          Em que operação este atendimento aconteceu. É o tipo copiado na
+          abertura, e não o da base agora: a mesma escola vira base de missão
+          programada em março e de enchente em novembro.
+        */}
+        {prontuario.tipoMissao ? (
+          <Etiqueta tom={prontuario.tipoMissao === 'Catastrofe' ? 'aviso' : 'neutro'}>
+            {traduzir(tiposMissao, idioma, prontuario.tipoMissao)}
+          </Etiqueta>
+        ) : null}
       </div>
 
       <div className="cartao space-y-3">
@@ -382,6 +419,35 @@ export function Prontuario() {
               valor={consulta.ortopedia ? (consulta.ortopedia.necessitaRaioX ? t('sim') : t('nao')) : null}
             />
             <Linha
+              rotulo={t('dataUltimaMenstruacao')}
+              valor={consulta.ginecologia?.dataUltimaMenstruacao}
+            />
+            {/*
+              G/P/A numa linha só porque é assim que se lê: separados, viram
+              três linhas quase vazias que ninguém relaciona.
+            */}
+            <Linha rotulo={t('gestacoesPartosAbortos')} valor={gpa(consulta.ginecologia)} />
+            <Linha
+              rotulo={t('gestante')}
+              valor={
+                consulta.ginecologia?.gestante === null ||
+                consulta.ginecologia?.gestante === undefined
+                  ? null
+                  : consulta.ginecologia.gestante
+                    ? `${t('sim')}${
+                        consulta.ginecologia.semanasGestacao
+                          ? ` · ${consulta.ginecologia.semanasGestacao} ${t('semanas')}`
+                          : ''
+                      }`
+                    : t('nao')
+              }
+            />
+            <Linha
+              rotulo={t('metodoContraceptivo')}
+              valor={consulta.ginecologia?.metodoContraceptivo}
+            />
+            <Linha rotulo={t('ultimoPreventivo')} valor={consulta.ginecologia?.ultimoPreventivo} />
+            <Linha
               rotulo={t('desfecho')}
               valor={consulta.desfecho ? traduzir(desfechos, idioma, consulta.desfecho) : null}
             />
@@ -434,6 +500,191 @@ export function Prontuario() {
         </Secao>
       ) : null}
 
+      {/*
+        A enfermagem era gravada pela API e não aparecia em lugar nenhum: nem
+        aqui para ler, nem numa tela para preencher.
+      */}
+      {prontuario.enfermagem ? (
+        <Secao
+          titulo={traduzir(especialidades, idioma, 'Enfermagem')}
+          autor={prontuario.enfermagem.profissional}
+        >
+          <dl className="divide-y divide-borda">
+            <Linha
+              rotulo={t('procedimentosRealizados')}
+              valor={prontuario.enfermagem.procedimentos
+                .map((p) => traduzir(procedimentosEnfermagem, idioma, p))
+                .join(', ')}
+            />
+            <Linha rotulo={t('procedimentos')} valor={prontuario.enfermagem.outroProcedimento} />
+            <Linha rotulo={t('observacoes')} valor={prontuario.enfermagem.observacoes} />
+            <Linha
+              rotulo={t('desfecho')}
+              valor={
+                prontuario.enfermagem.desfecho
+                  ? traduzir(desfechos, idioma, prontuario.enfermagem.desfecho)
+                  : null
+              }
+            />
+          </dl>
+
+          <div>
+            <h3 className="rotulo">{t('dispensacao')}</h3>
+            <ListaItens itens={prontuario.enfermagem.dispensacoes} />
+          </div>
+        </Secao>
+      ) : null}
+
+      {prontuario.cirurgia ? (
+        <Secao
+          titulo={traduzir(especialidades, idioma, 'Cirurgia')}
+          autor={prontuario.cirurgia.profissional}
+        >
+          <dl className="divide-y divide-borda">
+            <Linha rotulo={t('indicacaoCirurgica')} valor={prontuario.cirurgia.indicacao} />
+            <Linha
+              rotulo={t('procedimentoProposto')}
+              valor={
+                prontuario.cirurgia.procedimentoProposto === null
+                  ? null
+                  : prontuario.cirurgia.lateralidade === 'NaoSeAplica'
+                    ? prontuario.cirurgia.procedimentoProposto
+                    : `${prontuario.cirurgia.procedimentoProposto} · ${traduzir(
+                        lateralidades,
+                        idioma,
+                        prontuario.cirurgia.lateralidade,
+                      )}`
+              }
+            />
+            <Linha
+              rotulo={t('jejumHoras')}
+              valor={prontuario.cirurgia.jejumHoras === null ? null : `${prontuario.cirurgia.jejumHoras} h`}
+            />
+            <Linha
+              rotulo={t('consentimentoAssinado')}
+              valor={prontuario.cirurgia.consentimentoAssinado ? t('sim') : t('nao')}
+            />
+            <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesPreOperatorio} />
+          </dl>
+
+          {/*
+            As quatro paradas com a hora de cada uma. É a hora que diz se a
+            lista foi cumprida ao longo da cirurgia ou preenchida de uma vez no
+            fim — quatro carimbos no mesmo minuto contam essa história.
+          */}
+          <div>
+            <h3 className="rotulo">{t('listaDeVerificacao')}</h3>
+            <ul className="space-y-1 text-sm">
+              {(
+                [
+                  ['checkIn', prontuario.cirurgia.checkInEm],
+                  ['timeOutUm', prontuario.cirurgia.timeOutUmEm],
+                  ['timeOutDois', prontuario.cirurgia.timeOutDoisEm],
+                  ['checkOut', prontuario.cirurgia.checkOutEm],
+                ] as const
+              ).map(([chave, quando]) => (
+                <li key={chave} className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span>{t(chave)}</span>
+                  <span className={quando ? 'tabular-nums' : 'text-texto-suave'}>
+                    {quando
+                      ? new Date(quando).toLocaleTimeString(undefined, { timeStyle: 'short' })
+                      : t('paradaPendente')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <dl className="divide-y divide-borda">
+            <Linha
+              rotulo={t('checkOutProblemaEquipamento')}
+              valor={prontuario.cirurgia.checkOutProblemasComEquipamento ? t('sim') : null}
+            />
+            <Linha
+              rotulo={t('cuidadosRecuperacao')}
+              valor={prontuario.cirurgia.checkOutCuidadosRecuperacao}
+            />
+            <Linha
+              rotulo={t('recuperacao')}
+              valor={
+                prontuario.cirurgia.recuperacaoEntradaEm === null
+                  ? null
+                  : `${new Date(prontuario.cirurgia.recuperacaoEntradaEm).toLocaleTimeString(undefined, {
+                      timeStyle: 'short',
+                    })}${
+                      prontuario.cirurgia.recuperacaoSaidaEm
+                        ? ` — ${new Date(prontuario.cirurgia.recuperacaoSaidaEm).toLocaleTimeString(
+                            undefined,
+                            { timeStyle: 'short' },
+                          )}`
+                        : ''
+                    }`
+              }
+            />
+            <Linha rotulo={t('intercorrencias')} valor={prontuario.cirurgia.intercorrencias} />
+            <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesRecuperacao} />
+            <Linha
+              rotulo={t('desfecho')}
+              valor={
+                prontuario.cirurgia.desfecho
+                  ? traduzir(desfechos, idioma, prontuario.cirurgia.desfecho)
+                  : null
+              }
+            />
+          </dl>
+        </Secao>
+      ) : null}
+
+      {prontuario.ultrassom ? (
+        <Secao
+          titulo={traduzir(especialidades, idioma, 'Ultrassom')}
+          autor={prontuario.ultrassom.profissional}
+        >
+          <dl className="divide-y divide-borda">
+            <Linha rotulo={t('exameSolicitado')} valor={prontuario.ultrassom.exameSolicitado} />
+            <Linha rotulo={t('indicacaoExame')} valor={prontuario.ultrassom.indicacao} />
+            <Linha rotulo={t('analise')} valor={prontuario.ultrassom.analise} />
+            <Linha rotulo={t('conclusaoLaudo')} valor={prontuario.ultrassom.conclusao} />
+            <Linha
+              rotulo={t('desfecho')}
+              valor={
+                prontuario.ultrassom.desfecho
+                  ? traduzir(desfechos, idioma, prontuario.ultrassom.desfecho)
+                  : null
+              }
+            />
+          </dl>
+        </Secao>
+      ) : null}
+
+      {prontuario.farmacia ? (
+        <Secao
+          titulo={traduzir(especialidades, idioma, 'Farmacia')}
+          autor={prontuario.farmacia.profissional}
+        >
+          <dl className="divide-y divide-borda">
+            <Linha
+              rotulo={t('orientacaoFarmaceutica')}
+              valor={prontuario.farmacia.orientacoes}
+            />
+            <Linha rotulo={t('observacoes')} valor={prontuario.farmacia.observacoes} />
+            <Linha
+              rotulo={t('desfecho')}
+              valor={
+                prontuario.farmacia.desfecho
+                  ? traduzir(desfechos, idioma, prontuario.farmacia.desfecho)
+                  : null
+              }
+            />
+          </dl>
+
+          <div>
+            <h3 className="rotulo">{t('entregue')}</h3>
+            <ListaItens itens={prontuario.farmacia.dispensacoes} />
+          </div>
+        </Secao>
+      ) : null}
+
       {prontuario.localizacao ? (
         <div className="cartao text-sm">
           <span className="font-semibold">{t('localizacaoAtendimento')}: </span>
@@ -451,6 +702,21 @@ export function Prontuario() {
           </a>
         </div>
       ) : null}
+
+      {/*
+        A folha de observação fica aberta, e não dentro de um `details` como o
+        tempo nas filas: o que ela mostra é o estado do paciente agora, e
+        escondida atrás de um clique ela deixa de ser olhada.
+      */}
+      <Secao titulo={t('folhaDeObservacao')}>
+        <FolhaDeObservacao medicoes={prontuario.sinaisVitais} aoRemover={removerMedida} />
+
+        {finalizado ? null : (
+          <Link className="botao-secundario inline-block" to={`/atendimentos/${id}/sinais-vitais`}>
+            {t('registrarSinaisVitais')}
+          </Link>
+        )}
+      </Secao>
 
       <details className="cartao">
         <summary className="cursor-pointer font-semibold text-marca-clara">{t('tempoNasFilas')}</summary>
@@ -572,16 +838,25 @@ export function Prontuario() {
         </div>
       ) : (
         <div className="space-y-3">
+          {/*
+            Uma ficha por fila aberta, e não três botões fixos.
+
+            Antes eram triagem, consulta e odontologia, com o da consulta
+            apontando sempre para a clínica geral: quem era da pediatria, da
+            ginecologia ou do ultrassom não tinha como chegar na própria ficha.
+            As filas abertas são exatamente as fichas que dá para preencher
+            agora.
+          */}
           <div className="flex flex-wrap gap-2">
-            <Link className="botao-secundario" to={`/atendimentos/${id}/triagem`}>
-              {t('triagem')}
-            </Link>
-            <Link className="botao-secundario" to={`/atendimentos/${id}/consulta/ClinicaGeral`}>
-              {t('consulta')}
-            </Link>
-            <Link className="botao-secundario" to={`/atendimentos/${id}/odontologia`}>
-              {t('odontologia')}
-            </Link>
+            {fichasAbertas.map((etapa) => (
+              <Link
+                key={etapa.especialidade}
+                className="botao-secundario"
+                to={rotaDaFicha(id, etapa.especialidade)}
+              >
+                {traduzir(especialidades, idioma, etapa.especialidade)}
+              </Link>
+            ))}
           </div>
 
           {/*

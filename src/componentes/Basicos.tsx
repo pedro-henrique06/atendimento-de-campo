@@ -129,11 +129,20 @@ export function PontoRisco({ risco }: { risco: ClassificacaoRisco | null }) {
   );
 }
 
-export function Etiqueta({ children, tom = 'neutro' }: { children: ReactNode; tom?: 'neutro' | 'sucesso' }) {
+export function Etiqueta({
+  children,
+  tom = 'neutro',
+}: {
+  children: ReactNode;
+  /** `aviso` é o que está acontecendo agora e precisa saltar da lista. */
+  tom?: 'neutro' | 'sucesso' | 'aviso';
+}) {
   const cor =
     tom === 'sucesso'
       ? 'border-verde/40 bg-verde/10 text-verde'
-      : 'border-borda bg-superficie-2 text-texto-suave';
+      : tom === 'aviso'
+        ? 'border-amarelo/50 bg-amarelo/10 text-amarelo'
+        : 'border-borda bg-superficie-2 text-texto-suave';
 
   return <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${cor}`}>{children}</span>;
 }

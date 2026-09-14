@@ -1,21 +1,12 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
+import { FILAS } from '../api/tipos';
 import type { DesfechoAtendimento, Especialidade, Prontuario } from '../api/tipos';
 import { Erros } from './Basicos';
 import { Cronometro } from './Cronometro';
 import { useI18n, traduzir } from '../i18n';
 import { desfechosAtendimento, especialidades } from '../i18n/enums';
-
-const FILAS: Especialidade[] = [
-  'Triagem',
-  'ClinicaGeral',
-  'Pediatria',
-  'Ortopedia',
-  'Odontologia',
-  'Enfermagem',
-  'SaudeMental',
-];
 
 /** Qual formulário está aberto. Fechado, o cartão mostra só os botões. */
 type Acao = 'nenhuma' | 'encaminhar' | 'devolver' | 'encerrar';

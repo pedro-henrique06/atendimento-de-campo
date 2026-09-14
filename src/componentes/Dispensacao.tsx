@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/cliente';
-import type { ItemCatalogo, ViaAdministracao } from '../api/tipos';
+import type { Dispensacao, ItemCatalogo, ViaAdministracao } from '../api/tipos';
 import { useI18n, traduzir } from '../i18n';
 import { formas, unidades, vias as tabelaVias } from '../i18n/enums';
 import { Campo, Interruptor } from './Basicos';
@@ -126,6 +126,34 @@ function BuscaCatalogo({ aoEscolher }: { aoEscolher: (item: ItemCatalogo) => voi
         </ul>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * O que foi dispensado, só para leitura.
+ *
+ * Mora aqui, e não na tela do prontuário, porque a farmácia precisa da mesma
+ * lista para conferir contra o que foi prescrito — e duas cópias dela acabariam
+ * mostrando o mesmo item de dois jeitos.
+ */
+export function ListaItens({ itens }: { itens: Dispensacao[] }) {
+  const { t, idioma } = useI18n();
+
+  if (itens.length === 0) return <p className="text-sm text-texto-suave">{t('semItens')}</p>;
+
+  return (
+    <ul className="space-y-1 text-sm">
+      {itens.map((item) => (
+        <li key={item.id}>
+          · {item.quantidade} {traduzir(unidades, idioma, item.unidade)} — {item.item}
+          {item.via ? ` · ${traduzir(tabelaVias, idioma, item.via)}` : ''}
+          {item.posologia ? ` · ${item.posologia}` : ''}
+          {item.foraDoCatalogo ? (
+            <span className="ml-2 text-amarelo">({t('itemForaCatalogo')})</span>
+          ) : null}
+        </li>
+      ))}
+    </ul>
   );
 }
 

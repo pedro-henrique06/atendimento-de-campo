@@ -104,6 +104,29 @@ describe('Fila de atendimentos', () => {
     );
   });
 
+  it('as filas novas aparecem na barra', async () => {
+    renderizar();
+
+    // Ultrassom e farmácia são filas derivadas — ninguém chega nelas sem alguém
+    // ter mandado —, mas precisam estar na barra: é por ali que quem atende
+    // nelas encontra o próprio trabalho.
+    expect(await screen.findByRole('button', { name: 'Ultrassom' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Farmácia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ginecologia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cirurgia' })).toBeInTheDocument();
+  });
+
+  it('a fila da profissão abre primeiro, mesmo sendo nova', async () => {
+    renderizar({ ...DENTISTA, funcao: 'Ultrassonografista', filas: ['Ultrassom'] });
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Ultrassom' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      ),
+    );
+  });
+
   it('não esconde as outras filas — em campo as funções se cobrem', async () => {
     renderizar();
 
@@ -200,6 +223,81 @@ describe('Fila de atendimentos', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Devolver à fila' }));
 
     expect(liberar).toHaveBeenCalledWith('a1', 'Odontologia');
+  });
+
+  it('separa quem está comigo de quem está esperando', async () => {
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([
+      atendimento({
+        id: 'a1',
+        pacienteNome: 'Comigo Agora',
+        etapas: [
+          {
+            id: 'e1',
+            especialidade: 'Odontologia',
+            status: 'EmAndamento',
+            profissional: 'Ana Dentista',
+            iniciadaEm: '2026-07-26T12:30:00Z',
+            concluidaEm: null,
+            assumidaEm: '2026-07-26T12:30:00Z',
+            encaminhadaPor: null,
+            encaminhadaDe: null,
+          },
+        ],
+      }),
+      atendimento({ id: 'a2', pacienteNome: 'Esperando Ainda' }),
+    ]);
+
+    renderizar();
+
+    // A API já traz os dois juntos — esconde só o que está com outra pessoa.
+    // Sem separar, o paciente que estou atendendo fica perdido na fila.
+    expect(await screen.findByRole('heading', { name: /Atendendo agora/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Aguardando/i })).toBeInTheDocument();
+  });
+
+  it('o selo mostra o estado da etapa desta fila, não o do atendimento', async () => {
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([
+      atendimento({
+        etapas: [
+          {
+            id: 'e1',
+            especialidade: 'Odontologia',
+            status: 'EmAndamento',
+            profissional: 'Ana Dentista',
+            iniciadaEm: '2026-07-26T12:30:00Z',
+            concluidaEm: null,
+            assumidaEm: '2026-07-26T12:30:00Z',
+            encaminhadaPor: null,
+            encaminhadaDe: null,
+          },
+        ],
+      }),
+    ]);
+
+    renderizar();
+
+    // "Em andamento" no atendimento não diz se *esta* fila já pegou o paciente,
+    // que é a pergunta de quem olha a lista.
+    expect(await screen.findByText('Em andamento')).toBeInTheDocument();
+  });
+
+  it('a fila vazia de uma seção não deixa o título órfão', async () => {
+    // Só há quem espera: "Atendendo agora" não pode aparecer com zero embaixo.
+    renderizar();
+
+    expect(await screen.findByRole('heading', { name: /^Aguardando/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Atendendo agora/i })).not.toBeInTheDocument();
+  });
+
+  it('em "Todas" não agrupa, porque a lista mistura filas', async () => {
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(await screen.findByRole('button', { name: 'Todas as filas' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: /^Aguardando/i })).not.toBeInTheDocument(),
+    );
   });
 
   it('em "Todas" não oferece assumir, porque a lista mistura filas', async () => {

@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { AtendimentoResumo, ClassificacaoRisco, Especialidade } from '../api/tipos';
+import { FILAS } from '../api/tipos';
+import type {
+  AtendimentoResumo,
+  ClassificacaoRisco,
+  Especialidade,
+  EtapaResumo,
+} from '../api/tipos';
 import { Carregando, Erros, Etiqueta, PontoRisco, Vazio } from '../componentes/Basicos';
 import { Cronometro } from '../componentes/Cronometro';
 import { IconeConcluido, IconePendente } from '../componentes/Icones';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
-import { classificacoesCurtas, especialidades, statusAtendimento } from '../i18n/enums';
-
-const FILAS: Especialidade[] = [
-  'Triagem',
-  'ClinicaGeral',
-  'Pediatria',
-  'Ortopedia',
-  'Odontologia',
-  'Enfermagem',
-  'SaudeMental',
-];
+import {
+  classificacoesCurtas,
+  especialidades,
+  statusAtendimento,
+  statusEtapa,
+} from '../i18n/enums';
 
 const RISCOS: ClassificacaoRisco[] = ['Vermelho', 'Amarelo', 'Verde', 'Preto'];
 
@@ -33,6 +34,26 @@ export const INTERVALO_ATUALIZACAO = 15_000;
 
 /** "Meus" é uma fila a mais na barra, mas filtra por quem assumiu, não por especialidade. */
 type Aba = Especialidade | 'Todas' | 'Meus';
+
+/**
+ * A etapa que esta aba está olhando.
+ *
+ * Numa fila de especialidade é a etapa dela. Em "Meus" é a que está comigo, e em
+ * "Todas" é a que tem dono — ali a lista mistura filas, e a etapa a mostrar
+ * seria uma escolha arbitrária entre elas.
+ */
+function etapaRelevante(
+  atendimento: AtendimentoResumo,
+  aba: Aba,
+  meuNome: string | null,
+): EtapaResumo | undefined {
+  const abertas = atendimento.etapas.filter((e) => e.status !== 'Concluida');
+
+  if (aba === 'Meus') return abertas.find((e) => e.profissional === meuNome);
+  if (aba === 'Todas') return abertas.find((e) => e.profissional !== null);
+
+  return abertas.find((e) => e.especialidade === aba);
+}
 
 export function ListaAtendimentos() {
   const { t, idioma } = useI18n();
@@ -169,6 +190,29 @@ export function ListaAtendimentos() {
     }
   }
 
+  /*
+    O agrupamento só faz sentido numa fila de especialidade: é lá que a lista
+    traz os que ninguém pegou junto dos que estão comigo. Em "Meus" tudo já é
+    meu, e em "Todas" a lista mistura filas.
+  */
+  const agrupar = aba !== 'Todas' && aba !== 'Meus';
+  const meuNome = profissional?.nome ?? null;
+
+  const atendendo = (atendimentos ?? []).filter((a) => {
+    const etapa = etapaRelevante(a, aba, meuNome);
+    return etapa?.status === 'EmAndamento' && etapa.profissional === meuNome;
+  });
+
+  const aguardando = (atendimentos ?? []).filter((a) => !atendendo.includes(a));
+
+  const adereços = (atendimento: AtendimentoResumo) => ({
+    atendimento,
+    aba,
+    meuNome,
+    ocupado: assumindo === atendimento.id,
+    aoAlternar: alternarPosse,
+  });
+
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <div className="flex items-center justify-between gap-3">
@@ -228,57 +272,137 @@ export function ListaAtendimentos() {
         <Carregando texto={t('carregando')} />
       ) : atendimentos.length === 0 ? (
         <Vazio texto={aba === 'Meus' ? t('semAtendimentosMeus') : t('filaVazia')} />
+      ) : agrupar ? (
+        /*
+          Numa fila de especialidade a lista vem com os que ninguém pegou mais os
+          que estão comigo — a API esconde só o que está com outra pessoa. Sem
+          separar os dois, o paciente que estou atendendo agora fica perdido no
+          meio da fila de espera.
+        */
+        <div className="space-y-5">
+          {atendendo.length > 0 ? (
+            <Grupo titulo={t('atendendoAgora')} total={atendendo.length}>
+              {atendendo.map((atendimento) => (
+                <Cartao key={atendimento.id} {...adereços(atendimento)} />
+              ))}
+            </Grupo>
+          ) : null}
+
+          {aguardando.length > 0 ? (
+            <Grupo titulo={t('aguardandoNaFila')} total={aguardando.length}>
+              {aguardando.map((atendimento) => (
+                <Cartao key={atendimento.id} {...adereços(atendimento)} />
+              ))}
+            </Grupo>
+          ) : null}
+        </div>
       ) : (
         <ul className="space-y-3">
           {atendimentos.map((atendimento) => (
-            <li key={atendimento.id}>
-              <Link
-                to={`/atendimentos/${atendimento.id}`}
-                className="cartao block transition hover:border-marca-clara"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <PontoRisco risco={atendimento.classificacaoRisco} />
-                    <span className="truncate font-bold">
-                      {atendimento.codigo} · {atendimento.pacienteNome}
-                    </span>
-                  </div>
-                  <Etiqueta tom={atendimento.status === 'Finalizado' ? 'sucesso' : 'neutro'}>
-                    {traduzir(statusAtendimento, idioma, atendimento.status)}
-                  </Etiqueta>
-                </div>
-
-                {atendimento.resumo ? (
-                  <p className="mt-1 line-clamp-2 text-sm text-texto-suave">{atendimento.resumo}</p>
-                ) : null}
-
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                  {atendimento.etapas.map((etapa) => (
-                    <span
-                      key={etapa.id}
-                      className={`inline-flex items-center gap-1 ${
-                        etapa.status === 'Concluida' ? 'text-verde' : 'text-texto-suave'
-                      }`}
-                    >
-                      {etapa.status === 'Concluida' ? <IconeConcluido /> : <IconePendente />}
-                      {traduzir(especialidades, idioma, etapa.especialidade)}
-                    </span>
-                  ))}
-                </div>
-
-                <BlocoPosse
-                  atendimento={atendimento}
-                  aba={aba}
-                  meuNome={profissional?.nome ?? null}
-                  ocupado={assumindo === atendimento.id}
-                  aoAlternar={alternarPosse}
-                />
-              </Link>
-            </li>
+            <Cartao key={atendimento.id} {...adereços(atendimento)} />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+/** Uma seção da fila, com a contagem ao lado do título. */
+function Grupo({
+  titulo,
+  total,
+  children,
+}: {
+  titulo: string;
+  total: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="mb-2 flex items-baseline gap-2 text-sm font-semibold uppercase tracking-wide text-texto-suave">
+        {titulo}
+        <span className="rounded-full bg-superficie-2 px-2 py-0.5 text-xs tabular-nums">
+          {total}
+        </span>
+      </h2>
+      <ul className="space-y-3">{children}</ul>
+    </section>
+  );
+}
+
+function Cartao({
+  atendimento,
+  aba,
+  meuNome,
+  ocupado,
+  aoAlternar,
+}: {
+  atendimento: AtendimentoResumo;
+  aba: Aba;
+  meuNome: string | null;
+  ocupado: boolean;
+  aoAlternar: (id: string, especialidade: Especialidade, souEu: boolean) => void;
+}) {
+  const { idioma } = useI18n();
+  const etapa = etapaRelevante(atendimento, aba, meuNome);
+
+  return (
+    <li>
+      <Link
+        to={`/atendimentos/${atendimento.id}`}
+        className="cartao block transition hover:border-marca-clara"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <PontoRisco risco={atendimento.classificacaoRisco} />
+            <span className="truncate font-bold">
+              {atendimento.codigo} · {atendimento.pacienteNome}
+            </span>
+          </div>
+
+          {/*
+            O selo mostra o estado da etapa desta fila, e não o do atendimento
+            inteiro: "Em andamento" no atendimento não diz se *esta* fila já
+            pegou o paciente, que é a pergunta de quem olha a lista.
+          */}
+          {etapa ? (
+            <Etiqueta tom={etapa.status === 'EmAndamento' ? 'aviso' : 'neutro'}>
+              {traduzir(statusEtapa, idioma, etapa.status)}
+            </Etiqueta>
+          ) : (
+            <Etiqueta tom={atendimento.status === 'Finalizado' ? 'sucesso' : 'neutro'}>
+              {traduzir(statusAtendimento, idioma, atendimento.status)}
+            </Etiqueta>
+          )}
+        </div>
+
+        {atendimento.resumo ? (
+          <p className="mt-1 line-clamp-2 text-sm text-texto-suave">{atendimento.resumo}</p>
+        ) : null}
+
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+          {atendimento.etapas.map((e) => (
+            <span
+              key={e.id}
+              className={`inline-flex items-center gap-1 ${
+                e.status === 'Concluida' ? 'text-verde' : 'text-texto-suave'
+              }`}
+            >
+              {e.status === 'Concluida' ? <IconeConcluido /> : <IconePendente />}
+              {traduzir(especialidades, idioma, e.especialidade)}
+            </span>
+          ))}
+        </div>
+
+        <BlocoPosse
+          atendimento={atendimento}
+          aba={aba}
+          meuNome={meuNome}
+          ocupado={ocupado}
+          aoAlternar={aoAlternar}
+        />
+      </Link>
+    </li>
   );
 }
 
@@ -330,12 +454,9 @@ function BlocoPosse({
 }) {
   const { t } = useI18n();
 
-  const etapa =
-    aba === 'Meus'
-      ? atendimento.etapas.find((e) => e.status !== 'Concluida' && e.profissional === meuNome)
-      : aba === 'Todas'
-        ? atendimento.etapas.find((e) => e.status !== 'Concluida' && e.profissional !== null)
-        : atendimento.etapas.find((e) => e.especialidade === aba && e.status !== 'Concluida');
+  // A mesma etapa que o selo do cartão mostra: se as duas escolhas divergissem,
+  // o selo falaria de uma fila e o botão agiria sobre outra.
+  const etapa = etapaRelevante(atendimento, aba, meuNome);
 
   if (!etapa) return null;
 

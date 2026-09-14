@@ -23,7 +23,13 @@ export type FuncaoProfissional =
   | 'Outro'
   | 'ClinicoGeral'
   | 'Pediatra'
-  | 'Ortopedista';
+  | 'Ortopedista'
+  | 'Ginecologista'
+  | 'Cirurgiao'
+  | 'Anestesista'
+  | 'Cardiologista'
+  /** Quem opera o aparelho e assina o laudo. Conselho: CRM. */
+  | 'Ultrassonografista';
 
 /**
  * Profissoes oferecidas num cadastro novo, na ordem em que a tela lista.
@@ -33,6 +39,11 @@ export const FUNCOES_PARA_CADASTRO: FuncaoProfissional[] = [
   'ClinicoGeral',
   'Pediatra',
   'Ortopedista',
+  'Ginecologista',
+  'Cirurgiao',
+  'Anestesista',
+  'Cardiologista',
+  'Ultrassonografista',
   'Dentista',
   'Enfermeiro',
   'TecnicoEnfermagem',
@@ -53,7 +64,33 @@ export type Especialidade =
   | 'Ortopedia'
   | 'Odontologia'
   | 'Enfermagem'
-  | 'SaudeMental';
+  | 'SaudeMental'
+  | 'Ginecologia'
+  | 'Cirurgia'
+  | 'Anestesia'
+  /** Teleconsulta, como no formulário de missão programada. */
+  | 'Cardiologia'
+  /** Exame de imagem. Fila derivada: ninguém chega sem alguém ter mandado. */
+  | 'Ultrassom'
+  /** Dispensação e checagem do que foi prescrito. */
+  | 'Farmacia';
+
+/** As filas, na ordem em que a barra deve listá-las. */
+export const FILAS: Especialidade[] = [
+  'Triagem',
+  'ClinicaGeral',
+  'Pediatria',
+  'Ortopedia',
+  'Ginecologia',
+  'Cirurgia',
+  'Anestesia',
+  'Cardiologia',
+  'Odontologia',
+  'Enfermagem',
+  'Ultrassom',
+  'Farmacia',
+  'SaudeMental',
+];
 
 export type Sexo = 'NaoInformado' | 'Feminino' | 'Masculino' | 'Outro';
 
@@ -277,7 +314,11 @@ export type AcaoAuditoria =
   /** Transferiu o paciente para um hospital. */
   | 'TransferiuParaHospital'
   /** Encerrou por outro motivo, descrito no registro. */
-  | 'EncerrouPorOutroMotivo';
+  | 'EncerrouPorOutroMotivo'
+  /** Anotou mais uma medida na folha de observação. */
+  | 'RegistrouSinaisVitais'
+  /** Removeu uma linha da folha de observação. */
+  | 'RemoveuSinaisVitais';
 
 // ---------------------------------------------------------------------------
 
@@ -332,11 +373,22 @@ export interface UsuarioDisponivel {
   disponivel: boolean;
 }
 
+/**
+ * Em que tipo de operação a base está trabalhando.
+ *
+ * São dois formulários de papel e duas operações diferentes: na programada a
+ * equipe vai a uma comunidade combinada, com agenda e especialidades arranjadas
+ * de antemão; na catástrofe ela monta base onde deu, e a triagem é o que manda.
+ */
+export type TipoMissao = 'Programada' | 'Catastrofe';
+
 export interface Base {
   id: string;
   nome: string;
   prefixoCodigo: string;
   ativa: boolean;
+  /** Nulo nas bases criadas antes do campo existir. */
+  tipoMissao: TipoMissao | null;
 }
 
 export interface AlertaAlergia {
@@ -391,6 +443,7 @@ export interface BaseAdmin {
   id: string;
   nome: string;
   prefixoCodigo: string;
+  tipoMissao: TipoMissao | null;
   ativa: boolean;
   criadaEm: string;
   totalAtendimentos: number;
@@ -527,6 +580,26 @@ export interface Ortopedia {
   necessitaRaioX: boolean;
 }
 
+/**
+ * O bloco de ginecologia da consulta.
+ *
+ * Gestações, partos e abortos são três números, e não um texto "3/2/1": em
+ * texto, "G3 P2 A1", "3-2-1" e "III/II/I" contam a mesma coisa de três jeitos e
+ * nenhum deles soma.
+ */
+export interface Ginecologia {
+  /** Data da última menstruação, no formato `aaaa-mm-dd`. */
+  dataUltimaMenstruacao: string | null;
+  gestacoes: number | null;
+  partos: number | null;
+  abortos: number | null;
+  /** Nulo = não foi perguntado, que é diferente de ter respondido que não. */
+  gestante: boolean | null;
+  semanasGestacao: number | null;
+  metodoContraceptivo: string | null;
+  ultimoPreventivo: string | null;
+}
+
 export interface Consulta {
   etapaId: string;
   especialidade: Especialidade;
@@ -542,6 +615,7 @@ export interface Consulta {
   desfecho: DesfechoConsulta | null;
   encaminhadoPara: Especialidade | null;
   ortopedia: Ortopedia | null;
+  ginecologia: Ginecologia | null;
   dispensacoes: Dispensacao[];
   concluidaEm: string | null;
 }
@@ -578,6 +652,136 @@ export interface Enfermagem {
   concluidaEm: string | null;
 }
 
+/**
+ * Lado do corpo em que a cirurgia acontece.
+ *
+ * Campo próprio, e não um pedaço do texto do procedimento: cirurgia no lado
+ * errado é um dos erros que a lista de verificação existe para impedir.
+ */
+export type Lateralidade = 'NaoSeAplica' | 'Direito' | 'Esquerdo' | 'Bilateral';
+
+/**
+ * A ficha cirúrgica: pré-operatório, as quatro paradas da lista de verificação
+ * e a recuperação.
+ *
+ * As caixas são `boolean`, e não `boolean | null` como a alergia: numa lista de
+ * verificação a caixa está marcada ou não está, e não marcada já significa
+ * "não conferido".
+ */
+export interface Cirurgia {
+  etapaId: string;
+  profissional: Autor | null;
+
+  indicacao: string | null;
+  procedimentoProposto: string | null;
+  lateralidade: Lateralidade;
+  jejumHoras: number | null;
+  consentimentoAssinado: boolean;
+  observacoesPreOperatorio: string | null;
+
+  checkInIdentidadeConfirmada: boolean;
+  checkInSitioMarcado: boolean;
+  checkInConsentimentoConferido: boolean;
+  checkInAlergiaConferida: boolean;
+  checkInJejumConferido: boolean;
+  /** Carimbada pelo sistema quando a parada fica completa, e nunca reescrita. */
+  checkInEm: string | null;
+
+  timeOutUmEquipeApresentada: boolean;
+  timeOutUmMonitorizacaoOk: boolean;
+  timeOutUmViaAereaAvaliada: boolean;
+  timeOutUmRiscoSangramentoAvaliado: boolean;
+  timeOutUmEm: string | null;
+
+  timeOutDoisPacienteSitioProcedimentoConfirmados: boolean;
+  timeOutDoisAntibioticoProfilatico: boolean;
+  timeOutDoisImagensDisponiveis: boolean;
+  timeOutDoisEventosCriticosRevistos: boolean;
+  timeOutDoisMaterialEsterilizado: boolean;
+  timeOutDoisEm: string | null;
+
+  checkOutProcedimentoRegistrado: boolean;
+  checkOutContagemConfere: boolean;
+  checkOutAmostrasIdentificadas: boolean;
+  checkOutProblemasComEquipamento: boolean;
+  checkOutCuidadosRecuperacao: string | null;
+  checkOutEm: string | null;
+
+  recuperacaoEntradaEm: string | null;
+  recuperacaoSaidaEm: string | null;
+  intercorrencias: string | null;
+  observacoesRecuperacao: string | null;
+
+  desfecho: DesfechoConsulta | null;
+  concluidaEm: string | null;
+}
+
+/**
+ * O laudo do exame de imagem.
+ *
+ * Não tem CID-10 nem conduta: quem faz o exame descreve e conclui; quem decide
+ * o que fazer com isso é quem pediu.
+ */
+export interface Ultrassom {
+  etapaId: string;
+  /** Quem assinou, com o conselho — no papel, "Médico ___ CRM ___". */
+  profissional: Autor | null;
+  exameSolicitado: string | null;
+  indicacao: string | null;
+  analise: string | null;
+  conclusao: string | null;
+  desfecho: DesfechoConsulta | null;
+  concluidaEm: string | null;
+}
+
+/**
+ * A passagem pela farmácia.
+ *
+ * O "por quem" e o "quando" da checagem de papel são o profissional e a
+ * conclusão da própria etapa — não campos digitados, que poderiam divergir do
+ * resto do atendimento.
+ */
+export interface Farmacia {
+  etapaId: string;
+  profissional: Autor | null;
+  orientacoes: string | null;
+  observacoes: string | null;
+  desfecho: DesfechoConsulta | null;
+  dispensacoes: Dispensacao[];
+  concluidaEm: string | null;
+}
+
+/**
+ * Uma linha da folha de observação: a tabela horária de sinais vitais.
+ *
+ * `foraDaFaixa` marca o que merece um segundo olhar, e nada além disso — não é
+ * escore nem classificação de risco, e vem vazio para criança, cujas
+ * frequências normais são mais altas que o corte de adulto.
+ */
+export interface MedicaoSinaisVitais {
+  id: string;
+  medidaEm: string;
+  registradaPor: string;
+  pressaoSistolica: number | null;
+  pressaoDiastolica: number | null;
+  frequenciaCardiaca: number | null;
+  frequenciaRespiratoria: number | null;
+  saturacaoO2: number | null;
+  temperaturaCelsius: number | null;
+  glicemiaCapilar: number | null;
+  escalaDor: number | null;
+  observacao: string | null;
+  foraDaFaixa: SinalForaDaFaixa[];
+}
+
+export type SinalForaDaFaixa =
+  | 'PressaoSistolica'
+  | 'FrequenciaCardiaca'
+  | 'FrequenciaRespiratoria'
+  | 'SaturacaoO2'
+  | 'Temperatura'
+  | 'Glicemia';
+
 export interface Prontuario {
   id: string;
   codigo: string;
@@ -595,10 +799,23 @@ export interface Prontuario {
   desfecho: DesfechoAtendimento | null;
   /** Para onde foi transferido, ou qual foi o outro motivo. */
   desfechoDetalhe: string | null;
+  /**
+   * Em que operação este atendimento aconteceu, copiado da base na abertura.
+   *
+   * Copiado, e não lido da base: a mesma escola vira base de missão programada
+   * em março e de enchente em novembro, e mudar o tipo da base reescreveria o
+   * passado.
+   */
+  tipoMissao: TipoMissao | null;
   triagem: Triagem | null;
   consultas: Consulta[];
   odontologia: Odontologia | null;
   enfermagem: Enfermagem | null;
+  ultrassom: Ultrassom | null;
+  farmacia: Farmacia | null;
+  cirurgia: Cirurgia | null;
+  /** A folha de observação, em ordem de hora. */
+  sinaisVitais: MedicaoSinaisVitais[];
   etapas: EtapaResumo[];
   tempoNasFilas: EsperaFila[];
   historico: RegistroAuditoria[];
