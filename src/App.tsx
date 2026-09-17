@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { api } from './api/cliente';
 import { AvisoAtualizacao } from './componentes/AvisoAtualizacao';
+import { Carregando } from './componentes/Basicos';
 import { Cabecalho } from './componentes/Cabecalho';
 import { ProvedorSessao, useSessao } from './hooks/useSessao';
 import { useTema } from './hooks/useTema';
-import { ProvedorI18n } from './i18n';
+import { ProvedorI18n, useI18n } from './i18n';
 import { Atendimento } from './paginas/Atendimento';
 import { Cirurgia } from './paginas/Cirurgia';
 import { Enfermagem } from './paginas/Enfermagem';
@@ -51,12 +54,50 @@ function SomenteAdministrador() {
   return profissional?.ehAdministrador ? <Outlet /> : <Navigate to="/atendimentos" replace />;
 }
 
-/** Exige base escolhida; o resto do app depende dela para tudo. */
+/**
+ * Garante a base que o resto do app usa para tudo — escolhendo uma sozinho.
+ *
+ * Antes isto desviava para a tela de seleção, e todo mundo passava por ela
+ * depois de entrar. Só que na prática a base é uma: a pessoa fazia login,
+ * escolhia a única opção da lista e apertava continuar, três toques até chegar
+ * onde ia trabalhar. Agora quem entra cai direto na fila, e troca de base pelo
+ * botão do cabeçalho quando precisar — que é o caso raro.
+ *
+ * A seleção continua existindo, e é para onde isto manda quando não há base
+ * ativa nenhuma ou a lista não carrega: ali a pessoa vê o motivo e pode tentar
+ * de novo, em vez de olhar uma tela vazia.
+ */
 function ComBase({ tema, alternarTema }: { tema: Tema; alternarTema: () => void }) {
-  const { base } = useSessao();
+  const { t } = useI18n();
+  const { base, definirBase } = useSessao();
+  const [semBase, setSemBase] = useState(false);
+
+  useEffect(() => {
+    if (base) return;
+
+    let cancelado = false;
+
+    api
+      .bases()
+      .then((lista) => {
+        if (cancelado) return;
+
+        // A API devolve só as ativas. A primeira é a escolha: com uma base, é a
+        // dela; com várias, o cabeçalho diz qual ficou e troca em um toque.
+        if (lista.length > 0) definirBase(lista[0]);
+        else setSemBase(true);
+      })
+      .catch(() => {
+        if (!cancelado) setSemBase(true);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [base, definirBase]);
 
   if (!base) {
-    return <Navigate to="/bases" replace />;
+    return semBase ? <Navigate to="/bases" replace /> : <Carregando texto={t('carregando')} />;
   }
 
   return (
