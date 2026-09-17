@@ -167,6 +167,7 @@ export const textos = {
     erroInesperado: 'Não foi possível concluir. Tente de novo.',
 
     escolhaBase: 'Escolha a base onde você vai atender.',
+    semBasesAtivas: 'Nenhuma base ativa. Fale com a coordenação.',
     base: 'Base',
     trocarBase: 'Trocar base',
 
@@ -571,6 +572,7 @@ export const textos = {
     erroInesperado: 'No se pudo completar. Intente de nuevo.',
 
     escolhaBase: 'Elija la base donde va a atender.',
+    semBasesAtivas: 'Ninguna base activa. Hable con la coordinación.',
     base: 'Base',
     trocarBase: 'Cambiar base',
 
@@ -975,6 +977,7 @@ export const textos = {
     erroInesperado: 'Could not complete. Please try again.',
 
     escolhaBase: 'Choose the base where you will work.',
+    semBasesAtivas: 'No active base. Talk to the coordination team.',
     base: 'Base',
     trocarBase: 'Change base',
 

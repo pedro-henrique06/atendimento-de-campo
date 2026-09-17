@@ -8,13 +8,20 @@ import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
 import { tiposMissao } from '../i18n/enums';
 
+/**
+ * Troca de base.
+ *
+ * Deixou de ser a parada obrigatória depois do login — quem entra já cai na
+ * fila, com a base resolvida. Aqui se chega de propósito, pelo botão do
+ * cabeçalho, ou quando não há base ativa nenhuma para resolver.
+ */
 export function SelecaoBase() {
   const { t, idioma } = useI18n();
-  const { definirBase, sair } = useSessao();
+  const { base: baseAtual, definirBase, sair } = useSessao();
   const navegar = useNavigate();
 
   const [bases, setBases] = useState<Base[] | null>(null);
-  const [escolhida, setEscolhida] = useState('');
+  const [escolhida, setEscolhida] = useState(baseAtual?.id ?? '');
   const [erros, setErros] = useState<string[]>([]);
 
   function carregar() {
@@ -25,7 +32,12 @@ export function SelecaoBase() {
       .bases()
       .then((lista) => {
         setBases(lista);
-        setEscolhida((atual) => atual || (lista[0]?.id ?? ''));
+
+        // A base de agora vem selecionada: quem entrou aqui para trocar precisa
+        // ver de onde está saindo, e quem entrou sem querer sai sem mudar nada.
+        setEscolhida((atual) =>
+          lista.some((b) => b.id === atual) ? atual : (lista[0]?.id ?? ''),
+        );
       })
       .catch((erro) => {
         setBases([]);
@@ -58,6 +70,18 @@ export function SelecaoBase() {
 
           {bases === null ? (
             <Carregando texto={t('carregando')} />
+          ) : bases.length === 0 && erros.length === 0 ? (
+            /*
+              Sem base ativa não há o que escolher, e é para cá que o app manda
+              quem não teve base resolvida. Dizer o motivo evita a pessoa ficar
+              olhando um seletor vazio sem entender por quê.
+            */
+            <>
+              <p className="text-center text-texto-suave">{t('semBasesAtivas')}</p>
+              <button type="button" className="botao-secundario w-full" onClick={carregar}>
+                {t('tentarDeNovo')}
+              </button>
+            </>
           ) : (
             <>
               <label className="block">
@@ -97,13 +121,27 @@ export function SelecaoBase() {
             </>
           )}
 
-          <button
-            type="button"
-            onClick={sair}
-            className="w-full text-center text-marca-clara underline"
-          >
-            {t('sair')}
-          </button>
+          {/*
+            Voltar só existe quando há base valendo: sem ela não há para onde
+            voltar, e o app mandaria a pessoa direto para cá de novo.
+          */}
+          {baseAtual ? (
+            <button
+              type="button"
+              onClick={() => navegar('/atendimentos', { replace: true })}
+              className="w-full text-center text-marca-clara underline"
+            >
+              {t('voltar')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={sair}
+              className="w-full text-center text-marca-clara underline"
+            >
+              {t('sair')}
+            </button>
+          )}
         </div>
       </main>
     </div>

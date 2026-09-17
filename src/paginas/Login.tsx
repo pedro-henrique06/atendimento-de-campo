@@ -40,7 +40,11 @@ export function Login({ tema, alternarTema }: { tema: Tema; alternarTema: () => 
       const resposta = await api.login({ usuario: usuario.trim(), senha, idioma });
 
       entrar({ token: resposta.token, profissional: resposta.profissional });
-      navegar('/bases', { replace: true });
+
+      // Direto para a fila: a base é resolvida a caminho, e quem precisa trocar
+      // usa o botão do cabeçalho. Antes isto mandava para a seleção de base, e
+      // todo login custava mais dois toques antes de chegar ao trabalho.
+      navegar('/atendimentos', { replace: true });
     } catch (e) {
       if (e instanceof ErroDeRede) {
         setErro(t('semConexao'));

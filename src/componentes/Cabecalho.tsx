@@ -9,7 +9,7 @@ import type { Tema } from '../hooks/useTema';
 
 export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: () => void }) {
   const { t, idioma, definirIdioma } = useI18n();
-  const { profissional, base, definirBase, sair } = useSessao();
+  const { profissional, base, sair } = useSessao();
   const navegar = useNavigate();
   const [menuAberto, setMenuAberto] = useState(false);
   const [pendentes, setPendentes] = useState(0);
@@ -137,12 +137,18 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-2">
+          {/*
+            Vai para a troca sem limpar a base antes.
+
+            Limpar era o que fazia a tela de seleção ser obrigatória: sem base,
+            voltar dali deixava o app sem para onde ir. Agora a base continua
+            valendo enquanto a pessoa decide, e desistir da troca não custa
+            nada.
+          */}
           <button
             type="button"
-            onClick={() => {
-              definirBase(null);
-              navegar('/bases');
-            }}
+            onClick={() => navegar('/bases')}
+            aria-label={t('trocarBase')}
             className="flex min-w-0 items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm font-medium"
           >
             <IconeLocal className="h-4 w-4 shrink-0" />
