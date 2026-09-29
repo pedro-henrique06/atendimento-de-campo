@@ -6,6 +6,7 @@ import { FILAS } from '../api/tipos';
 import type { DesfechoConsulta, Especialidade, Prontuario } from '../api/tipos';
 import { AlertaAlergia, Carregando, Erros, Opcoes, Secao } from './Basicos';
 import { Cronometro } from './Cronometro';
+import { Encerramento } from './Encerramento';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
 import { desfechos, especialidades } from '../i18n/enums';
@@ -143,14 +144,24 @@ export function FichaDeEtapa<T extends object>({
       });
   }, [id, t]);
 
+  /**
+   * Grava a ficha, sem sair da tela.
+   *
+   * Separado do submit porque a alta também grava: ela encerra o atendimento
+   * inteiro, e o que está escrito aqui é o registro do que a justificou.
+   */
+  async function salvar() {
+    await enviar(id, rascunho.valor);
+    rascunho.limpar();
+  }
+
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault();
     setErros([]);
     setEnviando(true);
 
     try {
-      await enviar(id, rascunho.valor);
-      rascunho.limpar();
+      await salvar();
       navegar(`/atendimentos/${id}`, { replace: true });
     } catch (erro) {
       if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
@@ -205,6 +216,12 @@ export function FichaDeEtapa<T extends object>({
       <button type="submit" className="botao" disabled={enviando}>
         {enviando ? t('carregando') : t('salvar')}
       </button>
+
+      {/*
+        A alta, aqui mesmo. Sem ela, o paciente que pode ir para casa obrigava
+        quem está com ele a gravar, voltar ao prontuário e procurar outro botão.
+      */}
+      <Encerramento prontuario={prontuario} especialidade={especialidade} salvar={salvar} />
     </form>
   );
 }

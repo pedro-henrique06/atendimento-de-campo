@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type {
   ClassificacaoRisco,
   Especialidade,
+  Prontuario,
   ResultadoTesteRapido,
   Sintoma,
   StatusAlergia,
 } from '../api/tipos';
 import { Campo, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
+import { Encerramento } from '../componentes/Encerramento';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
 import {
@@ -136,6 +138,32 @@ export function Triagem() {
   const [divergencia, setDivergencia] = useState<string | null>(null);
 
   /*
+    O prontuário só é usado pela alta: é dele que saem as filas que o
+    encerramento cancela e o aviso de atendimento já finalizado. A triagem em si
+    não depende dele — é ela que preenche o cadastro —, então a tela aparece
+    inteira antes de ele chegar, e sem ele o que falta é só o cartão da alta.
+  */
+  const [prontuario, setProntuario] = useState<Prontuario | null>(null);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    api
+      .prontuario(id)
+      .then((p) => {
+        if (!cancelado) setProntuario(p);
+      })
+      .catch(() => {
+        // A triagem continua funcionando sem isto. Falhar aqui não pode
+        // derrubar a tela que mede a pressão do paciente.
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [id]);
+
+  /*
     O IMC aparece assim que peso e altura existem, ainda antes de salvar: é
     conferência, e conferir depois de gravar chega tarde. A faixa (adequado,
     sobrepeso) não é mostrada aqui de propósito — ela depende da idade e o corte
@@ -155,6 +183,58 @@ export function Triagem() {
     setForm({ ...form, ...mudanca });
   }
 
+  /**
+   * Grava a triagem, sem sair da tela.
+   *
+   * Separado do envio porque a alta também grava: quem só precisava medir a
+   * pressão vai para casa daqui, e o que foi medido é o registro que justifica
+   * a alta.
+   */
+  async function salvar() {
+    const sugestao = await api.registrarTriagem(id, {
+      pressaoSistolica: numero(form.sistolica),
+      pressaoDiastolica: numero(form.diastolica),
+      frequenciaCardiaca: numero(form.frequenciaCardiaca),
+      frequenciaRespiratoria: numero(form.frequenciaRespiratoria),
+      saturacaoO2: numero(form.saturacaoO2),
+      temperaturaCelsius: numero(form.temperatura),
+      glicemiaCapilar: numero(form.glicemia),
+      pesoKg: numero(form.peso),
+      alturaCm: numero(form.altura),
+      circunferenciaCefalicaCm: numero(form.circunferenciaCefalica),
+      testeRapidoCovid: form.testeRapidoCovid || null,
+      testeRapidoMalaria: form.testeRapidoMalaria || null,
+      teveCirurgiaPrevia:
+        form.teveCirurgiaPrevia === '' ? null : form.teveCirurgiaPrevia === 'sim',
+      // Só vai quando houve: "quais" junto de "não teve" é contradição
+      // gravada, e alguém vai ler só um dos dois.
+      cirurgiasPrevias:
+        form.teveCirurgiaPrevia === 'sim' ? form.cirurgiasPrevias.trim() || null : null,
+      escalaDor: numero(form.escalaDor),
+      sintomas: form.sintomas,
+      outroSintoma: form.outroSintoma.trim() || null,
+      medicamentosEmUso: form.medicamentosEmUso.trim() || null,
+      statusAlergia: form.statusAlergia,
+      alergias: form.statusAlergia === 'PossuiAlergia' ? form.alergias.trim() : null,
+      classificacaoRisco: form.classificacaoRisco,
+      encaminhamento: form.encaminhamento,
+      observacoes: form.observacoes.trim() || null,
+      achadosStart: {
+        deambula: form.deambula,
+        respiraEspontaneamente: form.respiraEspontaneamente,
+        respiraAposAberturaViaAerea: form.respiraAposViaAerea,
+        frequenciaRespiratoria: numero(form.frequenciaRespiratoria),
+        pulsoRadialPresente: form.pulsoRadialPresente,
+        tempoEnchimentoCapilarSegundos: numero(form.enchimentoCapilar),
+        obedeceComandos: form.obedeceComandos,
+      },
+    });
+
+    limpar();
+
+    return sugestao;
+  }
+
   async function aoEnviar(evento: FormEvent) {
     evento.preventDefault();
 
@@ -165,46 +245,7 @@ export function Triagem() {
     setEnviando(true);
 
     try {
-      const sugestao = await api.registrarTriagem(id, {
-        pressaoSistolica: numero(form.sistolica),
-        pressaoDiastolica: numero(form.diastolica),
-        frequenciaCardiaca: numero(form.frequenciaCardiaca),
-        frequenciaRespiratoria: numero(form.frequenciaRespiratoria),
-        saturacaoO2: numero(form.saturacaoO2),
-        temperaturaCelsius: numero(form.temperatura),
-        glicemiaCapilar: numero(form.glicemia),
-        pesoKg: numero(form.peso),
-        alturaCm: numero(form.altura),
-        circunferenciaCefalicaCm: numero(form.circunferenciaCefalica),
-        testeRapidoCovid: form.testeRapidoCovid || null,
-        testeRapidoMalaria: form.testeRapidoMalaria || null,
-        teveCirurgiaPrevia:
-          form.teveCirurgiaPrevia === '' ? null : form.teveCirurgiaPrevia === 'sim',
-        // Só vai quando houve: "quais" junto de "não teve" é contradição
-        // gravada, e alguém vai ler só um dos dois.
-        cirurgiasPrevias:
-          form.teveCirurgiaPrevia === 'sim' ? form.cirurgiasPrevias.trim() || null : null,
-        escalaDor: numero(form.escalaDor),
-        sintomas: form.sintomas,
-        outroSintoma: form.outroSintoma.trim() || null,
-        medicamentosEmUso: form.medicamentosEmUso.trim() || null,
-        statusAlergia: form.statusAlergia,
-        alergias: form.statusAlergia === 'PossuiAlergia' ? form.alergias.trim() : null,
-        classificacaoRisco: form.classificacaoRisco,
-        encaminhamento: form.encaminhamento,
-        observacoes: form.observacoes.trim() || null,
-        achadosStart: {
-          deambula: form.deambula,
-          respiraEspontaneamente: form.respiraEspontaneamente,
-          respiraAposAberturaViaAerea: form.respiraAposViaAerea,
-          frequenciaRespiratoria: numero(form.frequenciaRespiratoria),
-          pulsoRadialPresente: form.pulsoRadialPresente,
-          tempoEnchimentoCapilarSegundos: numero(form.enchimentoCapilar),
-          obedeceComandos: form.obedeceComandos,
-        },
-      });
-
-      limpar();
+      const sugestao = await salvar();
 
       // A divergência não bloqueia nada: o registro já foi aceito com a
       // classificação escolhida. É só um aviso antes de seguir.
@@ -630,6 +671,21 @@ export function Triagem() {
       <button type="submit" className="botao" disabled={enviando || !form.classificacaoRisco}>
         {enviando ? t('carregando') : t('salvar')}
       </button>
+
+      {/*
+        A alta a partir da triagem. É o caso que não tinha caminho nenhum: quem
+        chega para medir a pressão, receber orientação e ir embora não precisa de
+        fila clínica — e, sem encaminhamento, a triagem fechava a única etapa do
+        atendimento e deixava o paciente sem nenhum lugar de onde dar alta.
+      */}
+      {prontuario ? (
+        <Encerramento
+          prontuario={prontuario}
+          especialidade="Triagem"
+          salvar={salvar}
+          impedimento={form.classificacaoRisco ? null : t('classifiqueAntesDeEncerrar')}
+        />
+      ) : null}
     </form>
   );
 }

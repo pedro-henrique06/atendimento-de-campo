@@ -103,19 +103,6 @@ export function Prontuario() {
 
   useEffect(carregar, [carregar]);
 
-  async function finalizar() {
-    setErros([]);
-
-    try {
-      await api.finalizar(id);
-      carregar();
-    } catch (erro) {
-      if (erro instanceof ErroApi) setErros(erro.erros);
-      else if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
-      else setErros([t('erroInesperado')]);
-    }
-  }
-
   /**
    * Apaga uma linha da folha de observação.
    *
@@ -169,9 +156,6 @@ export function Prontuario() {
   const fichasAbertas = prontuario.etapas.filter(
     (e) => e.status !== 'Concluida' && e.status !== 'Cancelada',
   );
-
-  /** Há fila aberta? Se há, quem encerra é a alta, e não o botão de finalizar. */
-  const temFilaAberta = fichasAbertas.length > 0;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
@@ -860,16 +844,12 @@ export function Prontuario() {
           </div>
 
           {/*
-            Com fila aberta, quem encerra é a alta, no cartão de desfecho ali em
-            cima. Este botão só aparece quando não há nenhuma: deixar os dois
-            juntos ofereceria um caminho que a API recusaria com "há etapas
-            pendentes", e a pessoa não teria como adivinhar qual dos dois usar.
+            Quem encerra é o cartão de desfecho ali em cima, com ou sem fila
+            aberta. Aqui havia um "finalizar" que fechava o atendimento sem
+            gravar desfecho nenhum: era o único botão que sobrava para o
+            paciente triado e liberado, e ele saía do sistema sem constar como
+            alta em lugar algum.
           */}
-          {temFilaAberta ? null : (
-            <button type="button" className="botao" onClick={finalizar}>
-              {t('finalizar')}
-            </button>
-          )}
         </div>
       )}
     </div>

@@ -232,6 +232,11 @@ export const textos = {
     confirmarEncerramento: 'Confirmar encerramento',
     altaFilasPendentes: 'Este paciente ainda está nestas filas:',
     altaCancelaFilas: 'Dar alta cancela estas filas. Ele não será chamado nelas.',
+    encerrarGravaAFicha:
+      'Encerrar grava esta ficha e depois encerra o atendimento. As outras filas abertas são canceladas, inclusive uma que esta ficha esteja abrindo.',
+    semFilaAbertaEncerre:
+      'Nenhuma fila aberta. O atendimento fica em aberto até alguém registrar como ele terminou.',
+    classifiqueAntesDeEncerrar: 'Classifique o risco para poder encerrar o atendimento daqui.',
     devolver: 'Devolver a quem encaminhou',
     devolverPara: 'Devolver para',
     motivoDevolucao: 'Motivo da devolução',
@@ -637,6 +642,11 @@ export const textos = {
     confirmarEncerramento: 'Confirmar el cierre',
     altaFilasPendentes: 'Este paciente todavía está en estas filas:',
     altaCancelaFilas: 'Dar el alta cancela estas filas. No será llamado en ellas.',
+    encerrarGravaAFicha:
+      'Cerrar guarda esta ficha y después cierra la atención. Las demás filas abiertas quedan canceladas, incluida una que esta ficha esté abriendo.',
+    semFilaAbertaEncerre:
+      'Ninguna fila abierta. La atención sigue abierta hasta que alguien registre cómo terminó.',
+    classifiqueAntesDeEncerrar: 'Clasifique el riesgo para poder cerrar la atención desde aquí.',
     devolver: 'Devolver a quien derivó',
     devolverPara: 'Devolver a',
     motivoDevolucao: 'Motivo de la devolución',
@@ -1042,6 +1052,11 @@ export const textos = {
     confirmarEncerramento: 'Confirm closing',
     altaFilasPendentes: 'This patient is still in these queues:',
     altaCancelaFilas: 'Discharging cancels these queues. They will not be called in them.',
+    encerrarGravaAFicha:
+      'Closing saves this form and then closes the encounter. Any other open queue is cancelled, including one this form is about to open.',
+    semFilaAbertaEncerre:
+      'No open queue. The encounter stays open until someone records how it ended.',
+    classifiqueAntesDeEncerrar: 'Classify the risk to close the encounter from here.',
     devolver: 'Send back to referrer',
     devolverPara: 'Send back to',
     motivoDevolucao: 'Reason for sending back',
