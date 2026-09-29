@@ -3,7 +3,16 @@ import { Link, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { EsperaFila, Ginecologia, Prontuario as ProntuarioDto } from '../api/tipos';
 import { BarraDaPagina } from '../componentes/BarraDaPagina';
-import { AlertaAlergia, Carregando, Erros, Etiqueta, PontoRisco, Secao } from '../componentes/Basicos';
+import {
+  AlertaAlergia,
+  Carregando,
+  Erros,
+  Etiqueta,
+  EtiquetaRisco,
+  Medida,
+  Medidas,
+  Secao,
+} from '../componentes/Basicos';
 import { ListaItens } from '../componentes/Dispensacao';
 import { Encaminhar } from '../componentes/Encaminhar';
 import { FolhaDeObservacao } from '../componentes/FolhaDeObservacao';
@@ -186,58 +195,80 @@ export function Prontuario() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Etiqueta tom={finalizado ? 'sucesso' : 'neutro'}>
-          {traduzir(statusAtendimento, idioma, prontuario.status)}
-        </Etiqueta>
+      {/*
+        Identidade: só o que se confere olhando para a pessoa.
 
-        {/*
-          Em que operação este atendimento aconteceu. É o tipo copiado na
-          abertura, e não o da base agora: a mesma escola vira base de missão
-          programada em março e de enchente em novembro.
-        */}
-        {prontuario.tipoMissao ? (
-          <Etiqueta tom={prontuario.tipoMissao === 'Catastrofe' ? 'aviso' : 'neutro'}>
-            {traduzir(tiposMissao, idioma, prontuario.tipoMissao)}
-          </Etiqueta>
-        ) : null}
-      </div>
+        O nome saiu daqui — a etapa 1 o pôs no título, e mantê-lo nos dois
+        lugares era dizer duas vezes na mesma dobra.
+      */}
+      <div className="cartao space-y-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <EtiquetaRisco risco={prontuario.classificacaoRisco} />
 
-      <div className="cartao space-y-3">
-        <div className="flex flex-wrap items-baseline gap-x-3">
-          <span className="text-lg font-bold">{paciente.nome}</span>
           <span className="text-sm text-texto-suave">
             {paciente.idade !== null ? `${paciente.idade} ${t('anos')} · ` : ''}
             {traduzir(sexos, idioma, paciente.sexo)}
             {paciente.numeroDocumento ? ` · ${paciente.numeroDocumento}` : ''}
           </span>
+
+          <span className="ml-auto flex flex-wrap gap-2">
+            <Etiqueta tom={finalizado ? 'sucesso' : 'neutro'}>
+              {traduzir(statusAtendimento, idioma, prontuario.status)}
+            </Etiqueta>
+
+            {/*
+              Em que operação este atendimento aconteceu. É o tipo copiado na
+              abertura, e não o da base agora: a mesma escola vira base de missão
+              programada em março e de enchente em novembro.
+            */}
+            {prontuario.tipoMissao ? (
+              <Etiqueta tom={prontuario.tipoMissao === 'Catastrofe' ? 'aviso' : 'neutro'}>
+                {traduzir(tiposMissao, idioma, prontuario.tipoMissao)}
+              </Etiqueta>
+            ) : null}
+          </span>
         </div>
 
         <AlertaAlergia exibir={paciente.alerta.exibir} texto={paciente.alerta.texto} />
 
-        <div className="flex items-center gap-2 text-sm">
-          <PontoRisco risco={prontuario.classificacaoRisco} />
-          <span>{traduzir(classificacoes, idioma, prontuario.classificacaoRisco)}</span>
-        </div>
-
         {/*
-          Quando o atendimento foi aberto e por quem. O dado já estava gravado
-          desde sempre e nunca aparecia — e é o que responde "há quanto tempo
-          essa pessoa está aqui", que é a primeira pergunta de quem chega no
-          meio do plantão.
+          Quando o atendimento foi aberto e por quem. É o que responde "há quanto
+          tempo essa pessoa está aqui", a primeira pergunta de quem chega no meio
+          do plantão.
         */}
-        <p className="border-t border-borda pt-3 text-sm text-texto-suave">
+        <p className="text-sm text-texto-suave">
           {t('abertoEm')} {new Date(prontuario.criadoEm).toLocaleString()} · {prontuario.criadoPor}
         </p>
       </div>
 
       <Erros erros={erros} />
 
+      {/*
+        O que se faz, antes do que se lê.
+
+        As fichas eram o último elemento de uma rolagem longa: a pessoa abre o
+        prontuário para escrever, e o botão de escrever ficava abaixo de tudo o
+        que ela já sabe. Agora as filas abertas e o cartão de desfecho vêm
+        primeiro, e o registro inteiro fica abaixo deles, para leitura.
+      */}
+      {finalizado ? null : (
+        <div className="flex flex-wrap gap-2">
+          {fichasAbertas.map((etapa) => (
+            <Link
+              key={etapa.especialidade}
+              className="botao w-auto px-5"
+              to={rotaDaFicha(id, etapa.especialidade)}
+            >
+              {traduzir(especialidades, idioma, etapa.especialidade)}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <Encaminhar prontuario={prontuario} aoEncaminhar={setProntuario} />
 
       <Secao titulo={t('dadosPessoais')} autor={prontuario.criadoPor}>
         <dl className="divide-y divide-borda">
-          <Linha rotulo={t('consentimento')} valor={paciente.consentimentoRegistro ? t('sim') : t('nao')} />
           <Linha rotulo={t('nome')} valor={paciente.nome} />
           <Linha rotulo={t('tipoDocumento')} valor={traduzir(tiposDocumento, idioma, paciente.tipoDocumento)} />
           <Linha rotulo={t('numeroDocumento')} valor={paciente.numeroDocumento} />
@@ -282,30 +313,84 @@ export function Prontuario() {
             </>
           ) : null}
         </dl>
+
+        {/*
+          O consentimento é rodapé, e não a primeira linha da ficha.
+
+          Era a linha de cima de "Dados pessoais", e a pergunta inteira — "o
+          paciente (ou responsável) consente com o registro destas informações" —
+          quebrava em quatro linhas antes de qualquer dado do paciente aparecer.
+          É um fato de auditoria: precisa constar, não precisa ser lido primeiro.
+        */}
+        <p className="border-t border-borda pt-2 text-xs text-texto-suave">
+          {t('consentimento')}: {paciente.consentimentoRegistro ? t('sim') : t('nao')}
+        </p>
       </Secao>
 
       {prontuario.triagem ? (
         <Secao titulo={t('triagem')} autor={prontuario.triagem.profissional}>
-          <dl className="divide-y divide-borda">
-            <Linha
+          {/*
+            As medidas em bloco, e não em lista de rótulo e valor.
+
+            Numa coluna de 9rem, "Pressão arterial (mmHg)" e "Frequência
+            cardíaca (bpm)" quebravam em duas linhas cada, e nove medidas viravam
+            quinze linhas de leitura vertical. Na ficha de papel elas são um
+            bloco que se lê de relance — o olho vai ao número, e o rótulo
+            confirma.
+
+            Sem marcação de fora da faixa aqui: o servidor só calcula faixa de
+            referência para a folha de observação, e aplicar o corte de adulto no
+            navegador acusaria quase toda criança.
+          */}
+          <Medidas>
+            <Medida
               rotulo={t('pressaoArterial')}
+              unidade="mmHg"
               valor={
                 prontuario.triagem.pressaoSistolica
-                  ? `${prontuario.triagem.pressaoSistolica}x${prontuario.triagem.pressaoDiastolica}`
+                  ? `${prontuario.triagem.pressaoSistolica}/${prontuario.triagem.pressaoDiastolica}`
                   : null
               }
             />
-            <Linha rotulo={t('frequenciaCardiaca')} valor={prontuario.triagem.frequenciaCardiaca} />
-            <Linha rotulo={t('frequenciaRespiratoria')} valor={prontuario.triagem.frequenciaRespiratoria} />
-            <Linha rotulo={t('saturacaoO2')} valor={prontuario.triagem.saturacaoO2} />
-            <Linha rotulo={t('temperatura')} valor={prontuario.triagem.temperaturaCelsius} />
-            <Linha rotulo={t('glicemia')} valor={prontuario.triagem.glicemiaCapilar} />
-            <Linha rotulo={t('peso')} valor={prontuario.triagem.pesoKg} />
-            <Linha rotulo={t('altura')} valor={prontuario.triagem.alturaCm} />
-            <Linha
+            <Medida rotulo={t('frequenciaCardiaca')} unidade="bpm" valor={prontuario.triagem.frequenciaCardiaca} />
+            <Medida rotulo={t('frequenciaRespiratoria')} unidade="irpm" valor={prontuario.triagem.frequenciaRespiratoria} />
+            <Medida rotulo={t('saturacaoO2')} unidade="%" valor={prontuario.triagem.saturacaoO2} />
+            <Medida rotulo={t('temperatura')} unidade="°C" valor={prontuario.triagem.temperaturaCelsius} />
+            <Medida rotulo={t('glicemia')} unidade="mg/dL" valor={prontuario.triagem.glicemiaCapilar} />
+            <Medida rotulo={t('peso')} unidade="kg" valor={prontuario.triagem.pesoKg} />
+            <Medida rotulo={t('altura')} unidade="cm" valor={prontuario.triagem.alturaCm} />
+            <Medida
               rotulo={t('circunferenciaCefalica')}
+              unidade="cm"
               valor={prontuario.triagem.circunferenciaCefalicaCm}
             />
+            <Medida
+              rotulo={t('escalaDor')}
+              unidade="/ 10"
+              valor={
+                // Zero é resposta; só o nulo significa "não perguntei".
+                prontuario.triagem.escalaDor === null ? null : prontuario.triagem.escalaDor
+              }
+            />
+            <Medida
+              rotulo={t('imc')}
+              valor={
+                prontuario.triagem.imc === null ? null : prontuario.triagem.imc.toFixed(1)
+              }
+              /*
+                A faixa só vem do servidor quando a idade permite lê-la: em
+                criança o IMC se lê em curva, e o corte de adulto diria "baixo
+                peso" para uma criança saudável.
+              */
+              unidade={
+                prontuario.triagem.faixaImc
+                  ? traduzir(faixasImc, idioma, prontuario.triagem.faixaImc)
+                  : undefined
+              }
+            />
+          </Medidas>
+
+          <dl className="divide-y divide-borda">
             <Linha
               rotulo={t('testeRapidoCovid')}
               valor={
@@ -336,31 +421,7 @@ export function Prontuario() {
                     : t('nao')
               }
             />
-            <Linha
-              rotulo={t('imc')}
-              valor={
-                prontuario.triagem.imc === null
-                  ? null
-                  : /*
-                      A faixa só vem do servidor quando a idade permite lê-la: em
-                      criança o IMC se lê em curva, e o corte de adulto diria
-                      "baixo peso" para uma criança saudável.
-                    */
-                    `${prontuario.triagem.imc.toFixed(1)}${
-                      prontuario.triagem.faixaImc
-                        ? ` · ${traduzir(faixasImc, idioma, prontuario.triagem.faixaImc)}`
-                        : ''
-                    }`
-              }
-            />
-            <Linha
-              rotulo={t('escalaDor')}
-              valor={
-                // Zero é resposta, e `?? null` deixaria o 0 passar como valor —
-                // que é o que se quer. Só o nulo significa "não perguntei".
-                prontuario.triagem.escalaDor === null ? null : `${prontuario.triagem.escalaDor} / 10`
-              }
-            />
+            {/* IMC e escala de dor estão na grade de medidas, ali em cima. */}
             <Linha
               rotulo={t('sintomasAtuais')}
               valor={prontuario.triagem.sintomas
@@ -835,38 +896,7 @@ export function Prontuario() {
             </button>
           )}
         </div>
-      ) : (
-        <div className="space-y-3">
-          {/*
-            Uma ficha por fila aberta, e não três botões fixos.
-
-            Antes eram triagem, consulta e odontologia, com o da consulta
-            apontando sempre para a clínica geral: quem era da pediatria, da
-            ginecologia ou do ultrassom não tinha como chegar na própria ficha.
-            As filas abertas são exatamente as fichas que dá para preencher
-            agora.
-          */}
-          <div className="flex flex-wrap gap-2">
-            {fichasAbertas.map((etapa) => (
-              <Link
-                key={etapa.especialidade}
-                className="botao-secundario"
-                to={rotaDaFicha(id, etapa.especialidade)}
-              >
-                {traduzir(especialidades, idioma, etapa.especialidade)}
-              </Link>
-            ))}
-          </div>
-
-          {/*
-            Quem encerra é o cartão de desfecho ali em cima, com ou sem fila
-            aberta. Aqui havia um "finalizar" que fechava o atendimento sem
-            gravar desfecho nenhum: era o único botão que sobrava para o
-            paciente triado e liberado, e ele saía do sistema sem constar como
-            alta em lugar algum.
-          */}
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

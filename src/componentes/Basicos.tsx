@@ -46,9 +46,17 @@ export function Secao({
   children: ReactNode;
 }) {
   return (
-    <section className="cartao space-y-4">
-      <header className="flex items-baseline justify-between gap-3 border-b border-borda pb-2">
-        <h2 className="text-lg font-bold text-marca-clara">{titulo}</h2>
+    <section className="cartao space-y-3">
+      {/*
+        A assinatura embaixo do título, e não ao lado dele.
+
+        Lado a lado, "Coordenacao E2E" ocupava metade da largura do cabeçalho de
+        cada seção e disputava peso com o nome dela — três seções seguidas viram
+        três nomes de gente onde se procura o nome da ficha. Quem assinou importa
+        depois, na hora de perguntar a alguém; qual ficha é, importa agora.
+      */}
+      <header className="border-b border-borda pb-2">
+        <h2 className="text-base font-bold text-marca-clara">{titulo}</h2>
         {typeof autor === 'string' ? (
           <span className="text-sm text-texto-suave">{autor}</span>
         ) : autor ? (
@@ -58,6 +66,62 @@ export function Secao({
       {children}
     </section>
   );
+}
+
+/**
+ * Um valor medido: o número grande, a unidade junto e o rótulo embaixo.
+ *
+ * Sinais vitais estavam como lista de rótulo e valor, numa coluna de 9rem que
+ * fazia "Pressão arterial (mmHg)" e "Classificação de risco (START)" quebrarem
+ * em duas linhas cada. Numa ficha de papel eles são um bloco que se lê de
+ * relance, e é assim que a equipe procura por eles: o olho vai ao número.
+ *
+ * Sem marcação de fora da faixa aqui de propósito. O servidor só calcula faixa
+ * de referência para a folha de observação, e inventar o corte no navegador
+ * produziria alarme onde não há — em criança, que é metade dos atendimentos, os
+ * cortes de adulto acusariam quase todo mundo.
+ */
+export function Medida({
+  rotulo,
+  valor,
+  unidade,
+}: {
+  rotulo: string;
+  valor: ReactNode;
+  unidade?: string;
+}) {
+  if (valor === null || valor === undefined || valor === '') return null;
+
+  /*
+    Os rótulos do formulário trazem a unidade entre parênteses — "Frequência
+    cardíaca (bpm)" —, porque ali ela diz em que unidade digitar. Aqui a unidade
+    já está ao lado do número, e repeti-la faria a etiqueta dizer "bpm" duas
+    vezes e ocupar três linhas numa caixa de um terço de tela.
+
+    Só quando há unidade: sem ela o parêntese pode estar dizendo outra coisa.
+  */
+  const nome = unidade ? rotulo.replace(/\s*\([^)]*\)\s*$/, '') : rotulo;
+
+  return (
+    <div className="rounded-lg bg-superficie-2 px-3 py-2">
+      <div className="flex items-baseline gap-1">
+        <span className="dado text-lg font-semibold leading-tight">{valor}</span>
+        {unidade ? <span className="text-xs text-texto-suave">{unidade}</span> : null}
+      </div>
+      <div className="mt-0.5 text-xs leading-tight text-texto-suave">{nome}</div>
+    </div>
+  );
+}
+
+/**
+ * A grade das medidas.
+ *
+ * Não decide se está vazia: cada `Medida` sem valor já não desenha nada, e uma
+ * grade sem filhos visíveis não ocupa altura. Contar os filhos aqui daria a
+ * resposta errada — o elemento existe mesmo quando o que ele desenha é nulo.
+ */
+export function Medidas({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{children}</div>;
 }
 
 export function Campo({
