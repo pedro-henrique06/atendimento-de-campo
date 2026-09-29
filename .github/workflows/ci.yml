@@ -1,0 +1,42 @@
+# Verificação a cada push e a cada pull request.
+#
+# O repositório não tinha nenhuma, e foi isso que deixou um build de produção
+# quebrado durar dois merges (PR #11): o Dockerfile roda `npm run build`, e a
+# imagem parou de subir sem ninguém ver.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verificar:
+    name: Tipos, testes e build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar as dependências travadas
+        run: npm ci
+
+      # `tsc -b`, e nunca `tsc --noEmit`: o tsconfig da raiz é só um índice com
+      # `files: []`, e nessa forma o `--noEmit` não confere arquivo nenhum e sai
+      # limpo sempre, com o projeto quebrado ou não.
+      - name: Conferir os tipos
+        run: npm run typecheck
+
+      - name: Rodar os testes
+        run: npm test
+
+      # O mesmo comando do Dockerfile. Também é o único passo que compila o CSS:
+      # uma classe do Tailwind que não existe derruba o build e passa batido em
+      # toda a suíte, porque o Vitest não compila folha de estilo.
+      - name: Gerar o bundle de produção
+        run: npm run build
