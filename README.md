@@ -5,6 +5,17 @@ idiomas (PT/ES/EN), tema claro e escuro, feita para uso em celular no campo.
 
 **Stack:** React 18 · Vite 6 · TypeScript · Tailwind CSS
 
+## Manual de uso
+
+**[docs/](docs/README.md)** — como usar o sistema, por profissional, com as telas
+reais: [primeiro acesso](docs/01-primeiro-acesso.md),
+[coordenação](docs/02-coordenacao.md), [recepção](docs/03-recepcao.md),
+[triagem](docs/04-triagem.md), [consultas](docs/05-consultas.md),
+[odontologia](docs/06-odontologia.md), [enfermagem](docs/07-enfermagem.md),
+[farmácia](docs/08-farmacia.md), [ultrassom](docs/09-ultrassom.md),
+[cirurgia](docs/10-cirurgia-e-anestesia.md), [alta](docs/11-alta-e-desfecho.md) e
+[prontuário](docs/12-prontuario-e-auditoria.md).
+
 ## Rodando
 
 ```bash

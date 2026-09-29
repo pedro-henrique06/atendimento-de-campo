@@ -95,12 +95,17 @@ export function GestaoContas() {
       */}
       {cadastrando ? (
         <div className="space-y-2">
-          <NovaConta
-            aoCriar={() => {
-              setCadastrando(false);
-              carregar();
-            }}
-          />
+          {/*
+            Cadastrar NÃO fecha o formulário.
+
+            A senha provisória é mostrada dentro do <NovaConta>, e fechar aqui o
+            desmontava junto com ela — a senha aparece uma vez só, o servidor
+            guarda o hash, e a conta nascia inacessível: a única saída era
+            sortear outra senha pela própria lista. Some com o formulário limpo
+            também: em campo as contas são cadastradas em série, uma pessoa
+            atrás da outra, e quem fecha é quem terminou, pelo "Cancelar".
+          */}
+          <NovaConta aoCriar={carregar} />
 
           <button
             type="button"
