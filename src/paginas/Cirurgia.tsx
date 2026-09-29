@@ -11,6 +11,7 @@ import {
   Etiqueta,
   Interruptor,
   Opcoes,
+  RodapeDeSalvar,
   Secao,
 } from '../componentes/Basicos';
 import { BarraDaPagina } from '../componentes/BarraDaPagina';
@@ -606,10 +607,6 @@ export function Cirurgia() {
 
       {salvo ? <Etiqueta tom="sucesso">{t('paradaSalva')}</Etiqueta> : null}
 
-      <button type="submit" className="botao" disabled={enviando}>
-        {enviando ? t('carregando') : form.desfecho ? t('salvarEEncerrar') : t('salvarParada')}
-      </button>
-
       {/*
         A alta sai da própria ficha cirúrgica. O desfecho ali em cima fecha a
         fila da cirurgia; este cartão fecha o atendimento, que é outra coisa —
@@ -617,6 +614,12 @@ export function Cirurgia() {
         isso.
       */}
       <Encerramento prontuario={prontuario} especialidade="Cirurgia" salvar={salvar} />
+
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando}>
+          {enviando ? t('carregando') : form.desfecho ? t('salvarEEncerrar') : t('salvarParada')}
+        </button>
+      </RodapeDeSalvar>
     </form>
   );
 }

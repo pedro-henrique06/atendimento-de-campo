@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api } from '../api/cliente';
+import { api, ErroDeRede } from '../api/cliente';
 import type { Profissional } from '../api/tipos';
 import { ProvedorSessao } from '../hooks/useSessao';
 import { ProvedorI18n } from '../i18n';
@@ -261,6 +261,73 @@ describe('Triagem', () => {
       historico: [],
       etapas: [],
     });
+  });
+
+  /*
+    A sugestão do protocolo, antes da decisão.
+
+    Ela só existia como resposta de gravar a triagem: aparecia depois de a
+    pessoa já ter escolhido a cor e apertado salvar — ou uma sugestão chega a
+    tempo de ajudar, ou vira aviso que se aprende a fechar.
+  */
+  it('mostra a sugestão do START enquanto os achados são marcados', async () => {
+    const usuario = userEvent.setup();
+    const sugerir = vi.spyOn(api, 'sugestaoStart').mockResolvedValue({
+      sugerida: 'Vermelho',
+      motivo: 'Frequencia respiratoria 34 irpm, acima de 30.',
+      divergente: false,
+    });
+
+    comSessao(<Triagem />);
+
+    await usuario.click(await screen.findByLabelText(/Consegue caminhar sozinho/i));
+
+    expect(await screen.findByText(/Frequencia respiratoria 34/)).toBeInTheDocument();
+    expect(sugerir).toHaveBeenCalled();
+  });
+
+  it('a sugestão não escolhe a classificação no lugar do profissional', async () => {
+    const usuario = userEvent.setup();
+    vi.spyOn(api, 'sugestaoStart').mockResolvedValue({
+      sugerida: 'Vermelho',
+      motivo: 'Ausencia de respiracao apos abertura de via aerea.',
+      divergente: false,
+    });
+
+    comSessao(<Triagem />);
+
+    await usuario.click(await screen.findByLabelText(/Consegue caminhar sozinho/i));
+    await screen.findByText(/Ausencia de respiracao/);
+
+    // Software clínico não decide no lugar de quem está com o paciente: nenhuma
+    // cor fica marcada, e salvar continua bloqueado até alguém escolher.
+    const vermelho = screen.getByRole('button', { name: /^Vermelho/ });
+    expect(vermelho).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeDisabled();
+  });
+
+  it('sem sinal, a sugestão some e a triagem continua', async () => {
+    const usuario = userEvent.setup();
+    vi.spyOn(api, 'sugestaoStart').mockRejectedValue(new ErroDeRede());
+
+    comSessao(<Triagem />);
+
+    await usuario.click(await screen.findByLabelText(/Consegue caminhar sozinho/i));
+
+    // A sugestão apoia a decisão, nunca é a decisão: sem ela a tela inteira
+    // continua de pé, e a classificação continua sendo oferecida.
+    expect(await screen.findByRole('button', { name: /^Verde/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Sugestão do protocolo START/i)).not.toBeInTheDocument();
+  });
+
+  it('diz o que falta enquanto o risco não foi classificado', async () => {
+    comSessao(<Triagem />);
+
+    // O botão apagado sozinho não diz por quê, e o formulário tem uns 6.000px
+    // de campos opcionais antes da única escolha obrigatória.
+    expect(
+      await screen.findByText('Escolha a classificação de risco para poder salvar.'),
+    ).toBeInTheDocument();
   });
 
   it('mostra o IMC assim que peso e altura existem', async () => {

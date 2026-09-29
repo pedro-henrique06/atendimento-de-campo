@@ -12,7 +12,17 @@ import type {
   Prontuario,
 } from '../api/tipos';
 import { BarraDaPagina } from '../componentes/BarraDaPagina';
-import { AlertaAlergia, Campo, Carregando, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
+import {
+  AlertaAlergia,
+  Campo,
+  Carregando,
+  Erros,
+  Interruptor,
+  Multiplas,
+  Opcoes,
+  RodapeDeSalvar,
+  Secao,
+} from '../componentes/Basicos';
 import { Cronometro } from '../componentes/Cronometro';
 import { ListaDispensacao, novaLinha, paraEnvio } from '../componentes/Dispensacao';
 import type { LinhaDispensacao } from '../componentes/Dispensacao';
@@ -454,10 +464,6 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
         <Erros erros={erros} />
 
-        <button type="submit" className="botao" disabled={enviando}>
-          {enviando ? t('carregando') : t('salvar')}
-        </button>
-
         {/*
           A alta, aqui mesmo. A odontologia não tem campo de encaminhamento na
           ficha: sem isto, mandar o paciente para casa dependia de voltar ao
@@ -468,6 +474,12 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
           especialidade="Odontologia"
           salvar={salvarOdontologia}
         />
+
+        <RodapeDeSalvar>
+          <button type="submit" className="botao" disabled={enviando}>
+            {enviando ? t('carregando') : t('salvar')}
+          </button>
+        </RodapeDeSalvar>
       </form>
     );
   }
@@ -713,16 +725,18 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
       <Erros erros={erros} />
 
-      <button type="submit" className="botao" disabled={enviando}>
-        {enviando ? t('carregando') : t('salvar')}
-      </button>
-
       {/* A alta sai da própria consulta, sem passar pelo prontuário. */}
       <Encerramento
         prontuario={prontuario}
         especialidade={especialidadeAtual}
         salvar={salvarConsulta}
       />
+
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando}>
+          {enviando ? t('carregando') : t('salvar')}
+        </button>
+      </RodapeDeSalvar>
     </form>
   );
 }

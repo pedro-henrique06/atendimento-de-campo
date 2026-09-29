@@ -7,12 +7,15 @@ import type {
   Especialidade,
   Prontuario,
   ResultadoTesteRapido,
+  SugestaoStart,
   Sintoma,
   StatusAlergia,
 } from '../api/tipos';
 import {
   AlertaAlergia,
   Campo,
+  EtiquetaRisco,
+  RodapeDeSalvar,
   Erros,
   Interruptor,
   Multiplas,
@@ -154,6 +157,24 @@ export function Triagem() {
   */
   const [prontuario, setProntuario] = useState<Prontuario | null>(null);
 
+  /*
+    A sugestão do protocolo, buscada enquanto os achados são marcados.
+
+    Ela só existia como resposta de gravar: aparecia depois de a pessoa já ter
+    escolhido a cor e apertado salvar — ou uma sugestão chega a tempo de ajudar,
+    ou vira aviso que se aprende a fechar.
+
+    Vem do servidor, e não de uma cópia do algoritmo aqui: lógica clínica em
+    duas linguagens diverge, e a divergência apareceria como duas classificações
+    diferentes para o mesmo paciente — a que a tela mostrou e a que a auditoria
+    registrou.
+
+    Sem sinal ela simplesmente não aparece, e a triagem continua inteira: a
+    sugestão apoia a decisão, nunca é a decisão. Antes ela também dependia da
+    rede, só que mais tarde.
+  */
+  const [sugestao, setSugestao] = useState<SugestaoStart | null>(null);
+
   useEffect(() => {
     let cancelado = false;
 
@@ -171,6 +192,48 @@ export function Triagem() {
       cancelado = true;
     };
   }, [id]);
+
+  /*
+    Busca a sugestão a cada mudança nos achados, com meio segundo de espera.
+
+    Só os sete achados entram nas dependências: o resto do formulário — peso,
+    sintomas, observações — não altera o que o START responde, e refazer a
+    chamada a cada tecla digitada num campo de texto seria tráfego puro no meio
+    do plantão.
+  */
+  const achados = {
+    deambula: form.deambula,
+    respiraEspontaneamente: form.respiraEspontaneamente,
+    respiraAposAberturaViaAerea: form.respiraAposViaAerea,
+    frequenciaRespiratoria: numero(form.frequenciaRespiratoria),
+    pulsoRadialPresente: form.pulsoRadialPresente,
+    tempoEnchimentoCapilarSegundos: numero(form.enchimentoCapilar),
+    obedeceComandos: form.obedeceComandos,
+  };
+
+  const chaveDosAchados = JSON.stringify(achados);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    const timer = setTimeout(() => {
+      api
+        .sugestaoStart(JSON.parse(chaveDosAchados))
+        .then((s) => {
+          if (!cancelado) setSugestao(s);
+        })
+        .catch(() => {
+          // Sem sinal a sugestão some, e a triagem segue. Manter na tela a
+          // resposta de achados que já mudaram seria pior que não ter nenhuma.
+          if (!cancelado) setSugestao(null);
+        });
+    }, 500);
+
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [chaveDosAchados]);
 
   /*
     O IMC aparece assim que peso e altura existem, ainda antes de salvar: é
@@ -318,6 +381,92 @@ export function Triagem() {
           </button>
         </div>
       ) : null}
+
+      <Secao titulo={t('achadosStart')}>
+        <div className="space-y-2">
+          <Interruptor
+            rotulo={t('deambula')}
+            valor={form.deambula}
+            aoMudar={(v) => alterar({ deambula: v })}
+          />
+          <Interruptor
+            rotulo={t('respiraEspontaneamente')}
+            valor={form.respiraEspontaneamente}
+            aoMudar={(v) => alterar({ respiraEspontaneamente: v })}
+          />
+          {form.respiraEspontaneamente ? null : (
+            <Interruptor
+              rotulo={t('respiraAposViaAerea')}
+              valor={form.respiraAposViaAerea}
+              aoMudar={(v) => alterar({ respiraAposViaAerea: v })}
+            />
+          )}
+          <Interruptor
+            rotulo={t('pulsoRadialPresente')}
+            valor={form.pulsoRadialPresente}
+            aoMudar={(v) => alterar({ pulsoRadialPresente: v })}
+          />
+          <Interruptor
+            rotulo={t('obedeceComandos')}
+            valor={form.obedeceComandos}
+            aoMudar={(v) => alterar({ obedeceComandos: v })}
+          />
+        </div>
+
+        <Campo rotulo={t('enchimentoCapilar')}>
+          <input
+            type="number"
+            inputMode="numeric"
+            className="campo"
+            value={form.enchimentoCapilar}
+            onChange={(e) => alterar({ enchimentoCapilar: e.target.value })}
+          />
+        </Campo>
+      </Secao>
+
+      <Secao titulo={t('classificacaoRisco')}>
+        {/*
+          A sugestão do protocolo, antes da escolha e não depois dela.
+
+          Ela aparece, diz por quê, e não marca nada: a escolha é de quem está
+          com o paciente, e a classificação gravada é sempre a marcada aqui. O
+          servidor registra a divergência na auditoria quando as duas discordam.
+        */}
+        {sugestao ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-borda bg-superficie-2 px-3 py-2 text-sm">
+            <span className="text-texto-suave">{t('sugestaoStart')}:</span>
+            <EtiquetaRisco risco={sugestao.sugerida} />
+            <span className="w-full text-texto-suave">{sugestao.motivo}</span>
+          </div>
+        ) : null}
+
+        <Opcoes
+          valor={form.classificacaoRisco}
+          opcoes={RISCOS}
+          aoEscolher={(classificacaoRisco) => alterar({ classificacaoRisco })}
+          tabela={classificacoes}
+          idioma={idioma}
+        />
+
+        <div>
+          <span className="rotulo">{t('encaminhamento')}</span>
+          <Opcoes
+            valor={form.encaminhamento}
+            opcoes={DESTINOS}
+            aoEscolher={(encaminhamento) => alterar({ encaminhamento })}
+            tabela={especialidades}
+            idioma={idioma}
+          />
+        </div>
+
+        <Campo rotulo={t('observacoes')}>
+          <textarea
+            className="campo min-h-20"
+            value={form.observacoes}
+            onChange={(e) => alterar({ observacoes: e.target.value })}
+          />
+        </Campo>
+      </Secao>
 
       <Secao titulo={t('sinaisVitais')}>
         <div className="grid grid-cols-2 gap-3">
@@ -612,81 +761,6 @@ export function Triagem() {
         ) : null}
       </Secao>
 
-      <Secao titulo={t('achadosStart')}>
-        <div className="space-y-2">
-          <Interruptor
-            rotulo={t('deambula')}
-            valor={form.deambula}
-            aoMudar={(v) => alterar({ deambula: v })}
-          />
-          <Interruptor
-            rotulo={t('respiraEspontaneamente')}
-            valor={form.respiraEspontaneamente}
-            aoMudar={(v) => alterar({ respiraEspontaneamente: v })}
-          />
-          {form.respiraEspontaneamente ? null : (
-            <Interruptor
-              rotulo={t('respiraAposViaAerea')}
-              valor={form.respiraAposViaAerea}
-              aoMudar={(v) => alterar({ respiraAposViaAerea: v })}
-            />
-          )}
-          <Interruptor
-            rotulo={t('pulsoRadialPresente')}
-            valor={form.pulsoRadialPresente}
-            aoMudar={(v) => alterar({ pulsoRadialPresente: v })}
-          />
-          <Interruptor
-            rotulo={t('obedeceComandos')}
-            valor={form.obedeceComandos}
-            aoMudar={(v) => alterar({ obedeceComandos: v })}
-          />
-        </div>
-
-        <Campo rotulo={t('enchimentoCapilar')}>
-          <input
-            type="number"
-            inputMode="numeric"
-            className="campo"
-            value={form.enchimentoCapilar}
-            onChange={(e) => alterar({ enchimentoCapilar: e.target.value })}
-          />
-        </Campo>
-      </Secao>
-
-      <Secao titulo={t('classificacaoRisco')}>
-        {/*
-          A escolha é do profissional. O protocolo sugere; a sugestão aparece
-          depois do envio e nunca substitui o que foi marcado aqui.
-        */}
-        <Opcoes
-          valor={form.classificacaoRisco}
-          opcoes={RISCOS}
-          aoEscolher={(classificacaoRisco) => alterar({ classificacaoRisco })}
-          tabela={classificacoes}
-          idioma={idioma}
-        />
-
-        <div>
-          <span className="rotulo">{t('encaminhamento')}</span>
-          <Opcoes
-            valor={form.encaminhamento}
-            opcoes={DESTINOS}
-            aoEscolher={(encaminhamento) => alterar({ encaminhamento })}
-            tabela={especialidades}
-            idioma={idioma}
-          />
-        </div>
-
-        <Campo rotulo={t('observacoes')}>
-          <textarea
-            className="campo min-h-20"
-            value={form.observacoes}
-            onChange={(e) => alterar({ observacoes: e.target.value })}
-          />
-        </Campo>
-      </Secao>
-
       {divergencia ? (
         <div className="space-y-3 rounded-xl border border-amarelo/50 bg-amarelo/10 px-4 py-3 text-sm">
           <p className="font-semibold">{divergencia}</p>
@@ -703,10 +777,6 @@ export function Triagem() {
 
       <Erros erros={erros} />
 
-      <button type="submit" className="botao" disabled={enviando || !form.classificacaoRisco}>
-        {enviando ? t('carregando') : t('salvar')}
-      </button>
-
       {/*
         A alta a partir da triagem. É o caso que não tinha caminho nenhum: quem
         chega para medir a pressão, receber orientação e ir embora não precisa de
@@ -721,6 +791,24 @@ export function Triagem() {
           impedimento={form.classificacaoRisco ? null : t('classifiqueAntesDeEncerrar')}
         />
       ) : null}
+
+      {/*
+        Salvar fica colado no rodapé da tela.
+
+        O formulário tem uns 6.000px: o botão morava no fim dele, e gravar o que
+        já estava preenchido custava rolar a triagem inteira. Grudado, ele está
+        a um toque de qualquer ponto — e, quando o risco ainda não foi
+        classificado, diz o que falta em vez de só ficar apagado.
+      */}
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando || !form.classificacaoRisco}>
+          {enviando ? t('carregando') : t('salvar')}
+        </button>
+
+        {form.classificacaoRisco ? null : (
+          <p className="text-center text-xs text-texto-suave">{t('faltaClassificarORisco')}</p>
+        )}
+      </RodapeDeSalvar>
     </form>
   );
 }

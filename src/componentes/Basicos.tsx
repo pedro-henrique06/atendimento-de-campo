@@ -385,3 +385,23 @@ export function Interruptor({
     </label>
   );
 }
+
+/**
+ * O rodapé onde mora o botão de gravar, colado no fim da tela.
+ *
+ * As fichas são longas — a da triagem tem uns 6.000px, a cirúrgica mais —, e o
+ * botão morava no fim delas: gravar o que já estava preenchido custava rolar o
+ * formulário inteiro. Grudado, ele fica a um toque de qualquer ponto.
+ *
+ * O `-mx-4` cancela o padding lateral da página para a faixa ir de borda a
+ * borda, e o fundo quase opaco impede que o texto por baixo apareça através
+ * dela. Fica dentro do `form`, e não fixo na janela: assim ele acompanha o fim
+ * do formulário em vez de cobrir o que vier depois na página.
+ */
+export function RodapeDeSalvar({ children }: { children: ReactNode }) {
+  return (
+    <div className="sticky bottom-0 -mx-4 space-y-1 border-t border-borda bg-fundo/95 px-4 pb-2 pt-3 backdrop-blur">
+      {children}
+    </div>
+  );
+}

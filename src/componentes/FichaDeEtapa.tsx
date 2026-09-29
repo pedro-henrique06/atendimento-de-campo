@@ -5,7 +5,7 @@ import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import { FILAS } from '../api/tipos';
 import type { DesfechoConsulta, Especialidade, Prontuario } from '../api/tipos';
 import { BarraDaPagina } from './BarraDaPagina';
-import { AlertaAlergia, Carregando, Erros, Opcoes, Secao } from './Basicos';
+import { AlertaAlergia, Carregando, Erros, Opcoes, RodapeDeSalvar, Secao } from './Basicos';
 import { Cronometro } from './Cronometro';
 import { Encerramento } from './Encerramento';
 import { useRascunho } from '../hooks/useRascunho';
@@ -214,15 +214,17 @@ export function FichaDeEtapa<T extends object>({
 
       <Erros erros={erros} />
 
-      <button type="submit" className="botao" disabled={enviando}>
-        {enviando ? t('carregando') : t('salvar')}
-      </button>
-
       {/*
         A alta, aqui mesmo. Sem ela, o paciente que pode ir para casa obrigava
         quem está com ele a gravar, voltar ao prontuário e procurar outro botão.
       */}
       <Encerramento prontuario={prontuario} especialidade={especialidade} salvar={salvar} />
+
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando}>
+          {enviando ? t('carregando') : t('salvar')}
+        </button>
+      </RodapeDeSalvar>
     </form>
   );
 }
