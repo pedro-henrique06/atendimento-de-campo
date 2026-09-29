@@ -1,31 +1,18 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import {
-  IconeAlerta,
-  IconeConcluido,
-  IconeLocal,
-  IconeLua,
-  IconeOlho,
-  IconeOlhoFechado,
-  IconePendente,
-  IconeSeta,
-  IconeSol,
-} from './Icones';
+import * as Icones from './Icones';
 
-const TODOS = {
-  IconeAlerta,
-  IconeConcluido,
-  IconeLocal,
-  IconeLua,
-  IconeOlho,
-  IconeOlhoFechado,
-  IconePendente,
-  IconeSeta,
-  IconeSol,
-};
+/*
+  Lidos do módulo, e não escritos à mão.
+
+  A lista era mantida a dedo e já tinha ficado para trás: ícone novo entrava em
+  Icones.tsx e nunca era testado, porque ninguém lembrava de acrescentá-lo aqui
+  também. Derivada, ela não tem como envelhecer.
+*/
+const TODOS = Object.entries(Icones).filter(([nome]) => nome.startsWith('Icone'));
 
 describe('Ícones', () => {
-  it.each(Object.entries(TODOS))('%s desenha um SVG que herda a cor do texto', (_, Icone) => {
+  it.each(TODOS)('%s desenha um SVG que herda a cor do texto', (_, Icone) => {
     const { container } = render(<Icone />);
     const svg = container.querySelector('svg');
 
@@ -35,7 +22,7 @@ describe('Ícones', () => {
     expect(svg?.getAttribute('stroke')).toBe('currentColor');
   });
 
-  it.each(Object.entries(TODOS))('%s é decorativo, não anunciado', (_, Icone) => {
+  it.each(TODOS)('%s é decorativo, não anunciado', (_, Icone) => {
     // Quem nomeia o controle é o texto ou o aria-label do botão em volta. Um
     // ícone com nome próprio faria o leitor de tela ler a mesma coisa duas
     // vezes.

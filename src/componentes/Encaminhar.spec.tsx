@@ -57,6 +57,7 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
         assumidaEm: null,
         encaminhadaPor: null,
         encaminhadaDe: null,
+        entrouNaFilaEm: null,
       },
       {
         id: 'e2',
@@ -68,6 +69,7 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
         assumidaEm: null,
         encaminhadaPor: null,
         encaminhadaDe: null,
+        entrouNaFilaEm: null,
       },
     ],
     tempoNasFilas: [],
@@ -167,27 +169,60 @@ describe('Encaminhar', () => {
     expect(await screen.findByText(/ja foi concluida/)).toBeInTheDocument();
   });
 
-  it('some quando não há fila aberta', () => {
-    // Sem etapa pendente não há de onde encaminhar.
-    const { container } = renderizar(
-      prontuario({
-        etapas: [
-          {
-            id: 'e1',
-            especialidade: 'Triagem',
-            status: 'Concluida',
-            profissional: 'Ana Enfermeira',
-            iniciadaEm: null,
-            concluidaEm: '2026-07-26T12:10:00Z',
-            assumidaEm: null,
-            encaminhadaPor: null,
-            encaminhadaDe: null,
-          },
-        ],
-      }),
-    );
+  /** Só a triagem, concluída e sem encaminhamento: nenhuma fila aberta. */
+  function semFilaAberta(): Prontuario {
+    return prontuario({
+      etapas: [
+        {
+          id: 'e1',
+          especialidade: 'Triagem',
+          status: 'Concluida',
+          profissional: 'Ana Enfermeira',
+          iniciadaEm: null,
+          concluidaEm: '2026-07-26T12:10:00Z',
+          assumidaEm: null,
+          encaminhadaPor: null,
+          encaminhadaDe: null,
+          entrouNaFilaEm: null,
+        },
+      ],
+    });
+  }
 
-    expect(container).toBeEmptyDOMElement();
+  it('sem fila aberta ainda dá para encerrar', async () => {
+    /*
+      Este é o paciente triado e liberado: a triagem fechou a única etapa e não
+      abriu nenhuma outra. Aqui o cartão sumia, e o único botão que sobrava no
+      prontuário era um "finalizar" que não gravava desfecho — o paciente saía
+      do sistema sem constar como alta em lugar nenhum.
+    */
+    const usuario = userEvent.setup();
+    const aoEncaminhar = vi.fn();
+    const atualizado = prontuario({ finalizadoEm: '2026-07-26T12:30:00Z', desfecho: 'Alta' });
+    const encerrar = vi.spyOn(api, 'encerrar').mockResolvedValue(atualizado);
+
+    renderizar(semFilaAberta(), aoEncaminhar);
+
+    await usuario.click(screen.getByRole('button', { name: 'Encerrar atendimento' }));
+    await usuario.click(screen.getByRole('button', { name: 'Dar alta e encerrar' }));
+
+    // Pela triagem, que é a etapa de onde o paciente está saindo.
+    expect(encerrar).toHaveBeenCalledWith('a1', 'Triagem', {
+      desfecho: 'Alta',
+      detalhe: undefined,
+      cancelarPendentes: false,
+    });
+
+    expect(aoEncaminhar).toHaveBeenCalledWith(atualizado);
+  });
+
+  it('sem fila aberta não oferece encaminhar nem devolver', () => {
+    // A API recusa as duas com a etapa de origem concluída, e botão que só
+    // serve para receber erro é pior que botão nenhum.
+    renderizar(semFilaAberta());
+
+    expect(screen.queryByRole('button', { name: /Encaminhar/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Devolver/ })).not.toBeInTheDocument();
   });
 
   it('some em atendimento finalizado', () => {

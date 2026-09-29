@@ -502,6 +502,25 @@ export const api = {
     });
   },
 
+  /**
+   * A sugestão do protocolo START para estes achados, sem gravar nada.
+   *
+   * Existe para a sugestão chegar antes da decisão. Ela só vinha como resposta
+   * de gravar a triagem: aparecia depois de o profissional já ter escolhido a
+   * cor e apertado salvar, que é o pior momento possível para uma sugestão.
+   *
+   * É uma chamada, e não uma cópia do algoritmo aqui: lógica clínica em duas
+   * linguagens diverge, e a divergência apareceria como duas classificações
+   * diferentes para o mesmo paciente — a que a tela mostrou e a que a auditoria
+   * registrou.
+   */
+  sugestaoStart(achados: unknown): Promise<SugestaoStart> {
+    return requisitar<SugestaoStart>('/protocolo-start', {
+      method: 'POST',
+      body: JSON.stringify(achados),
+    });
+  },
+
   registrarTriagem(id: string, corpo: unknown): Promise<SugestaoStart | null> {
     return requisitar<SugestaoStart | null>(`/atendimentos/${id}/triagem`, {
       method: 'PUT',

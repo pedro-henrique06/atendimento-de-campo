@@ -11,10 +11,22 @@ import type {
   ProcedimentoOdontologico,
   Prontuario,
 } from '../api/tipos';
-import { AlertaAlergia, Campo, Carregando, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
+import {
+  AlertaAlergia,
+  Campo,
+  Carregando,
+  Erros,
+  Interruptor,
+  Multiplas,
+  Opcoes,
+  RodapeDeSalvar,
+  Secao,
+} from '../componentes/Basicos';
 import { Cronometro } from '../componentes/Cronometro';
 import { ListaDispensacao, novaLinha, paraEnvio } from '../componentes/Dispensacao';
 import type { LinhaDispensacao } from '../componentes/Dispensacao';
+import { Encerramento } from '../componentes/Encerramento';
 import { Odontograma } from '../componentes/Odontograma';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
@@ -242,84 +254,93 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
       });
   }, [id, t]);
 
-  async function enviarConsulta(evento: FormEvent) {
-    evento.preventDefault();
-    setErros([]);
-    setEnviando(true);
-
+  /**
+   * Grava a consulta, sem sair da tela.
+   *
+   * Separado do submit porque a alta também grava: ela encerra o atendimento
+   * inteiro, e o que está escrito aqui é o registro do que a justificou.
+   */
+  async function salvarConsulta() {
     const form = consulta.valor;
 
-    try {
-      await api.registrarConsulta(id, {
-        especialidade: especialidadeAtual,
-        sintomasDescricao: form.sintomas.trim() || null,
-        historiaClinica: form.historiaClinica.trim() || null,
-        exameFisico: form.exameFisico.trim() || null,
-        cid10Codigo: form.cid10Codigo,
-        diagnosticoObservacao: form.diagnosticoObservacao.trim() || null,
-        conduta: form.conduta.trim() || null,
-        orientacoesGerais: form.orientacoesGerais.trim() || null,
-        desfecho: form.desfecho,
-        encaminhadoPara: form.encaminhadoPara,
-        ortopedia:
-          especialidadeAtual === 'Ortopedia'
-            ? {
-                localizacao: form.localizacao.trim() || null,
-                mecanismoTrauma: form.mecanismoTrauma.trim() || null,
-                imobilizacao: form.imobilizacao,
-                necessitaRaioX: form.necessitaRaioX,
-              }
-            : null,
-        ginecologia:
-          especialidadeAtual === 'Ginecologia'
-            ? {
-                dataUltimaMenstruacao: form.dataUltimaMenstruacao || null,
-                gestacoes: numeroOuNulo(form.gestacoes),
-                partos: numeroOuNulo(form.partos),
-                abortos: numeroOuNulo(form.abortos),
-                gestante: form.gestante,
-                semanasGestacao: numeroOuNulo(form.semanasGestacao),
-                metodoContraceptivo: form.metodoContraceptivo.trim() || null,
-                ultimoPreventivo: form.ultimoPreventivo.trim() || null,
-              }
-            : null,
-        dispensacoes: paraEnvio(form.dispensacoes),
-      });
+    await api.registrarConsulta(id, {
+      especialidade: especialidadeAtual,
+      sintomasDescricao: form.sintomas.trim() || null,
+      historiaClinica: form.historiaClinica.trim() || null,
+      exameFisico: form.exameFisico.trim() || null,
+      cid10Codigo: form.cid10Codigo,
+      diagnosticoObservacao: form.diagnosticoObservacao.trim() || null,
+      conduta: form.conduta.trim() || null,
+      orientacoesGerais: form.orientacoesGerais.trim() || null,
+      desfecho: form.desfecho,
+      encaminhadoPara: form.encaminhadoPara,
+      ortopedia:
+        especialidadeAtual === 'Ortopedia'
+          ? {
+              localizacao: form.localizacao.trim() || null,
+              mecanismoTrauma: form.mecanismoTrauma.trim() || null,
+              imobilizacao: form.imobilizacao,
+              necessitaRaioX: form.necessitaRaioX,
+            }
+          : null,
+      ginecologia:
+        especialidadeAtual === 'Ginecologia'
+          ? {
+              dataUltimaMenstruacao: form.dataUltimaMenstruacao || null,
+              gestacoes: numeroOuNulo(form.gestacoes),
+              partos: numeroOuNulo(form.partos),
+              abortos: numeroOuNulo(form.abortos),
+              gestante: form.gestante,
+              semanasGestacao: numeroOuNulo(form.semanasGestacao),
+              metodoContraceptivo: form.metodoContraceptivo.trim() || null,
+              ultimoPreventivo: form.ultimoPreventivo.trim() || null,
+            }
+          : null,
+      dispensacoes: paraEnvio(form.dispensacoes),
+    });
 
-      consulta.limpar();
-      navegar(`/atendimentos/${id}`, { replace: true });
-    } catch (erro) {
-      tratarErro(erro);
-    } finally {
-      setEnviando(false);
-    }
+    consulta.limpar();
   }
 
-  async function enviarOdontologia(evento: FormEvent) {
-    evento.preventDefault();
-    setErros([]);
-    setEnviando(true);
-
+  /** Grava a odontologia, sem sair da tela. Mesma razão da consulta. */
+  async function salvarOdontologia() {
     const form = odonto.valor;
 
-    try {
-      await api.registrarOdontologia(id, {
-        queixa: form.queixa.trim() || null,
-        cid10Codigo: form.cid10Codigo,
-        procedimentos: form.procedimentos,
-        outroProcedimento: form.outroProcedimento.trim() || null,
-        desfecho: form.desfecho,
-        odontograma: form.odontograma,
-        dispensacoes: paraEnvio(form.dispensacoes),
-      });
+    await api.registrarOdontologia(id, {
+      queixa: form.queixa.trim() || null,
+      cid10Codigo: form.cid10Codigo,
+      procedimentos: form.procedimentos,
+      outroProcedimento: form.outroProcedimento.trim() || null,
+      desfecho: form.desfecho,
+      odontograma: form.odontograma,
+      dispensacoes: paraEnvio(form.dispensacoes),
+    });
 
-      odonto.limpar();
-      navegar(`/atendimentos/${id}`, { replace: true });
-    } catch (erro) {
-      tratarErro(erro);
-    } finally {
-      setEnviando(false);
-    }
+    odonto.limpar();
+  }
+
+  /**
+   * O submit das duas fichas: grava e volta para o prontuário.
+   *
+   * Uma função para as duas porque a diferença entre elas está toda em quem
+   * grava, e o tratamento de erro e o "enviando" são idênticos — separados,
+   * eram duas cópias da mesma casca esperando divergir.
+   */
+  function submeter(salvar: () => Promise<void>) {
+    return async (evento: FormEvent) => {
+      evento.preventDefault();
+      setErros([]);
+      setEnviando(true);
+
+      try {
+        await salvar();
+        navegar(`/atendimentos/${id}`, { replace: true });
+      } catch (erro) {
+        tratarErro(erro);
+      } finally {
+        setEnviando(false);
+      }
+    };
   }
 
   function tratarErro(erro: unknown) {
@@ -369,8 +390,8 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
     const alterar = (mudanca: Partial<FormOdonto>) => odonto.setValor({ ...form, ...mudanca });
 
     return (
-      <form onSubmit={enviarOdontologia} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-        <h1 className="titulo">{t('odontologia')}</h1>
+      <form onSubmit={submeter(salvarOdontologia)} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+        <BarraDaPagina titulo={t('odontologia')} voltarPara={`/atendimentos/${id}`} />
         {cabecalhoPaciente}
 
         <Secao titulo={t('sintomas')}>
@@ -443,9 +464,22 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
         <Erros erros={erros} />
 
-        <button type="submit" className="botao" disabled={enviando}>
-          {enviando ? t('carregando') : t('salvar')}
-        </button>
+        {/*
+          A alta, aqui mesmo. A odontologia não tem campo de encaminhamento na
+          ficha: sem isto, mandar o paciente para casa dependia de voltar ao
+          prontuário e achar outro botão.
+        */}
+        <Encerramento
+          prontuario={prontuario}
+          especialidade="Odontologia"
+          salvar={salvarOdontologia}
+        />
+
+        <RodapeDeSalvar>
+          <button type="submit" className="botao" disabled={enviando}>
+            {enviando ? t('carregando') : t('salvar')}
+          </button>
+        </RodapeDeSalvar>
       </form>
     );
   }
@@ -454,8 +488,11 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
   const alterar = (mudanca: Partial<FormConsulta>) => consulta.setValor({ ...form, ...mudanca });
 
   return (
-    <form onSubmit={enviarConsulta} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{traduzir(especialidades, idioma, especialidadeAtual)}</h1>
+    <form onSubmit={submeter(salvarConsulta)} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+      <BarraDaPagina
+        titulo={traduzir(especialidades, idioma, especialidadeAtual)}
+        voltarPara={`/atendimentos/${id}`}
+      />
       {cabecalhoPaciente}
 
       <Secao titulo={t('sintomas')}>
@@ -688,9 +725,18 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
       <Erros erros={erros} />
 
-      <button type="submit" className="botao" disabled={enviando}>
-        {enviando ? t('carregando') : t('salvar')}
-      </button>
+      {/* A alta sai da própria consulta, sem passar pelo prontuário. */}
+      <Encerramento
+        prontuario={prontuario}
+        especialidade={especialidadeAtual}
+        salvar={salvarConsulta}
+      />
+
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando}>
+          {enviando ? t('carregando') : t('salvar')}
+        </button>
+      </RodapeDeSalvar>
     </form>
   );
 }

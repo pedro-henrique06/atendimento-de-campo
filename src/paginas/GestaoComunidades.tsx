@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { ComunidadeAdmin } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Campo, Carregando, Erros, Etiqueta, Vazio } from '../componentes/Basicos';
 import { useI18n } from '../i18n';
 
@@ -63,10 +64,9 @@ export function GestaoComunidades() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <div>
-        <h1 className="titulo">{t('gestaoComunidades')}</h1>
-        <p className="mt-1 text-sm text-texto-suave">{t('comunidadesSubtitulo')}</p>
-      </div>
+      <BarraDaPagina titulo={t('gestaoComunidades')} voltarPara="/atendimentos" />
+
+      <p className="text-sm text-texto-suave">{t('comunidadesSubtitulo')}</p>
 
       <form onSubmit={criar} className="cartao space-y-4">
         <Campo rotulo={t('novaComunidade')} obrigatorio>

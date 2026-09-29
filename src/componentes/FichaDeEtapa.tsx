@@ -4,8 +4,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import { FILAS } from '../api/tipos';
 import type { DesfechoConsulta, Especialidade, Prontuario } from '../api/tipos';
-import { AlertaAlergia, Carregando, Erros, Opcoes, Secao } from './Basicos';
+import { BarraDaPagina } from './BarraDaPagina';
+import { AlertaAlergia, Carregando, Erros, Opcoes, RodapeDeSalvar, Secao } from './Basicos';
 import { Cronometro } from './Cronometro';
+import { Encerramento } from './Encerramento';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
 import { desfechos, especialidades } from '../i18n/enums';
@@ -143,14 +145,24 @@ export function FichaDeEtapa<T extends object>({
       });
   }, [id, t]);
 
+  /**
+   * Grava a ficha, sem sair da tela.
+   *
+   * Separado do submit porque a alta também grava: ela encerra o atendimento
+   * inteiro, e o que está escrito aqui é o registro do que a justificou.
+   */
+  async function salvar() {
+    await enviar(id, rascunho.valor);
+    rascunho.limpar();
+  }
+
   async function aoSubmeter(evento: FormEvent) {
     evento.preventDefault();
     setErros([]);
     setEnviando(true);
 
     try {
-      await enviar(id, rascunho.valor);
-      rascunho.limpar();
+      await salvar();
       navegar(`/atendimentos/${id}`, { replace: true });
     } catch (erro) {
       if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
@@ -178,7 +190,7 @@ export function FichaDeEtapa<T extends object>({
 
   return (
     <form onSubmit={aoSubmeter} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{titulo}</h1>
+      <BarraDaPagina titulo={titulo} voltarPara={`/atendimentos/${id}`} />
 
       <div className="cartao space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
@@ -202,9 +214,17 @@ export function FichaDeEtapa<T extends object>({
 
       <Erros erros={erros} />
 
-      <button type="submit" className="botao" disabled={enviando}>
-        {enviando ? t('carregando') : t('salvar')}
-      </button>
+      {/*
+        A alta, aqui mesmo. Sem ela, o paciente que pode ir para casa obrigava
+        quem está com ele a gravar, voltar ao prontuário e procurar outro botão.
+      */}
+      <Encerramento prontuario={prontuario} especialidade={especialidade} salvar={salvar} />
+
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando}>
+          {enviando ? t('carregando') : t('salvar')}
+        </button>
+      </RodapeDeSalvar>
     </form>
   );
 }

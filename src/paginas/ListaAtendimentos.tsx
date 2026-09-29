@@ -8,8 +8,9 @@ import type {
   Especialidade,
   EtapaResumo,
 } from '../api/tipos';
-import { Carregando, Erros, Etiqueta, PontoRisco, Vazio } from '../componentes/Basicos';
-import { Cronometro } from '../componentes/Cronometro';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
+import { Carregando, Erros, EtiquetaRisco, PontoRisco, Vazio } from '../componentes/Basicos';
+import { Cronometro, Espera } from '../componentes/Cronometro';
 import { IconeConcluido, IconePendente } from '../componentes/Icones';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
@@ -210,17 +211,25 @@ export function ListaAtendimentos() {
     aba,
     meuNome,
     ocupado: assumindo === atendimento.id,
+    agrupado: agrupar,
     aoAlternar: alternarPosse,
   });
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="titulo">{t('atendimentos')}</h1>
-        <button type="button" className="botao w-auto px-5" onClick={() => navegar('/atendimentos/novo')}>
-          {t('novo')}
-        </button>
-      </div>
+      {/* Sem voltar: esta é a tela inicial, de onde todo o resto parte. */}
+      <BarraDaPagina
+        titulo={t('atendimentos')}
+        acao={
+          <button
+            type="button"
+            className="botao w-auto px-5"
+            onClick={() => navegar('/atendimentos/novo')}
+          >
+            {t('novo')}
+          </button>
+        }
+      />
 
       <input
         className="campo"
@@ -330,77 +339,155 @@ function Grupo({
   );
 }
 
+/**
+ * Uma linha da fila.
+ *
+ * Era um cartão de ~300px para três informações, com uma faixa vazia embaixo só
+ * para o botão. Cabiam três pacientes numa tela de celular — numa fila de
+ * quarenta pessoas debaixo da lona, isso é rolagem sem fim.
+ *
+ * O que mudou, e por quê:
+ *
+ * - **o nome vem inteiro.** Era o código em negrito e o nome truncado depois
+ *   dele ("Anaís Palaci…"), e dois pacientes diferentes liam igual. Na tenda se
+ *   chama pelo nome; o código serve para cruzar com o papel, e por isso desceu
+ *   para a segunda linha, em mono, onde se lê letra por letra;
+ * - **o risco vira etiqueta.** Era um ponto de 12px, e é o critério de
+ *   ordenação do protocolo START — procurá-lo em vinte cartões é o contrário de
+ *   priorizar;
+ * - **a espera aparece.** É o outro número da decisão, e não existia em lugar
+ *   nenhum da tela;
+ * - **"Aguardando" sai do cartão.** O título do grupo logo acima já diz isso,
+ *   e repetir em cada linha gasta o canto onde o estado *diferente* — o
+ *   atendimento com outra pessoa — precisa aparecer.
+ */
 function Cartao({
   atendimento,
   aba,
   meuNome,
   ocupado,
+  agrupado,
   aoAlternar,
 }: {
   atendimento: AtendimentoResumo;
   aba: Aba;
   meuNome: string | null;
   ocupado: boolean;
+  /** O grupo acima já diz o estado; repetir na etiqueta seria dizer duas vezes. */
+  agrupado: boolean;
   aoAlternar: (id: string, especialidade: Especialidade, souEu: boolean) => void;
 }) {
-  const { idioma } = useI18n();
+  const { t, idioma } = useI18n();
   const etapa = etapaRelevante(atendimento, aba, meuNome);
+
+  const souEu = etapa?.profissional != null && etapa.profissional === meuNome;
+  const deOutro = etapa?.profissional != null && !souEu;
+
+  // Em "Todas" a lista mistura filas e não há etapa óbvia para assumir.
+  const podeAgir = aba !== 'Todas' && etapa !== undefined && !deOutro;
+
+  /*
+    O selo só aparece quando diz algo que o grupo não disse: fora do
+    agrupamento, ou quando o paciente está com outra pessoa.
+  */
+  const selo = deOutro
+    ? etapa!.profissional
+    : agrupado
+      ? null
+      : etapa
+        ? traduzir(statusEtapa, idioma, etapa.status)
+        : traduzir(statusAtendimento, idioma, atendimento.status);
 
   return (
     <li>
       <Link
         to={`/atendimentos/${atendimento.id}`}
-        className="cartao block transition hover:border-marca-clara"
+        className="cartao block space-y-1 p-3 transition hover:border-marca-clara"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <PontoRisco risco={atendimento.classificacaoRisco} />
-            <span className="truncate font-bold">
-              {atendimento.codigo} · {atendimento.pacienteNome}
-            </span>
-          </div>
+        <div className="flex items-start gap-2">
+          {/*
+            Sem risco não vira etiqueta: na fila da triagem ninguém foi triado
+            ainda, e "Sem triagem" repetido em todo cartão é uma coluna inteira
+            de ruído. Quem diz que falta triar é a própria fila, logo abaixo.
+          */}
+          {atendimento.classificacaoRisco ? (
+            <EtiquetaRisco risco={atendimento.classificacaoRisco} />
+          ) : null}
 
           {/*
-            O selo mostra o estado da etapa desta fila, e não o do atendimento
-            inteiro: "Em andamento" no atendimento não diz se *esta* fila já
-            pegou o paciente, que é a pergunta de quem olha a lista.
+            Sem `truncate`: o nome quebra para a segunda linha em vez de ser
+            cortado. Dois "Paciente Da…" na mesma tela não identificam ninguém.
           */}
-          {etapa ? (
-            <Etiqueta tom={etapa.status === 'EmAndamento' ? 'aviso' : 'neutro'}>
-              {traduzir(statusEtapa, idioma, etapa.status)}
-            </Etiqueta>
+          <span className="min-w-0 flex-1 font-bold leading-tight">
+            {atendimento.pacienteNome}
+          </span>
+
+          {/* A espera, que é metade da decisão de quem passa na frente. */}
+          {souEu || deOutro ? (
+            <Cronometro assumidaEm={etapa!.assumidaEm} />
           ) : (
-            <Etiqueta tom={atendimento.status === 'Finalizado' ? 'sucesso' : 'neutro'}>
-              {traduzir(statusAtendimento, idioma, atendimento.status)}
-            </Etiqueta>
+            <Espera entrouEm={etapa?.entrouNaFilaEm ?? null} />
           )}
         </div>
 
         {atendimento.resumo ? (
-          <p className="mt-1 line-clamp-2 text-sm text-texto-suave">{atendimento.resumo}</p>
+          <p className="line-clamp-2 text-sm text-texto-suave">{atendimento.resumo}</p>
         ) : null}
 
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-          {atendimento.etapas.map((e) => (
-            <span
-              key={e.id}
-              className={`inline-flex items-center gap-1 ${
-                e.status === 'Concluida' ? 'text-verde' : 'text-texto-suave'
-              }`}
-            >
-              {e.status === 'Concluida' ? <IconeConcluido /> : <IconePendente />}
-              {traduzir(especialidades, idioma, e.especialidade)}
-            </span>
-          ))}
-        </div>
+        {/*
+          Código, estado e caminho do paciente numa linha só, com o botão.
 
-        <BlocoPosse
-          atendimento={atendimento}
-          aba={aba}
-          meuNome={meuNome}
-          ocupado={ocupado}
-          aoAlternar={aoAlternar}
-        />
+          O botão tem 44px de altura — o alvo de toque para quem usa luva e está
+          no sol —, então uma linha só para ele deixava um vão morto do tamanho
+          dele em todo cartão. Centralizado contra o texto, o mesmo botão não
+          gasta altura nenhuma a mais.
+        */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-texto-suave">
+            <span className="dado">{atendimento.codigo}</span>
+
+            {selo ? (
+              <span className="truncate">
+                {deOutro ? `${t('emAtendimentoCom')} ${selo}` : selo}
+              </span>
+            ) : null}
+
+            {souEu ? <span className="font-medium text-marca-clara">{t('comigo')}</span> : null}
+
+            {atendimento.etapas.map((e) => (
+              <span
+                key={e.id}
+                className={`inline-flex items-center gap-1 ${
+                  e.status === 'Concluida' ? 'text-verde' : ''
+                }`}
+              >
+                {e.status === 'Concluida' ? (
+                  <IconeConcluido className="h-3.5 w-3.5" />
+                ) : (
+                  <IconePendente className="h-3.5 w-3.5" />
+                )}
+                {traduzir(especialidades, idioma, e.especialidade)}
+              </span>
+            ))}
+          </div>
+
+          {podeAgir ? (
+            <button
+              type="button"
+              disabled={ocupado}
+              onClick={(e) => {
+                // O cartão inteiro é um link para o prontuário; sem isto,
+                // assumir navegaria para lá no mesmo clique.
+                e.preventDefault();
+                e.stopPropagation();
+                aoAlternar(atendimento.id, etapa!.especialidade, souEu);
+              }}
+              className="botao-secundario shrink-0 py-1.5"
+            >
+              {souEu ? t('liberar') : t('assumir')}
+            </button>
+          ) : null}
+        </div>
       </Link>
     </li>
   );
@@ -428,83 +515,3 @@ function ChipFiltro({
     </button>
   );
 }
-
-/**
- * Quem está com o paciente, e o botão para assumir ou devolver.
- *
- * Em "Todas" a lista mistura filas e não há uma etapa óbvia para assumir, mas
- * quem está com o paciente continua aparecendo: é justamente ali que a
- * coordenação olha a operação inteira e precisa ver o que já tem dono.
- *
- * Em "Meus" cada linha já é de quem está olhando, e o botão vira "devolver à
- * fila".
- */
-function BlocoPosse({
-  atendimento,
-  aba,
-  meuNome,
-  ocupado,
-  aoAlternar,
-}: {
-  atendimento: AtendimentoResumo;
-  aba: Especialidade | 'Todas' | 'Meus';
-  meuNome: string | null;
-  ocupado: boolean;
-  aoAlternar: (id: string, especialidade: Especialidade, souEu: boolean) => void;
-}) {
-  const { t } = useI18n();
-
-  // A mesma etapa que o selo do cartão mostra: se as duas escolhas divergissem,
-  // o selo falaria de uma fila e o botão agiria sobre outra.
-  const etapa = etapaRelevante(atendimento, aba, meuNome);
-
-  if (!etapa) return null;
-
-  const souEu = etapa.profissional !== null && etapa.profissional === meuNome;
-  const deOutro = etapa.profissional !== null && !souEu;
-
-  // Em "Todas" só o aviso de quem está com o paciente, sem botão: a etapa a
-  // assumir seria uma escolha arbitrária entre as filas que a lista mistura.
-  const podeAgir = aba !== 'Todas';
-
-  return (
-    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-borda pt-3">
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-texto-suave">
-        {souEu ? t('comigo') : null}
-        {deOutro ? (
-          <>
-            {t('emAtendimentoCom')}{' '}
-            <span className="font-medium text-texto">{etapa.profissional}</span>
-          </>
-        ) : null}
-
-        {/*
-          O tempo aparece na fila, e não só na ficha: é aqui que se vê o
-          atendimento que ficou esquecido aberto desde a manhã.
-        */}
-        {etapa.profissional ? <Cronometro assumidaEm={etapa.assumidaEm} /> : null}
-      </span>
-
-      {deOutro || !podeAgir ? null : (
-        <button
-          type="button"
-          disabled={ocupado}
-          onClick={(e) => {
-            // O cartão inteiro é um link para o prontuário; sem isto, assumir
-            // navegaria para lá no mesmo clique.
-            e.preventDefault();
-            e.stopPropagation();
-            aoAlternar(atendimento.id, etapa.especialidade, souEu);
-          }}
-          className="botao-secundario shrink-0"
-        >
-          {souEu ? t('liberar') : t('assumir')}
-        </button>
-      )}
-    </div>
-  );
-}
-
-
-
-

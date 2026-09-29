@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ErroDeRede } from '../api/cliente';
 import type { ProducaoProfissional } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Carregando, Erros, Vazio } from '../componentes/Basicos';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
@@ -72,9 +73,10 @@ export function Producao() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+      <BarraDaPagina titulo={t('producao')} voltarPara="/atendimentos" />
+
       <div>
-        <h1 className="titulo">{t('producao')}</h1>
-        <p className="mt-1 text-sm text-texto-suave">
+        <p className="text-sm text-texto-suave">
           {profissional?.ehAdministrador ? t('producaoSubtitulo') : t('producaoSubtituloPropria')}
         </p>
       </div>

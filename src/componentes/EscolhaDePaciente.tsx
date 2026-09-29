@@ -22,7 +22,6 @@ export function EscolhaDePaciente({
 }) {
   const { t, idioma } = useI18n();
 
-  const [modo, setModo] = useState<'escolha' | 'buscando'>('escolha');
   const [codigo, setCodigo] = useState('');
   const [achado, setAchado] = useState<PacienteConhecido | null>(null);
   const [naoEncontrado, setNaoEncontrado] = useState(false);
@@ -68,103 +67,110 @@ export function EscolhaDePaciente({
     }
   }
 
-  if (modo === 'escolha') {
-    return (
-      <section className="cartao space-y-4">
-        <p className="text-texto-suave">{t('atendimentoPara')}</p>
+  return (
+    <div className="space-y-4">
+      {/*
+        A busca pelo código vem primeiro, e já com o campo aberto.
 
-        <Erros erros={erros} />
+        Era uma bifurcação em tela própria: dois botões, 70% de tela vazia, e a
+        busca atrás de um segundo toque. Só que é a busca que evita o cadastro
+        duplicado, e quem volta é a regra em campo — deixar o caminho que perde
+        o histórico a um toque e o que o preserva a dois é o incentivo invertido.
+      */}
+      <section className="cartao space-y-3">
+        <div>
+          <h2 className="font-bold">{t('jaFoiAtendido')}</h2>
+          <p className="text-sm text-texto-suave">{t('dicaCodigo')}</p>
+        </div>
 
-        <button type="button" className="botao" onClick={comecarNovo} disabled={ocupado}>
-          {ocupado ? t('carregando') : t('pacienteNovo')}
-        </button>
+        <form onSubmit={procurar} className="space-y-3">
+          <label className="block">
+            <span className="rotulo">{t('informeOCodigo')}</span>
+            <input
+              className="campo dado uppercase"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              placeholder="XXXX-XXXX"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="botao"
+            disabled={ocupado || codigo.trim().length === 0}
+          >
+            {ocupado ? t('carregando') : t('procurar')}
+          </button>
+        </form>
+
+        {naoEncontrado ? (
+          <p
+            role="alert"
+            className="rounded-xl border border-vermelho/40 bg-vermelho/10 px-4 py-3 text-sm text-vermelho"
+          >
+            {t('codigoNaoEncontrado')}
+          </p>
+        ) : null}
+
+        {achado ? (
+          <div className="space-y-3 rounded-xl border border-marca/40 bg-marca/10 p-4">
+            <p className="sobretitulo text-marca-clara">{t('pacienteEncontrado')}</p>
+
+            {/*
+              Nome, idade e visitas anteriores: o bastante para a equipe conferir
+              que é a pessoa certa antes de abrir o prontuário dela.
+            */}
+            <div>
+              <p className="font-bold">{achado.paciente.nome}</p>
+              <p className="text-sm text-texto-suave">
+                <span className="dado">{achado.paciente.codigo}</span>
+                {achado.paciente.idade !== null ? ` · ${achado.paciente.idade}` : ''}
+                {` · ${traduzir(tabelaSexos, idioma, achado.paciente.sexo)}`}
+              </p>
+              <p className="mt-1 text-sm text-texto-suave">
+                {achado.totalAtendimentos === 1
+                  ? t('umAtendimentoAnterior')
+                  : `${achado.totalAtendimentos} ${t('atendimentosAnteriores')}`}
+                {achado.ultimoAtendimentoEm
+                  ? ` · ${t('ultimaVisita')}: ${new Date(achado.ultimoAtendimentoEm).toLocaleDateString()}`
+                  : ''}
+                {achado.ultimaBase ? ` · ${achado.ultimaBase}` : ''}
+              </p>
+            </div>
+
+            <button type="button" className="botao" onClick={() => aoEscolherConhecido(achado)}>
+              {t('usarEsteCadastro')}
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      <Erros erros={erros} />
+
+      {/*
+        A primeira visita, embaixo e sem disputar destaque. Não é o caso raro —
+        numa missão nova, é quase todo mundo —, mas é o caminho que não tem
+        volta: cadastrar de novo quem já tinha código quebra o histórico da
+        pessoa, e o código é o único fio que liga uma visita à seguinte.
+      */}
+      <section className="cartao space-y-3">
+        <div>
+          <h2 className="font-bold">{t('primeiraVez')}</h2>
+          <p className="text-sm text-texto-suave">{t('dicaPacienteNovo')}</p>
+        </div>
 
         <button
           type="button"
           className="botao-secundario w-full"
-          onClick={() => setModo('buscando')}
+          onClick={comecarNovo}
+          disabled={ocupado}
         >
-          {t('pacienteConhecido')}
+          {ocupado ? t('carregando') : t('pacienteNovo')}
         </button>
       </section>
-    );
-  }
-
-  return (
-    <section className="cartao space-y-4">
-      <form onSubmit={procurar} className="space-y-3">
-        <label className="block">
-          <span className="rotulo">{t('informeOCodigo')}</span>
-          <input
-            className="campo font-mono uppercase tracking-widest"
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
-            placeholder="XXXX-XXXX"
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            required
-          />
-          <span className="mt-1 block text-sm text-texto-suave">{t('dicaCodigo')}</span>
-        </label>
-
-        <button type="submit" className="botao" disabled={ocupado || codigo.trim().length === 0}>
-          {ocupado ? t('carregando') : t('procurar')}
-        </button>
-      </form>
-
-      <Erros erros={erros} />
-
-      {naoEncontrado ? (
-        <p role="alert" className="rounded-xl border border-vermelho/40 bg-vermelho/10 px-4 py-3 text-sm text-vermelho">
-          {t('codigoNaoEncontrado')}
-        </p>
-      ) : null}
-
-      {achado ? (
-        <div className="space-y-3 rounded-xl border border-marca/40 bg-marca/10 p-4">
-          <p className="sobretitulo text-marca-clara">{t('pacienteEncontrado')}</p>
-
-          {/*
-            Nome, idade e visitas anteriores: o bastante para a equipe conferir
-            que é a pessoa certa antes de abrir o prontuário dela.
-          */}
-          <div>
-            <p className="font-bold">{achado.paciente.nome}</p>
-            <p className="text-sm text-texto-suave">
-              <span className="font-mono">{achado.paciente.codigo}</span>
-              {achado.paciente.idade !== null ? ` · ${achado.paciente.idade}` : ''}
-              {` · ${traduzir(tabelaSexos, idioma, achado.paciente.sexo)}`}
-            </p>
-            <p className="mt-1 text-sm text-texto-suave">
-              {achado.totalAtendimentos === 1
-                ? t('umAtendimentoAnterior')
-                : `${achado.totalAtendimentos} ${t('atendimentosAnteriores')}`}
-              {achado.ultimoAtendimentoEm
-                ? ` · ${t('ultimaVisita')}: ${new Date(achado.ultimoAtendimentoEm).toLocaleDateString()}`
-                : ''}
-              {achado.ultimaBase ? ` · ${achado.ultimaBase}` : ''}
-            </p>
-          </div>
-
-          <button type="button" className="botao" onClick={() => aoEscolherConhecido(achado)}>
-            {t('usarEsteCadastro')}
-          </button>
-        </div>
-      ) : null}
-
-      <button
-        type="button"
-        className="w-full text-center text-sm text-marca-clara underline"
-        onClick={() => {
-          setModo('escolha');
-          setAchado(null);
-          setNaoEncontrado(false);
-          setErros([]);
-        }}
-      >
-        {t('voltar')}
-      </button>
-    </section>
+    </div>
   );
 }

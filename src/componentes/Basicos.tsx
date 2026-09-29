@@ -46,9 +46,17 @@ export function Secao({
   children: ReactNode;
 }) {
   return (
-    <section className="cartao space-y-4">
-      <header className="flex items-baseline justify-between gap-3 border-b border-borda pb-2">
-        <h2 className="text-lg font-bold text-marca-clara">{titulo}</h2>
+    <section className="cartao space-y-3">
+      {/*
+        A assinatura embaixo do título, e não ao lado dele.
+
+        Lado a lado, "Coordenacao E2E" ocupava metade da largura do cabeçalho de
+        cada seção e disputava peso com o nome dela — três seções seguidas viram
+        três nomes de gente onde se procura o nome da ficha. Quem assinou importa
+        depois, na hora de perguntar a alguém; qual ficha é, importa agora.
+      */}
+      <header className="border-b border-borda pb-2">
+        <h2 className="text-base font-bold text-marca-clara">{titulo}</h2>
         {typeof autor === 'string' ? (
           <span className="text-sm text-texto-suave">{autor}</span>
         ) : autor ? (
@@ -58,6 +66,62 @@ export function Secao({
       {children}
     </section>
   );
+}
+
+/**
+ * Um valor medido: o número grande, a unidade junto e o rótulo embaixo.
+ *
+ * Sinais vitais estavam como lista de rótulo e valor, numa coluna de 9rem que
+ * fazia "Pressão arterial (mmHg)" e "Classificação de risco (START)" quebrarem
+ * em duas linhas cada. Numa ficha de papel eles são um bloco que se lê de
+ * relance, e é assim que a equipe procura por eles: o olho vai ao número.
+ *
+ * Sem marcação de fora da faixa aqui de propósito. O servidor só calcula faixa
+ * de referência para a folha de observação, e inventar o corte no navegador
+ * produziria alarme onde não há — em criança, que é metade dos atendimentos, os
+ * cortes de adulto acusariam quase todo mundo.
+ */
+export function Medida({
+  rotulo,
+  valor,
+  unidade,
+}: {
+  rotulo: string;
+  valor: ReactNode;
+  unidade?: string;
+}) {
+  if (valor === null || valor === undefined || valor === '') return null;
+
+  /*
+    Os rótulos do formulário trazem a unidade entre parênteses — "Frequência
+    cardíaca (bpm)" —, porque ali ela diz em que unidade digitar. Aqui a unidade
+    já está ao lado do número, e repeti-la faria a etiqueta dizer "bpm" duas
+    vezes e ocupar três linhas numa caixa de um terço de tela.
+
+    Só quando há unidade: sem ela o parêntese pode estar dizendo outra coisa.
+  */
+  const nome = unidade ? rotulo.replace(/\s*\([^)]*\)\s*$/, '') : rotulo;
+
+  return (
+    <div className="rounded-lg bg-superficie-2 px-3 py-2">
+      <div className="flex items-baseline gap-1">
+        <span className="dado text-lg font-semibold leading-tight">{valor}</span>
+        {unidade ? <span className="text-xs text-texto-suave">{unidade}</span> : null}
+      </div>
+      <div className="mt-0.5 text-xs leading-tight text-texto-suave">{nome}</div>
+    </div>
+  );
+}
+
+/**
+ * A grade das medidas.
+ *
+ * Não decide se está vazia: cada `Medida` sem valor já não desenha nada, e uma
+ * grade sem filhos visíveis não ocupa altura. Contar os filhos aqui daria a
+ * resposta errada — o elemento existe mesmo quando o que ele desenha é nulo.
+ */
+export function Medidas({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{children}</div>;
 }
 
 export function Campo({
@@ -129,6 +193,44 @@ export function PontoRisco({ risco }: { risco: ClassificacaoRisco | null }) {
   );
 }
 
+/** Fundo e tinta de cada risco, para a etiqueta que se lê sem depender da cor. */
+const ETIQUETA_RISCO: Record<ClassificacaoRisco, string> = {
+  Vermelho: 'bg-fundo-vermelho text-tinta-vermelho',
+  Amarelo: 'bg-fundo-amarelo text-tinta-amarelo',
+  Verde: 'bg-fundo-verde text-tinta-verde',
+  Preto: 'bg-fundo-preto text-tinta-preto',
+};
+
+/**
+ * O risco como etiqueta legível, e não como ponto.
+ *
+ * O ponto de 12px continua servindo onde o texto ao lado já diz a cor. Onde o
+ * risco é o critério de leitura — a fila —, ele precisa do peso que tem na
+ * decisão: é por ele que se escolhe quem passa na frente, e procurar um ponto
+ * de 12px em vinte cartões é o contrário disso.
+ *
+ * Fundo tingido com tinta escura, e não a cor cheia com texto branco: o amarelo
+ * e o verde cheios não dão contraste para texto branco, e a mesma etiqueta
+ * precisa funcionar nos quatro riscos e nos dois temas.
+ */
+export function EtiquetaRisco({ risco }: { risco: ClassificacaoRisco | null }) {
+  const { t, idioma } = useI18n();
+
+  if (!risco) {
+    return (
+      <span className="rounded-md bg-superficie-2 px-2 py-0.5 text-xs font-semibold text-texto-suave">
+        {t('semRisco')}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${ETIQUETA_RISCO[risco]}`}>
+      {traduzir(classificacoesCurtas, idioma, risco)}
+    </span>
+  );
+}
+
 export function Etiqueta({
   children,
   tom = 'neutro',
@@ -186,7 +288,13 @@ export function Vazio({ texto }: { texto: string }) {
   return <div className="cartao py-10 text-center text-texto-suave">{texto}</div>;
 }
 
-/** Grupo de opções em botões, mais confortável que `select` no celular. */
+/**
+ * Grupo de opções em botões, mais confortável que `select` no celular.
+ *
+ * O escolhido era um bloco azul sólido com texto branco. Numa lista de sete
+ * sintomas marcados, viravam sete blocos pesados e o título da seção sumia
+ * entre eles — o estado ativo precisa se distinguir do repouso, não gritar.
+ */
 export function Opcoes<T extends string>({
   valor,
   opcoes,
@@ -211,11 +319,7 @@ export function Opcoes<T extends string>({
             type="button"
             aria-pressed={ativo}
             onClick={() => aoEscolher(opcao)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              ativo
-                ? 'border-marca bg-marca text-white'
-                : 'border-borda bg-superficie-2 text-texto hover:border-marca-clara'
-            }`}
+            className={`opcao ${ativo ? 'opcao-ativa' : 'opcao-repouso'}`}
           >
             {traduzir(tabela, idioma, opcao)}
           </button>
@@ -250,11 +354,7 @@ export function Multiplas<T extends string>({
             type="button"
             aria-pressed={ativo}
             onClick={() => aoAlternar(opcao)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              ativo
-                ? 'border-marca bg-marca text-white'
-                : 'border-borda bg-superficie-2 text-texto hover:border-marca-clara'
-            }`}
+            className={`opcao ${ativo ? 'opcao-ativa' : 'opcao-repouso'}`}
           >
             {traduzir(tabela, idioma, opcao)}
           </button>
@@ -283,5 +383,25 @@ export function Interruptor({
         className="h-6 w-6 shrink-0 accent-[rgb(var(--cor-marca))]"
       />
     </label>
+  );
+}
+
+/**
+ * O rodapé onde mora o botão de gravar, colado no fim da tela.
+ *
+ * As fichas são longas — a da triagem tem uns 6.000px, a cirúrgica mais —, e o
+ * botão morava no fim delas: gravar o que já estava preenchido custava rolar o
+ * formulário inteiro. Grudado, ele fica a um toque de qualquer ponto.
+ *
+ * O `-mx-4` cancela o padding lateral da página para a faixa ir de borda a
+ * borda, e o fundo quase opaco impede que o texto por baixo apareça através
+ * dela. Fica dentro do `form`, e não fixo na janela: assim ele acompanha o fim
+ * do formulário em vez de cobrir o que vier depois na página.
+ */
+export function RodapeDeSalvar({ children }: { children: ReactNode }) {
+  return (
+    <div className="sticky bottom-0 -mx-4 space-y-1 border-t border-borda bg-fundo/95 px-4 pb-2 pt-3 backdrop-blur">
+      {children}
+    </div>
   );
 }

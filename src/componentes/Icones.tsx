@@ -112,3 +112,38 @@ export function IconePendente({ className }: Props) {
     </Traco>
   );
 }
+
+/**
+ * Voltar.
+ *
+ * O app é instalado como PWA em modo `standalone`, que é uma janela sem barra
+ * de navegador: ali não existe o botão de voltar do sistema. Quem abria uma
+ * ficha e desistia não tinha como sair dela a não ser pelo logotipo, que leva
+ * para a fila e perde o contexto.
+ */
+export function IconeVoltar({ className }: Props) {
+  return (
+    <Traco className={className}>
+      <path d="M15 18l-6-6 6-6" />
+    </Traco>
+  );
+}
+
+/** Menu da conta e das configurações, no canto do cabeçalho. */
+export function IconeMenu({ className }: Props) {
+  return (
+    <Traco className={className}>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </Traco>
+  );
+}
+
+/** Relógio: tempo de espera na fila, tempo de atendimento. */
+export function IconeRelogio({ className }: Props) {
+  return (
+    <Traco className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </Traco>
+  );
+}

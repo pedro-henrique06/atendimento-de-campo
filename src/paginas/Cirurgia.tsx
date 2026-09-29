@@ -11,9 +11,12 @@ import {
   Etiqueta,
   Interruptor,
   Opcoes,
+  RodapeDeSalvar,
   Secao,
 } from '../componentes/Basicos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Cronometro } from '../componentes/Cronometro';
+import { Encerramento } from '../componentes/Encerramento';
 import { SecaoDesfecho, useTituloDaFila } from '../componentes/FichaDeEtapa';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n } from '../i18n';
@@ -249,68 +252,78 @@ export function Cirurgia() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, t]);
 
+  /**
+   * Grava a ficha cirúrgica, sem sair da tela.
+   *
+   * Separado do submit porque a alta também grava: ela encerra o atendimento
+   * inteiro, e a lista de verificação é o registro do que a justificou.
+   */
+  async function salvar() {
+    const form = rascunho.valor;
+
+    await api.registrarCirurgia(id, {
+      indicacao: form.indicacao.trim() || null,
+      procedimentoProposto: form.procedimentoProposto.trim() || null,
+      lateralidade: form.lateralidade,
+      jejumHoras: numeroOuNulo(form.jejumHoras),
+      consentimentoAssinado: form.consentimentoAssinado,
+      observacoesPreOperatorio: form.observacoesPreOperatorio.trim() || null,
+
+      checkInIdentidadeConfirmada: form.checkInIdentidadeConfirmada,
+      checkInSitioMarcado: form.checkInSitioMarcado,
+      checkInConsentimentoConferido: form.checkInConsentimentoConferido,
+      checkInAlergiaConferida: form.checkInAlergiaConferida,
+      checkInJejumConferido: form.checkInJejumConferido,
+
+      timeOutUmEquipeApresentada: form.timeOutUmEquipeApresentada,
+      timeOutUmMonitorizacaoOk: form.timeOutUmMonitorizacaoOk,
+      timeOutUmViaAereaAvaliada: form.timeOutUmViaAereaAvaliada,
+      timeOutUmRiscoSangramentoAvaliado: form.timeOutUmRiscoSangramentoAvaliado,
+
+      timeOutDoisPacienteSitioProcedimentoConfirmados:
+        form.timeOutDoisPacienteSitioProcedimentoConfirmados,
+      timeOutDoisAntibioticoProfilatico: form.timeOutDoisAntibioticoProfilatico,
+      timeOutDoisImagensDisponiveis: form.timeOutDoisImagensDisponiveis,
+      timeOutDoisEventosCriticosRevistos: form.timeOutDoisEventosCriticosRevistos,
+      timeOutDoisMaterialEsterilizado: form.timeOutDoisMaterialEsterilizado,
+
+      checkOutProcedimentoRegistrado: form.checkOutProcedimentoRegistrado,
+      checkOutContagemConfere: form.checkOutContagemConfere,
+      checkOutAmostrasIdentificadas: form.checkOutAmostrasIdentificadas,
+      checkOutProblemasComEquipamento: form.checkOutProblemasComEquipamento,
+      checkOutCuidadosRecuperacao: form.checkOutCuidadosRecuperacao.trim() || null,
+
+      recuperacaoEntradaEm: horaParaIso(form.recuperacaoEntrada),
+      recuperacaoSaidaEm: horaParaIso(form.recuperacaoSaida),
+      intercorrencias: form.intercorrencias.trim() || null,
+      observacoesRecuperacao: form.observacoesRecuperacao.trim() || null,
+
+      desfecho: form.desfecho,
+      encaminhadoPara: form.encaminhadoPara,
+    });
+
+    // Com desfecho a fila fecha e a ficha está pronta; sem ele, a pessoa
+    // continua aqui para a próxima parada.
+    if (form.desfecho) {
+      rascunho.limpar();
+      return true;
+    }
+
+    const atualizado = await api.prontuario(id);
+    setProntuario(atualizado);
+    if (atualizado.cirurgia) rascunho.setValor(doServidor(atualizado.cirurgia));
+    setSalvo(true);
+    return false;
+  }
+
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
     setErros([]);
     setSalvo(false);
     setEnviando(true);
 
-    const form = rascunho.valor;
-
     try {
-      await api.registrarCirurgia(id, {
-        indicacao: form.indicacao.trim() || null,
-        procedimentoProposto: form.procedimentoProposto.trim() || null,
-        lateralidade: form.lateralidade,
-        jejumHoras: numeroOuNulo(form.jejumHoras),
-        consentimentoAssinado: form.consentimentoAssinado,
-        observacoesPreOperatorio: form.observacoesPreOperatorio.trim() || null,
-
-        checkInIdentidadeConfirmada: form.checkInIdentidadeConfirmada,
-        checkInSitioMarcado: form.checkInSitioMarcado,
-        checkInConsentimentoConferido: form.checkInConsentimentoConferido,
-        checkInAlergiaConferida: form.checkInAlergiaConferida,
-        checkInJejumConferido: form.checkInJejumConferido,
-
-        timeOutUmEquipeApresentada: form.timeOutUmEquipeApresentada,
-        timeOutUmMonitorizacaoOk: form.timeOutUmMonitorizacaoOk,
-        timeOutUmViaAereaAvaliada: form.timeOutUmViaAereaAvaliada,
-        timeOutUmRiscoSangramentoAvaliado: form.timeOutUmRiscoSangramentoAvaliado,
-
-        timeOutDoisPacienteSitioProcedimentoConfirmados:
-          form.timeOutDoisPacienteSitioProcedimentoConfirmados,
-        timeOutDoisAntibioticoProfilatico: form.timeOutDoisAntibioticoProfilatico,
-        timeOutDoisImagensDisponiveis: form.timeOutDoisImagensDisponiveis,
-        timeOutDoisEventosCriticosRevistos: form.timeOutDoisEventosCriticosRevistos,
-        timeOutDoisMaterialEsterilizado: form.timeOutDoisMaterialEsterilizado,
-
-        checkOutProcedimentoRegistrado: form.checkOutProcedimentoRegistrado,
-        checkOutContagemConfere: form.checkOutContagemConfere,
-        checkOutAmostrasIdentificadas: form.checkOutAmostrasIdentificadas,
-        checkOutProblemasComEquipamento: form.checkOutProblemasComEquipamento,
-        checkOutCuidadosRecuperacao: form.checkOutCuidadosRecuperacao.trim() || null,
-
-        recuperacaoEntradaEm: horaParaIso(form.recuperacaoEntrada),
-        recuperacaoSaidaEm: horaParaIso(form.recuperacaoSaida),
-        intercorrencias: form.intercorrencias.trim() || null,
-        observacoesRecuperacao: form.observacoesRecuperacao.trim() || null,
-
-        desfecho: form.desfecho,
-        encaminhadoPara: form.encaminhadoPara,
-      });
-
-      // Com desfecho a fila fecha e a ficha está pronta; sem ele, a pessoa
-      // continua aqui para a próxima parada.
-      if (form.desfecho) {
-        rascunho.limpar();
-        navegar(`/atendimentos/${id}`, { replace: true });
-        return;
-      }
-
-      const atualizado = await api.prontuario(id);
-      setProntuario(atualizado);
-      if (atualizado.cirurgia) rascunho.setValor(doServidor(atualizado.cirurgia));
-      setSalvo(true);
+      if (await salvar()) navegar(`/atendimentos/${id}`, { replace: true });
     } catch (erro) {
       if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
       else if (erro instanceof ErroApi) setErros(erro.erros);
@@ -337,7 +350,7 @@ export function Cirurgia() {
 
   return (
     <form onSubmit={enviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{titulo}</h1>
+      <BarraDaPagina titulo={titulo} voltarPara={`/atendimentos/${id}`} />
 
       <div className="cartao space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
@@ -594,9 +607,19 @@ export function Cirurgia() {
 
       {salvo ? <Etiqueta tom="sucesso">{t('paradaSalva')}</Etiqueta> : null}
 
-      <button type="submit" className="botao" disabled={enviando}>
-        {enviando ? t('carregando') : form.desfecho ? t('salvarEEncerrar') : t('salvarParada')}
-      </button>
+      {/*
+        A alta sai da própria ficha cirúrgica. O desfecho ali em cima fecha a
+        fila da cirurgia; este cartão fecha o atendimento, que é outra coisa —
+        quem sai da recuperação e vai para casa passava pelo prontuário para
+        isso.
+      */}
+      <Encerramento prontuario={prontuario} especialidade="Cirurgia" salvar={salvar} />
+
+      <RodapeDeSalvar>
+        <button type="submit" className="botao" disabled={enviando}>
+          {enviando ? t('carregando') : form.desfecho ? t('salvarEEncerrar') : t('salvarParada')}
+        </button>
+      </RodapeDeSalvar>
     </form>
   );
 }

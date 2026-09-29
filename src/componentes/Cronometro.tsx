@@ -80,6 +80,51 @@ export function Cronometro({
   );
 }
 
+/**
+ * Há quanto tempo o paciente espera nesta fila.
+ *
+ * É o par do cronômetro, e não o mesmo número: um conta desde que alguém
+ * assumiu, o outro desde que o paciente entrou na fila. A lista só mostrava o
+ * primeiro, então dava para ver há quanto tempo alguém estava sendo atendido e
+ * não há quanto tempo os outros estavam esperando — que é o que decide, junto
+ * da cor do risco, quem passa na frente.
+ *
+ * Fica esmaecido enquanto a espera é curta e ganha peso quando passa da meia
+ * hora: numa fila de vinte cartões, vinte números em destaque não destacam
+ * nada.
+ */
+export function Espera({ entrouEm }: { entrouEm: string | null }) {
+  const { t } = useI18n();
+  const [agora, setAgora] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!entrouEm) return;
+
+    const intervalo = setInterval(() => setAgora(Date.now()), INTERVALO_CRONOMETRO);
+    return () => clearInterval(intervalo);
+  }, [entrouEm]);
+
+  if (!entrouEm) return null;
+
+  const minutos = minutosDesde(entrouEm, agora);
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 text-sm tabular-nums ${
+        minutos >= MINUTOS_DE_ESPERA_LONGA ? 'font-semibold text-texto' : 'text-texto-suave'
+      }`}
+      aria-live="off"
+      title={t('esperandoHa')}
+    >
+      <RelogioPequeno />
+      {formatarDuracao(minutos)}
+    </span>
+  );
+}
+
+/** A partir daqui a espera deixa de ser rotina e passa a saltar da lista. */
+export const MINUTOS_DE_ESPERA_LONGA = 30;
+
 function RelogioPequeno() {
   return (
     <svg

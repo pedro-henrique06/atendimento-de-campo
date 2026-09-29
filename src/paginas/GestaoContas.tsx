@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import { FUNCOES_PARA_CADASTRO } from '../api/tipos';
 import type { ContaCriada, FuncaoProfissional, Profissional, StatusConta } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Carregando, Erros, Etiqueta, Vazio } from '../componentes/Basicos';
 import { CredencialProvisoria } from '../componentes/CredencialProvisoria';
 import { NovaConta } from '../componentes/NovaConta';
@@ -22,7 +23,19 @@ export function GestaoContas() {
   const { t, idioma } = useI18n();
   const { profissional } = useSessao();
 
-  const [status, setStatus] = useState<StatusConta | null>('Pendente');
+  /*
+    Abre em todas, e nao em "Pendentes".
+
+    Pendentes era o padrao e, na maior parte dos dias, esta vazio: quem entrava
+    para conferir uma conta ou redefinir uma senha caia num "nenhuma conta nesta
+    situacao" e tinha que descobrir sozinho que era so trocar de aba. Quem avisa
+    que ha conta esperando e o numero no menu do cabecalho, que aparece sem
+    entrar aqui.
+  */
+  const [status, setStatus] = useState<StatusConta | null>(null);
+
+  /** O cadastro comeca fechado: e o ato raro desta tela. */
+  const [cadastrando, setCadastrando] = useState(false);
   const [busca, setBusca] = useState('');
   const [contas, setContas] = useState<Profissional[] | null>(null);
   const [erros, setErros] = useState<string[]>([]);
@@ -67,14 +80,41 @@ export function GestaoContas() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{t('gestaoContas')}</h1>
+      <BarraDaPagina titulo={t('gestaoContas')} voltarPara="/atendimentos" />
 
       {/*
-        O cadastro fica aqui, no topo, porque é a única porta de entrada do
-        sistema: não existe auto-registro, e quem não for cadastrado aqui não
-        entra.
+        O cadastro fica nesta tela porque é a única porta de entrada do sistema:
+        não existe auto-registro, e quem não for cadastrado aqui não entra. Mas
+        fica fechado.
+
+        Aberto, o formulário inteiro — nome, usuário, profissão, registro do
+        conselho, e-mail — empurrava a lista de contas para baixo de 1.500px. E
+        a lista é o que se vem ver: conferir quem tem acesso, redefinir a senha
+        de quem perdeu, reclassificar quem mudou de função. Cadastrar gente nova
+        é o ato raro.
       */}
-      <NovaConta aoCriar={carregar} />
+      {cadastrando ? (
+        <div className="space-y-2">
+          <NovaConta
+            aoCriar={() => {
+              setCadastrando(false);
+              carregar();
+            }}
+          />
+
+          <button
+            type="button"
+            className="botao-secundario w-full"
+            onClick={() => setCadastrando(false)}
+          >
+            {t('cancelar')}
+          </button>
+        </div>
+      ) : (
+        <button type="button" className="botao" onClick={() => setCadastrando(true)}>
+          {t('novaConta')}
+        </button>
+      )}
 
       {credencial ? (
         <CredencialProvisoria
