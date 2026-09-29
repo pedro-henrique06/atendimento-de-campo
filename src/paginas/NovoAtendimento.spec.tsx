@@ -76,8 +76,21 @@ describe('Novo atendimento', () => {
     renderizar();
 
     expect(screen.getByRole('button', { name: /Novo paciente/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /já atendido/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Já foi atendido antes/ })).toBeInTheDocument();
     expect(screen.queryByLabelText(/Nome/)).not.toBeInTheDocument();
+  });
+
+  it('a busca pelo código já vem aberta, sem um toque antes', () => {
+    /*
+      Era o segundo toque de uma bifurcação, atrás de um botão. Só que é a busca
+      que evita o cadastro duplicado, e quem volta é a regra em campo: deixar o
+      caminho que perde o histórico a um toque e o que o preserva a dois é o
+      incentivo invertido.
+    */
+    renderizar();
+
+    expect(screen.getByLabelText(/Informe o código/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Procurar' })).toBeInTheDocument();
   });
 
   it('mostra o código antes de pedir qualquer dado', async () => {
@@ -112,7 +125,6 @@ describe('Novo atendimento', () => {
     const usuario = userEvent.setup();
     renderizar();
 
-    await usuario.click(screen.getByRole('button', { name: /já atendido/ }));
     await usuario.type(screen.getByLabelText(/Informe o código/), '4K7Z-2YAP');
     await usuario.click(screen.getByRole('button', { name: 'Procurar' }));
 
@@ -135,7 +147,6 @@ describe('Novo atendimento', () => {
     const usuario = userEvent.setup();
     renderizar();
 
-    await usuario.click(screen.getByRole('button', { name: /já atendido/ }));
     await usuario.type(screen.getByLabelText(/Informe o código/), '4K7Z-2YAP');
     await usuario.click(screen.getByRole('button', { name: 'Procurar' }));
     await usuario.click(await screen.findByRole('button', { name: 'Usar este cadastro' }));
@@ -150,7 +161,6 @@ describe('Novo atendimento', () => {
     const usuario = userEvent.setup();
     renderizar();
 
-    await usuario.click(screen.getByRole('button', { name: /já atendido/ }));
     await usuario.type(screen.getByLabelText(/Informe o código/), 'XXXX-XXXX');
     await usuario.click(screen.getByRole('button', { name: 'Procurar' }));
 
