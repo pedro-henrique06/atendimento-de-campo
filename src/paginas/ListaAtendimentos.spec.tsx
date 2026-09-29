@@ -44,6 +44,7 @@ function atendimento(sobre: Partial<AtendimentoResumo> = {}): AtendimentoResumo 
         assumidaEm: null,
         encaminhadaPor: null,
         encaminhadaDe: null,
+        entrouNaFilaEm: null,
       },
     ],
     criadoEm: '2026-07-26T12:00:00Z',
@@ -148,6 +149,7 @@ describe('Fila de atendimentos', () => {
             assumidaEm: null,
             encaminhadaPor: null,
             encaminhadaDe: null,
+            entrouNaFilaEm: null,
           },
         ],
       }),
@@ -155,7 +157,7 @@ describe('Fila de atendimentos', () => {
 
     renderizar();
 
-    expect(await screen.findByText('Carlos Dentista')).toBeInTheDocument();
+    expect(await screen.findByText(/Carlos Dentista/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Assumir' })).not.toBeInTheDocument();
   });
 
@@ -211,6 +213,7 @@ describe('Fila de atendimentos', () => {
             assumidaEm: null,
             encaminhadaPor: null,
             encaminhadaDe: null,
+            entrouNaFilaEm: null,
           },
         ],
       }),
@@ -241,6 +244,7 @@ describe('Fila de atendimentos', () => {
             assumidaEm: '2026-07-26T12:30:00Z',
             encaminhadaPor: null,
             encaminhadaDe: null,
+            entrouNaFilaEm: null,
           },
         ],
       }),
@@ -255,9 +259,13 @@ describe('Fila de atendimentos', () => {
     expect(screen.getByRole('heading', { name: /^Aguardando/i })).toBeInTheDocument();
   });
 
-  it('o selo mostra o estado da etapa desta fila, não o do atendimento', async () => {
+  it('a lista fala do estado da etapa desta fila, e não do atendimento', async () => {
     vi.spyOn(api, 'atendimentos').mockResolvedValue([
       atendimento({
+        // O atendimento está "Em andamento" — o paciente já foi triado e está
+        // no posto —, mas quem olha a fila da odontologia quer saber se *esta*
+        // fila já pegou o paciente.
+        status: 'EmAndamento',
         etapas: [
           {
             id: 'e1',
@@ -269,6 +277,7 @@ describe('Fila de atendimentos', () => {
             assumidaEm: '2026-07-26T12:30:00Z',
             encaminhadaPor: null,
             encaminhadaDe: null,
+            entrouNaFilaEm: null,
           },
         ],
       }),
@@ -276,9 +285,106 @@ describe('Fila de atendimentos', () => {
 
     renderizar();
 
-    // "Em andamento" no atendimento não diz se *esta* fila já pegou o paciente,
-    // que é a pergunta de quem olha a lista.
-    expect(await screen.findByText('Em andamento')).toBeInTheDocument();
+    // Quem diz o estado da etapa é o título do grupo, e o cartão diz que o
+    // paciente está comigo. Repetir "Em andamento" em cada linha, embaixo de um
+    // título que já diz isso, era dizer duas vezes e gastar o canto onde o
+    // estado diferente — com outra pessoa — precisa aparecer.
+    expect(await screen.findByRole('heading', { name: /Atendendo agora/i })).toBeInTheDocument();
+    expect(screen.getByText(/Com você/i)).toBeInTheDocument();
+
+    // E o estado do atendimento inteiro não aparece na linha do paciente.
+    expect(screen.queryByText(/Em andamento/)).not.toBeInTheDocument();
+  });
+
+  /*
+    O cartão da fila, depois do redesenho.
+
+    Era um cartão de ~300px para três informações, com o nome truncado depois do
+    código e o risco num ponto de 12px. Cabiam três pacientes numa tela de
+    celular.
+  */
+  it('mostra o nome inteiro, e não truncado atrás do código', async () => {
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([
+      atendimento({ pacienteNome: 'Yesenia Navarro Quintero De La Cruz' }),
+    ]);
+
+    renderizar();
+
+    // Num elemento só: cortado, dois pacientes diferentes leem igual, e é pelo
+    // nome que se chama alguém na tenda.
+    expect(await screen.findByText('Yesenia Navarro Quintero De La Cruz')).toBeInTheDocument();
+  });
+
+  it('diz o risco por escrito, e não só pela cor', async () => {
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([
+      atendimento({ classificacaoRisco: 'Vermelho' }),
+    ]);
+
+    renderizar();
+
+    // O risco é o critério de ordenação do START. Como ponto de 12px ele existia
+    // para quem enxerga cor e para mais ninguém.
+    expect(await screen.findByText('Vermelho')).toBeInTheDocument();
+  });
+
+  it('mostra há quanto tempo o paciente espera na fila', async () => {
+    const quarentaMinutosAtras = new Date(Date.now() - 40 * 60_000).toISOString();
+
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([
+      atendimento({
+        etapas: [
+          {
+            id: 'e1',
+            especialidade: 'Odontologia',
+            status: 'Aguardando',
+            profissional: null,
+            iniciadaEm: null,
+            concluidaEm: null,
+            assumidaEm: null,
+            encaminhadaPor: null,
+            encaminhadaDe: null,
+            entrouNaFilaEm: quarentaMinutosAtras,
+          },
+        ],
+      }),
+    ]);
+
+    renderizar();
+
+    // Junto da cor do risco, é o que decide quem passa na frente — e não
+    // existia em lugar nenhum da tela.
+    expect(await screen.findByText('40 min')).toBeInTheDocument();
+  });
+
+  it('quem já está sendo atendido mostra o tempo de atendimento, não a espera', async () => {
+    const duasHorasAtras = new Date(Date.now() - 120 * 60_000).toISOString();
+    const dezMinutosAtras = new Date(Date.now() - 10 * 60_000).toISOString();
+
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([
+      atendimento({
+        etapas: [
+          {
+            id: 'e1',
+            especialidade: 'Odontologia',
+            status: 'EmAndamento',
+            profissional: 'Ana Dentista',
+            iniciadaEm: dezMinutosAtras,
+            concluidaEm: null,
+            assumidaEm: dezMinutosAtras,
+            encaminhadaPor: null,
+            encaminhadaDe: null,
+            entrouNaFilaEm: duasHorasAtras,
+          },
+        ],
+      }),
+    ]);
+
+    renderizar();
+
+    // São perguntas diferentes: quanto esperou, e há quanto tempo está comigo.
+    // Somadas, todo atendimento pareceria durar o plantão inteiro.
+    expect(await screen.findByText('10 min')).toBeInTheDocument();
+    expect(screen.queryByText('2h')).not.toBeInTheDocument();
   });
 
   it('a fila vazia de uma seção não deixa o título órfão', async () => {
@@ -331,6 +437,7 @@ describe('Fila de atendimentos', () => {
             assumidaEm: null,
             encaminhadaPor: null,
             encaminhadaDe: null,
+            entrouNaFilaEm: null,
           },
         ],
       }),
@@ -341,7 +448,7 @@ describe('Fila de atendimentos', () => {
 
     await usuario.click(await screen.findByRole('button', { name: 'Todas as filas' }));
 
-    expect(await screen.findByText('Carlos Dentista')).toBeInTheDocument();
+    expect(await screen.findByText(/Carlos Dentista/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Assumir' })).not.toBeInTheDocument();
   });
 

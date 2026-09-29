@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import { FILAS } from '../api/tipos';
-import type { DesfechoAtendimento, Especialidade, Prontuario } from '../api/tipos';
+import type { Especialidade, Prontuario } from '../api/tipos';
 import { Erros } from './Basicos';
 import { Cronometro } from './Cronometro';
 import { filasPendentes, FormularioDeEncerramento } from './Encerramento';

@@ -485,6 +485,14 @@ export interface EtapaResumo {
   encaminhadaPor: string | null;
   /** De qual fila veio: o destino do botão de devolver. */
   encaminhadaDe: Especialidade | null;
+  /**
+   * Quando o paciente entrou nesta fila — o começo da espera.
+   *
+   * É o par de `assumidaEm`, que é o começo do atendimento. A lista mostrava só
+   * o segundo: dava para ver há quanto tempo alguém estava sendo atendido, e
+   * não há quanto tempo os outros estavam esperando.
+   */
+  entrouNaFilaEm: string | null;
 }
 
 export interface AtendimentoResumo {

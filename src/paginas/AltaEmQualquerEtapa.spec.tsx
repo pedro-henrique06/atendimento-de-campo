@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api, ErroApi } from '../api/cliente';
-import type { Especialidade, EtapaResumo, Prontuario } from '../api/tipos';
+import type { EtapaResumo, Prontuario } from '../api/tipos';
 import { ProvedorI18n } from '../i18n';
 import { Atendimento } from './Atendimento';
 import { Farmacia } from './Farmacia';
@@ -31,6 +31,7 @@ function etapa(sobre: Partial<EtapaResumo> = {}): EtapaResumo {
     assumidaEm: '2026-07-26T12:05:00Z',
     encaminhadaPor: null,
     encaminhadaDe: null,
+    entrouNaFilaEm: null,
     ...sobre,
   };
 }

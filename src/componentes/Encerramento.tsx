@@ -189,8 +189,16 @@ export function Encerramento({
   prontuario: Prontuario;
   /** A fila desta ficha. É por ela que o atendimento é encerrado. */
   especialidade: Especialidade;
-  /** A gravação da própria ficha, sem navegar. Roda antes do encerramento. */
-  salvar: () => Promise<void>;
+  /**
+   * A gravação da própria ficha, sem navegar. Roda antes do encerramento.
+   *
+   * `Promise<unknown>` porque cada ficha devolve o que precisa devolver para a
+   * própria tela — a triagem devolve a sugestão do protocolo, a cirurgia se a
+   * fila fechou. Aqui nada disso é lido: o que importa é ter gravado. O atalho
+   * de `void` do TypeScript não atravessa uma `Promise`, então `Promise<void>`
+   * recusava as duas.
+   */
+  salvar: () => Promise<unknown>;
   /**
    * O que falta na ficha para ela poder ser gravada, quando falta algo.
    *

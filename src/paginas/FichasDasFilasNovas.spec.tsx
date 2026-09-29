@@ -20,6 +20,7 @@ function etapa(sobre: Partial<EtapaResumo> = {}): EtapaResumo {
     assumidaEm: '2026-07-26T12:05:00Z',
     encaminhadaPor: 'Carlos Clínico',
     encaminhadaDe: 'ClinicaGeral',
+    entrouNaFilaEm: null,
     ...sobre,
   };
 }

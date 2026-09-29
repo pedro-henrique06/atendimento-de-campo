@@ -57,6 +57,7 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
         assumidaEm: null,
         encaminhadaPor: null,
         encaminhadaDe: null,
+        entrouNaFilaEm: null,
       },
       {
         id: 'e2',
@@ -68,6 +69,7 @@ function prontuario(sobre: Partial<Prontuario> = {}): Prontuario {
         assumidaEm: null,
         encaminhadaPor: null,
         encaminhadaDe: null,
+        entrouNaFilaEm: null,
       },
     ],
     tempoNasFilas: [],
@@ -181,6 +183,7 @@ describe('Encaminhar', () => {
           assumidaEm: null,
           encaminhadaPor: null,
           encaminhadaDe: null,
+          entrouNaFilaEm: null,
         },
       ],
     });
