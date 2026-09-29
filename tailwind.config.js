@@ -16,11 +16,30 @@ export default {
         marca: 'rgb(var(--cor-marca) / <alpha-value>)',
         'marca-clara': 'rgb(var(--cor-marca-clara) / <alpha-value>)',
         'marca-escura': 'rgb(var(--cor-marca-escura) / <alpha-value>)',
-        // Classificacao de risco START.
-        vermelho: '#e5484d',
-        amarelo: '#f5a524',
-        verde: '#46a758',
-        preto: '#4b5563',
+        'marca-suave': 'rgb(var(--cor-marca-suave) / <alpha-value>)',
+
+        /*
+          Classificacao de risco START.
+
+          Eram tres literais fixas, que serviam ao ponto colorido e a mais nada:
+          como fundo elas nao davam contraste para texto, e no tema escuro
+          ficavam berrantes. Agora cada risco tem a cor cheia (o ponto, a
+          barra), a tinta (o texto) e o fundo, e os tres seguem o tema.
+        */
+        vermelho: 'rgb(var(--cor-risco-vermelho) / <alpha-value>)',
+        amarelo: 'rgb(var(--cor-risco-amarelo) / <alpha-value>)',
+        verde: 'rgb(var(--cor-risco-verde) / <alpha-value>)',
+        preto: 'rgb(var(--cor-risco-preto) / <alpha-value>)',
+
+        'tinta-vermelho': 'rgb(var(--tinta-risco-vermelho) / <alpha-value>)',
+        'tinta-amarelo': 'rgb(var(--tinta-risco-amarelo) / <alpha-value>)',
+        'tinta-verde': 'rgb(var(--tinta-risco-verde) / <alpha-value>)',
+        'tinta-preto': 'rgb(var(--tinta-risco-preto) / <alpha-value>)',
+
+        'fundo-vermelho': 'rgb(var(--fundo-risco-vermelho) / <alpha-value>)',
+        'fundo-amarelo': 'rgb(var(--fundo-risco-amarelo) / <alpha-value>)',
+        'fundo-verde': 'rgb(var(--fundo-risco-verde) / <alpha-value>)',
+        'fundo-preto': 'rgb(var(--fundo-risco-preto) / <alpha-value>)',
       },
       borderRadius: {
         card: '1rem',

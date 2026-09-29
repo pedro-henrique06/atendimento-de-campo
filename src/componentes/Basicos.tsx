@@ -129,6 +129,44 @@ export function PontoRisco({ risco }: { risco: ClassificacaoRisco | null }) {
   );
 }
 
+/** Fundo e tinta de cada risco, para a etiqueta que se lê sem depender da cor. */
+const ETIQUETA_RISCO: Record<ClassificacaoRisco, string> = {
+  Vermelho: 'bg-fundo-vermelho text-tinta-vermelho',
+  Amarelo: 'bg-fundo-amarelo text-tinta-amarelo',
+  Verde: 'bg-fundo-verde text-tinta-verde',
+  Preto: 'bg-fundo-preto text-tinta-preto',
+};
+
+/**
+ * O risco como etiqueta legível, e não como ponto.
+ *
+ * O ponto de 12px continua servindo onde o texto ao lado já diz a cor. Onde o
+ * risco é o critério de leitura — a fila —, ele precisa do peso que tem na
+ * decisão: é por ele que se escolhe quem passa na frente, e procurar um ponto
+ * de 12px em vinte cartões é o contrário disso.
+ *
+ * Fundo tingido com tinta escura, e não a cor cheia com texto branco: o amarelo
+ * e o verde cheios não dão contraste para texto branco, e a mesma etiqueta
+ * precisa funcionar nos quatro riscos e nos dois temas.
+ */
+export function EtiquetaRisco({ risco }: { risco: ClassificacaoRisco | null }) {
+  const { t, idioma } = useI18n();
+
+  if (!risco) {
+    return (
+      <span className="rounded-md bg-superficie-2 px-2 py-0.5 text-xs font-semibold text-texto-suave">
+        {t('semRisco')}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${ETIQUETA_RISCO[risco]}`}>
+      {traduzir(classificacoesCurtas, idioma, risco)}
+    </span>
+  );
+}
+
 export function Etiqueta({
   children,
   tom = 'neutro',
@@ -186,7 +224,13 @@ export function Vazio({ texto }: { texto: string }) {
   return <div className="cartao py-10 text-center text-texto-suave">{texto}</div>;
 }
 
-/** Grupo de opções em botões, mais confortável que `select` no celular. */
+/**
+ * Grupo de opções em botões, mais confortável que `select` no celular.
+ *
+ * O escolhido era um bloco azul sólido com texto branco. Numa lista de sete
+ * sintomas marcados, viravam sete blocos pesados e o título da seção sumia
+ * entre eles — o estado ativo precisa se distinguir do repouso, não gritar.
+ */
 export function Opcoes<T extends string>({
   valor,
   opcoes,
@@ -211,11 +255,7 @@ export function Opcoes<T extends string>({
             type="button"
             aria-pressed={ativo}
             onClick={() => aoEscolher(opcao)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              ativo
-                ? 'border-marca bg-marca text-white'
-                : 'border-borda bg-superficie-2 text-texto hover:border-marca-clara'
-            }`}
+            className={`opcao ${ativo ? 'opcao-ativa' : 'opcao-repouso'}`}
           >
             {traduzir(tabela, idioma, opcao)}
           </button>
@@ -250,11 +290,7 @@ export function Multiplas<T extends string>({
             type="button"
             aria-pressed={ativo}
             onClick={() => aoAlternar(opcao)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              ativo
-                ? 'border-marca bg-marca text-white'
-                : 'border-borda bg-superficie-2 text-texto hover:border-marca-clara'
-            }`}
+            className={`opcao ${ativo ? 'opcao-ativa' : 'opcao-repouso'}`}
           >
             {traduzir(tabela, idioma, opcao)}
           </button>

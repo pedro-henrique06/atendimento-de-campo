@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { BaseAdmin, TipoMissao } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Campo, Carregando, Erros, Etiqueta, Opcoes, Vazio } from '../componentes/Basicos';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
@@ -139,7 +140,7 @@ export function GestaoBases() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="titulo">{t('gestaoBases')}</h1>
+        <BarraDaPagina titulo={t('gestaoBases')} voltarPara="/atendimentos" />
 
         {edicao === null ? (
           <button type="button" className="botao w-auto px-5" onClick={abrirNova}>

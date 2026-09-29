@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import { FUNCOES_PARA_CADASTRO } from '../api/tipos';
 import type { ContaCriada, FuncaoProfissional, Profissional, StatusConta } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Carregando, Erros, Etiqueta, Vazio } from '../componentes/Basicos';
 import { CredencialProvisoria } from '../componentes/CredencialProvisoria';
 import { NovaConta } from '../componentes/NovaConta';
@@ -67,7 +68,7 @@ export function GestaoContas() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{t('gestaoContas')}</h1>
+      <BarraDaPagina titulo={t('gestaoContas')} voltarPara="/atendimentos" />
 
       {/*
         O cadastro fica aqui, no topo, porque é a única porta de entrada do

@@ -8,6 +8,7 @@ import type {
   Especialidade,
   EtapaResumo,
 } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Carregando, Erros, Etiqueta, PontoRisco, Vazio } from '../componentes/Basicos';
 import { Cronometro } from '../componentes/Cronometro';
 import { IconeConcluido, IconePendente } from '../componentes/Icones';
@@ -215,12 +216,19 @@ export function ListaAtendimentos() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="titulo">{t('atendimentos')}</h1>
-        <button type="button" className="botao w-auto px-5" onClick={() => navegar('/atendimentos/novo')}>
-          {t('novo')}
-        </button>
-      </div>
+      {/* Sem voltar: esta é a tela inicial, de onde todo o resto parte. */}
+      <BarraDaPagina
+        titulo={t('atendimentos')}
+        acao={
+          <button
+            type="button"
+            className="botao w-auto px-5"
+            onClick={() => navegar('/atendimentos/novo')}
+          >
+            {t('novo')}
+          </button>
+        }
+      />
 
       <input
         className="campo"

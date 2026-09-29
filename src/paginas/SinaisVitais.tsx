@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { Prontuario } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { AlertaAlergia, Campo, Carregando, Erros, Secao } from '../componentes/Basicos';
 import { FolhaDeObservacao } from '../componentes/FolhaDeObservacao';
 import { useRascunho } from '../hooks/useRascunho';
@@ -166,7 +167,7 @@ export function SinaisVitais() {
 
   return (
     <form onSubmit={enviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{t('sinaisVitais')}</h1>
+      <BarraDaPagina titulo={t('sinaisVitais')} voltarPara={`/atendimentos/${id}`} />
 
       <div className="cartao space-y-2">
         <div className="flex flex-wrap items-baseline gap-x-2">

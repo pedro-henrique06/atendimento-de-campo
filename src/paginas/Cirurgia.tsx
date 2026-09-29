@@ -13,6 +13,7 @@ import {
   Opcoes,
   Secao,
 } from '../componentes/Basicos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Cronometro } from '../componentes/Cronometro';
 import { Encerramento } from '../componentes/Encerramento';
 import { SecaoDesfecho, useTituloDaFila } from '../componentes/FichaDeEtapa';
@@ -348,7 +349,7 @@ export function Cirurgia() {
 
   return (
     <form onSubmit={enviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{titulo}</h1>
+      <BarraDaPagina titulo={titulo} voltarPara={`/atendimentos/${id}`} />
 
       <div className="cartao space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">

@@ -12,6 +12,7 @@ import type {
   TipoDocumento,
   Vulnerabilidade,
 } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Campo, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
 import { CodigoPaciente } from '../componentes/CodigoPaciente';
 import { EscolhaDePaciente } from '../componentes/EscolhaDePaciente';
@@ -307,7 +308,7 @@ export function NovoAtendimento() {
   if (!form.codigo) {
     return (
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-        <h1 className="titulo">{t('novoAtendimento')}</h1>
+        <BarraDaPagina titulo={t('novoAtendimento')} voltarPara="/atendimentos" />
 
         <EscolhaDePaciente
           aoEscolherNovo={comecarComCodigo}
@@ -319,7 +320,7 @@ export function NovoAtendimento() {
 
   return (
     <form onSubmit={aoEnviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{t('novoAtendimento')}</h1>
+      <BarraDaPagina titulo={t('novoAtendimento')} voltarPara="/atendimentos" />
 
       <CodigoPaciente codigo={form.codigo} />
 

@@ -10,7 +10,16 @@ import type {
   Sintoma,
   StatusAlergia,
 } from '../api/tipos';
-import { Campo, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
+import {
+  AlertaAlergia,
+  Campo,
+  Erros,
+  Interruptor,
+  Multiplas,
+  Opcoes,
+  Secao,
+} from '../componentes/Basicos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Encerramento } from '../componentes/Encerramento';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
@@ -273,7 +282,33 @@ export function Triagem() {
 
   return (
     <form onSubmit={aoEnviar} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{t('triagem')}</h1>
+      <BarraDaPagina titulo={t('triagem')} voltarPara={`/atendimentos/${id}`} />
+
+      {/*
+        De quem é esta triagem.
+
+        A tela não dizia: nem nome, nem idade, nem o alerta de alergia que todas
+        as outras fichas mostram. Numa tenda com vários aparelhos abertos, é
+        assim que a triagem de um paciente é gravada no prontuário de outro — e
+        é justamente aqui que se pergunta sobre alergia e se mede o que decide a
+        cor do risco.
+      */}
+      {prontuario ? (
+        <div className="cartao space-y-2">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="font-bold">{prontuario.paciente.nome}</span>
+            <span className="text-sm text-texto-suave">
+              {prontuario.paciente.idade !== null ? `${prontuario.paciente.idade} ${t('anos')}` : ''}
+            </span>
+            <span className="dado ml-auto text-sm text-texto-suave">{prontuario.codigo}</span>
+          </div>
+
+          <AlertaAlergia
+            exibir={prontuario.paciente.alerta.exibir}
+            texto={prontuario.paciente.alerta.texto}
+          />
+        </div>
+      ) : null}
 
       {recuperado ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-marca-clara/40 bg-marca-clara/10 px-4 py-3 text-sm">

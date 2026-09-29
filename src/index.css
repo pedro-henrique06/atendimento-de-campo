@@ -30,6 +30,34 @@
   --cor-marca-escura: 9 26 55;
 
   /*
+    Fundo tingido da marca, para o estado escolhido.
+
+    Antes toda opção marcada virava um bloco azul sólido com texto branco. Numa
+    tela com sintomas, procedimentos e a lista de verificação cirúrgica, dez
+    marcados viravam dez blocos pesados e o olho perdia o que era título. O
+    tingido marca igual e pesa um quinto.
+  */
+  --cor-marca-suave: 226 235 248;
+
+  /*
+    O risco do START em duas leituras: a cor cheia, para o ponto e a barra, e o
+    tom que serve de fundo com o texto por cima. A cor cheia sozinha não dá
+    contraste para texto em nenhum dos dois temas.
+  */
+  --cor-risco-vermelho: 229 72 77;
+  --cor-risco-amarelo: 245 165 36;
+  --cor-risco-verde: 70 167 88;
+  --cor-risco-preto: 75 85 99;
+  --tinta-risco-vermelho: 176 42 47;
+  --tinta-risco-amarelo: 138 84 4;
+  --tinta-risco-verde: 32 104 46;
+  --tinta-risco-preto: 55 65 81;
+  --fundo-risco-vermelho: 253 232 233;
+  --fundo-risco-amarelo: 254 241 219;
+  --fundo-risco-verde: 228 244 231;
+  --fundo-risco-preto: 233 236 240;
+
+  /*
     Faz o navegador desenhar o que e dele — seletor de data, barra de rolagem —
     no mesmo tema. Sem isso, um celular no modo escuro abria um calendario
     preto dentro de uma tela branca.
@@ -47,6 +75,25 @@
   --cor-marca: 20 55 113;
   --cor-marca-clara: 126 168 232;
   --cor-marca-escura: 10 28 61;
+  --cor-marca-suave: 27 48 84;
+
+  /*
+    No escuro a conta se inverte: o fundo do risco fica escuro e a tinta clara.
+    Os mesmos nomes, para o componente não saber em que tema está.
+  */
+  --cor-risco-vermelho: 229 72 77;
+  --cor-risco-amarelo: 245 165 36;
+  --cor-risco-verde: 70 167 88;
+  --cor-risco-preto: 148 163 184;
+  --tinta-risco-vermelho: 255 164 167;
+  --tinta-risco-amarelo: 250 204 129;
+  --tinta-risco-verde: 143 214 158;
+  --tinta-risco-preto: 203 213 225;
+  --fundo-risco-vermelho: 66 22 26;
+  --fundo-risco-amarelo: 62 42 12;
+  --fundo-risco-verde: 21 54 30;
+  --fundo-risco-preto: 34 45 63;
+
   color-scheme: dark;
 }
 
@@ -92,9 +139,42 @@ body {
   /*
     Titulo de pagina. Estava escrito a mao em cada tela, metade com
     `tracking-tight` e metade sem, o que aparecia ao trocar de aba.
+
+    Era `text-3xl`: 30px em negrito numa tela de 430px gastavam uma linha e
+    meia para repetir o nome da tela em que a pessoa acabou de entrar. O titulo
+    diz onde se esta, e nao e o conteudo — 20px dizem a mesma coisa e devolvem
+    a primeira dobra para o que importa.
   */
   .titulo {
-    @apply text-3xl font-bold tracking-tight;
+    @apply text-xl font-bold tracking-tight;
+  }
+
+  /*
+    Numero que se le, e nao se soma: codigo do paciente, pressao, horario.
+    Tabular para as colunas ficarem alinhadas, e um tiquinho de espaco entre
+    letras porque o codigo e lido em voz alta, letra por letra.
+  */
+  .dado {
+    @apply font-mono tabular-nums tracking-wide;
+  }
+
+  /*
+    Opcao escolhida, no lugar do bloco azul solido.
+
+    O estado ativo precisa se distinguir do repouso, nao gritar: numa lista de
+    sintomas com sete marcados, o solido virava sete blocos pesados e o titulo
+    da secao sumia entre eles.
+  */
+  .opcao {
+    @apply rounded-full border px-4 py-2 text-sm font-medium transition;
+  }
+
+  .opcao-repouso {
+    @apply border-borda bg-superficie-2 text-texto hover:border-marca-clara;
+  }
+
+  .opcao-ativa {
+    @apply border-marca bg-marca-suave font-semibold text-marca-clara;
   }
 
   /*

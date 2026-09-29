@@ -11,6 +11,7 @@ import type {
   ProcedimentoOdontologico,
   Prontuario,
 } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { AlertaAlergia, Campo, Carregando, Erros, Interruptor, Multiplas, Opcoes, Secao } from '../componentes/Basicos';
 import { Cronometro } from '../componentes/Cronometro';
 import { ListaDispensacao, novaLinha, paraEnvio } from '../componentes/Dispensacao';
@@ -380,7 +381,7 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
     return (
       <form onSubmit={submeter(salvarOdontologia)} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-        <h1 className="titulo">{t('odontologia')}</h1>
+        <BarraDaPagina titulo={t('odontologia')} voltarPara={`/atendimentos/${id}`} />
         {cabecalhoPaciente}
 
         <Secao titulo={t('sintomas')}>
@@ -476,7 +477,10 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
 
   return (
     <form onSubmit={submeter(salvarConsulta)} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{traduzir(especialidades, idioma, especialidadeAtual)}</h1>
+      <BarraDaPagina
+        titulo={traduzir(especialidades, idioma, especialidadeAtual)}
+        voltarPara={`/atendimentos/${id}`}
+      />
       {cabecalhoPaciente}
 
       <Secao titulo={t('sintomas')}>

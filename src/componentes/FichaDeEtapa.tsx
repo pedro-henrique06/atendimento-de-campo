@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import { FILAS } from '../api/tipos';
 import type { DesfechoConsulta, Especialidade, Prontuario } from '../api/tipos';
+import { BarraDaPagina } from './BarraDaPagina';
 import { AlertaAlergia, Carregando, Erros, Opcoes, Secao } from './Basicos';
 import { Cronometro } from './Cronometro';
 import { Encerramento } from './Encerramento';
@@ -189,7 +190,7 @@ export function FichaDeEtapa<T extends object>({
 
   return (
     <form onSubmit={aoSubmeter} className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-      <h1 className="titulo">{titulo}</h1>
+      <BarraDaPagina titulo={titulo} voltarPara={`/atendimentos/${id}`} />
 
       <div className="cartao space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">

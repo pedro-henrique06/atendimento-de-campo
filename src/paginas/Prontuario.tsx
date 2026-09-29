@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
 import type { EsperaFila, Ginecologia, Prontuario as ProntuarioDto } from '../api/tipos';
+import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { AlertaAlergia, Carregando, Erros, Etiqueta, PontoRisco, Secao } from '../componentes/Basicos';
 import { ListaItens } from '../componentes/Dispensacao';
 import { Encaminhar } from '../componentes/Encaminhar';
@@ -159,19 +160,33 @@ export function Prontuario() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+      {/*
+        O nome no título e o código embaixo.
+
+        Era o contrário: o código em 30px e o nome numa linha do cartão de
+        baixo. O código serve para cruzar com o papel e para ditar no rádio; na
+        tela, quem está com a pessoa na frente confere pelo nome.
+      */}
+      <BarraDaPagina
+        titulo={paciente.nome}
+        sobretitulo={prontuario.codigo}
+        voltarPara="/atendimentos"
+        acao={
+          <button
+            type="button"
+            className="botao-secundario"
+            onClick={() => {
+              navigator.clipboard?.writeText(prontuario.codigo);
+              setCopiado(true);
+              setTimeout(() => setCopiado(false), 2000);
+            }}
+          >
+            {copiado ? t('copiado') : t('copiar')}
+          </button>
+        }
+      />
+
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="titulo">{prontuario.codigo}</h1>
-        <button
-          type="button"
-          className="botao-secundario"
-          onClick={() => {
-            navigator.clipboard?.writeText(prontuario.codigo);
-            setCopiado(true);
-            setTimeout(() => setCopiado(false), 2000);
-          }}
-        >
-          {copiado ? t('copiado') : t('copiar')}
-        </button>
         <Etiqueta tom={finalizado ? 'sucesso' : 'neutro'}>
           {traduzir(statusAtendimento, idioma, prontuario.status)}
         </Etiqueta>
