@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/cliente';
 import { useNavigate } from 'react-router-dom';
 import { useSessao } from '../hooks/useSessao';
-import { IDIOMAS, rotuloIdioma, useI18n } from '../i18n';
-import { IconeLocal, IconeLua, IconeMenu, IconeSeta, IconeSol } from './Icones';
+import { IDIOMAS, rotuloIdioma, traduzir, useI18n } from '../i18n';
+import { tiposMissao } from '../i18n/enums';
+import { IconeLua, IconeMenu, IconeSol } from './Icones';
 import { Marca } from './Marca';
+import { TrocaDeBase } from './TrocaDeBase';
 import type { Tema } from '../hooks/useTema';
 
 /**
@@ -98,18 +100,9 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
           A base ocupa o lugar que era do nome do app. É o dado que muda e que
           precisa ser conferido: quem troca de base e não repara registra o
           atendimento no lugar errado, e o código do paciente sai com o prefixo
-          de outra base.
+          de outra base. A troca acontece ali mesmo, sem sair da tela.
         */}
-        <button
-          type="button"
-          onClick={() => navegar('/bases')}
-          aria-label={t('trocarBase')}
-          className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-white/15 px-3 py-2 text-sm font-medium"
-        >
-          <IconeLocal className="h-4 w-4 shrink-0" />
-          <span className="truncate">{base?.nome ?? t('base')}</span>
-          <IconeSeta className="h-4 w-4 shrink-0 opacity-70" />
-        </button>
+        <TrocaDeBase />
 
         <button
           type="button"
@@ -155,7 +148,10 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
               */}
               <div className="border-b border-borda px-4 py-3">
                 <p className="truncate font-semibold">{profissional?.nome ?? '—'}</p>
-                <p className="truncate text-sm text-texto-suave">{base?.nome ?? t('base')}</p>
+                <p className="truncate text-sm text-texto-suave">
+                  {base?.nome ?? t('base')}
+                  {base?.tipoMissao ? ` · ${traduzir(tiposMissao, idioma, base.tipoMissao)}` : ''}
+                </p>
               </div>
 
               {/*

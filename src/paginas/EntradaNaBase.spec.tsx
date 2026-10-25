@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -170,47 +170,69 @@ describe('Entrada na base', () => {
   });
 });
 
-describe('Troca de base pelo cabeçalho', () => {
-  it('abre a troca com a base atual selecionada e sem perdê-la', async () => {
-    const usuario = userEvent.setup();
-
+describe('Troca de missão pelo cabeçalho', () => {
+  function duasBases() {
     vi.spyOn(api, 'bases').mockResolvedValue([
-      base(),
-      base({ id: 'b2', nome: 'Escuela Zoe', prefixoCodigo: 'ESC' }),
+      base({ tipoMissao: 'Programada' }),
+      base({
+        id: 'b2',
+        nome: 'Escuela Zoe',
+        prefixoCodigo: 'ESC',
+        tipoMissao: 'Catastrofe',
+      }),
     ]);
+  }
+
+  it('troca de base sem sair da fila', async () => {
+    const usuario = userEvent.setup();
+    duasBases();
 
     renderizar();
     await screen.findByText('fila de atendimentos');
 
     await usuario.click(screen.getByRole('button', { name: 'Trocar base' }));
+    const lista = await screen.findByRole('menu');
+    await usuario.click(within(lista).getByRole('menuitem', { name: /Escuela Zoe/ }));
 
-    const seletor = await screen.findByRole('combobox', { name: /Base/ });
-
-    // Quem entrou aqui para trocar precisa ver de onde está saindo.
-    expect(seletor).toHaveValue('b1');
-
-    // E desistir não pode custar a base: antes o botão do cabeçalho a limpava,
-    // e voltar deixava o app sem para onde ir.
-    await usuario.click(screen.getByRole('button', { name: 'Voltar' }));
-    expect(await screen.findByText('fila de atendimentos')).toBeInTheDocument();
+    // Era uma página: seletor, "continuar" e a fila fora da tela para escolher
+    // o que quase sempre tem uma opção só.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Trocar base' })).toHaveTextContent('Escuela Zoe'),
+    );
+    expect(screen.getByText('fila de atendimentos')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continuar' })).not.toBeInTheDocument();
   });
 
-  it('troca de base e volta para a fila', async () => {
+  it('diz o tipo de missão de cada base, e qual é a de agora', async () => {
     const usuario = userEvent.setup();
-
-    vi.spyOn(api, 'bases').mockResolvedValue([
-      base(),
-      base({ id: 'b2', nome: 'Escuela Zoe', prefixoCodigo: 'ESC' }),
-    ]);
+    duasBases();
 
     renderizar();
     await screen.findByText('fila de atendimentos');
 
     await usuario.click(screen.getByRole('button', { name: 'Trocar base' }));
-    await usuario.selectOptions(await screen.findByRole('combobox', { name: /Base/ }), 'b2');
-    await usuario.click(screen.getByRole('button', { name: 'Continuar' }));
+    const lista = await screen.findByRole('menu');
 
-    await waitFor(() => expect(screen.getByText('fila de atendimentos')).toBeInTheDocument());
-    expect(screen.getByText('Escuela Zoe')).toBeInTheDocument();
+    // Entrar numa base de catástrofe é um turno diferente de entrar numa missão
+    // programada, e no botão só cabe o nome.
+    expect(within(lista).getByText('Catástrofe')).toBeInTheDocument();
+    expect(within(lista).getAllByText('Missão programada').length).toBeGreaterThan(0);
+  });
+
+  it('fechar sem escolher não mexe na base', async () => {
+    const usuario = userEvent.setup();
+    duasBases();
+
+    renderizar();
+    await screen.findByText('fila de atendimentos');
+
+    await usuario.click(screen.getByRole('button', { name: 'Trocar base' }));
+    await screen.findByRole('menu');
+    await usuario.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Trocar base' })).toHaveTextContent(
+      'Acampamento Panamá',
+    );
   });
 });

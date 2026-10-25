@@ -9,11 +9,15 @@ import { useI18n, traduzir } from '../i18n';
 import { tiposMissao } from '../i18n/enums';
 
 /**
- * Troca de base.
+ * A tela de quando não há base para resolver.
  *
  * Deixou de ser a parada obrigatória depois do login — quem entra já cai na
- * fila, com a base resolvida. Aqui se chega de propósito, pelo botão do
- * cabeçalho, ou quando não há base ativa nenhuma para resolver.
+ * fila, com a base resolvida — e deixou de ser também o caminho da troca, que
+ * agora acontece na faixa do cabeçalho, em um toque, sem a fila sair da tela.
+ *
+ * O que sobra para cá é o caso em que o app não tem base nenhuma para abrir a
+ * fila: aqui a pessoa vê o motivo, tenta de novo e pode sair. O seletor
+ * continua funcionando para quem chega pela URL com base ativa.
  */
 export function SelecaoBase() {
   const { t, idioma } = useI18n();
