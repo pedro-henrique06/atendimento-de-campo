@@ -77,7 +77,7 @@ describe('Novo atendimento', () => {
 
     expect(screen.getByRole('button', { name: /Novo paciente/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Já foi atendido antes/ })).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Nome/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Nome\*?$/)).not.toBeInTheDocument();
   });
 
   it('a busca pelo código já vem aberta, sem um toque antes', () => {
@@ -102,7 +102,7 @@ describe('Novo atendimento', () => {
     await usuario.click(screen.getByRole('button', { name: /Novo paciente/ }));
 
     expect(await screen.findByText('4K7Z-2YAP')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Nome/)).toHaveValue('');
+    expect(screen.getByLabelText(/^Nome\*?$/)).toHaveValue('');
   });
 
   it('trava o formulário até o consentimento ser marcado', async () => {
@@ -111,7 +111,7 @@ describe('Novo atendimento', () => {
 
     await usuario.click(screen.getByRole('button', { name: /Novo paciente/ }));
 
-    const nome = await screen.findByLabelText(/Nome/);
+    const nome = await screen.findByLabelText(/^Nome\*?$/);
     expect(nome).toBeDisabled();
 
     await usuario.click(screen.getByRole('checkbox', { name: /consente/ }));
@@ -135,7 +135,7 @@ describe('Novo atendimento', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Usar este cadastro' }));
 
-    await waitFor(() => expect(screen.getByLabelText(/Nome/)).toHaveValue('Yesenia Retorno'));
+    await waitFor(() => expect(screen.getByLabelText(/^Nome\*?$/)).toHaveValue('Yesenia Retorno'));
     expect(screen.getByText('4K7Z-2YAP')).toBeInTheDocument();
   });
 
@@ -152,7 +152,7 @@ describe('Novo atendimento', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Usar este cadastro' }));
 
     expect(screen.getByRole('checkbox', { name: /consente/ })).not.toBeChecked();
-    expect(screen.getByLabelText(/Nome/)).toBeDisabled();
+    expect(screen.getByLabelText(/^Nome\*?$/)).toBeDisabled();
   });
 
   it('avisa quando o código não existe, em vez de abrir um cadastro em branco', async () => {
@@ -165,7 +165,7 @@ describe('Novo atendimento', () => {
     await usuario.click(screen.getByRole('button', { name: 'Procurar' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/Nenhum paciente encontrado/);
-    expect(screen.queryByLabelText(/Nome/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Nome\*?$/)).not.toBeInTheDocument();
   });
 
   it('deixa trocar de paciente depois de escolher', async () => {
