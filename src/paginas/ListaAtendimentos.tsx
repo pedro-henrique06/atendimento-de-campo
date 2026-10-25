@@ -330,7 +330,9 @@ function Grupo({
     <section>
       <h2 className="mb-2 flex items-baseline gap-2 text-sm font-semibold uppercase tracking-wide text-texto-suave">
         {titulo}
-        <span className="rounded-full bg-superficie-2 px-2 py-0.5 text-xs tabular-nums">
+        {/* Sobre o fundo cinza da página, o cinza da superfície sumiria: o
+            contador fica branco com um fio de contorno. */}
+        <span className="rounded-full bg-superficie px-2 py-0.5 text-xs tabular-nums ring-1 ring-borda">
           {total}
         </span>
       </h2>
@@ -402,7 +404,7 @@ function Cartao({
     <li>
       <Link
         to={`/atendimentos/${atendimento.id}`}
-        className="cartao block space-y-1 p-3 transition hover:border-marca-clara"
+        className="cartao block space-y-1 p-3 transition active:scale-[0.99]"
       >
         <div className="flex items-start gap-2">
           {/*
@@ -507,8 +509,8 @@ function ChipFiltro({
       type="button"
       onClick={aoClicar}
       aria-pressed={ativo}
-      className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition ${
-        ativo ? 'border-marca bg-marca text-white' : 'border-borda bg-superficie text-texto'
+      className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.97] ${
+        ativo ? 'bg-marca text-white' : 'bg-superficie text-texto ring-1 ring-borda'
       }`}
     >
       {children}
