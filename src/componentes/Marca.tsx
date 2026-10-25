@@ -19,7 +19,7 @@ export const INSTITUICAO_PADRAO = 'Hospital Israelita Albert Einstein';
  * abertas, onde há largura para ele ser lido.
  *
  * `contexto` diz onde a marca está: no cartão das telas abertas, cuja
- * superfície acompanha o tema, ou na barra azul do cabeçalho.
+ * superfície acompanha o tema, ou na faixa do cabeçalho.
  */
 export function Marca({ contexto = 'cartao' }: { contexto?: 'cartao' | 'cabecalho' }) {
   const configurado = import.meta.env.VITE_LOGO_URL?.trim();
@@ -38,7 +38,11 @@ export function Marca({ contexto = 'cartao' }: { contexto?: 'cartao' | 'cabecalh
     return (
       /*
         Placa branca nos dois contextos: a marca e desenhada para fundo claro e
-        sumiria no azul do cabecalho e no tema escuro.
+        sumiria no tema escuro.
+
+        Na faixa clara do cabecalho a placa quase nao aparece, que e o
+        pretendido — ali o simbolo parece pousado sobre a propria pagina. No
+        escuro ela volta a ser necessaria.
       */
       <div
         className={`inline-flex shrink-0 items-center justify-center bg-white ${
@@ -66,7 +70,7 @@ export function Marca({ contexto = 'cartao' }: { contexto?: 'cartao' | 'cabecalh
       className={`inline-flex shrink-0 items-center justify-center ${
         grande
           ? 'h-16 w-16 rounded-2xl bg-marca text-white'
-          : 'h-9 w-9 rounded-lg bg-white/15 text-white'
+          : 'h-9 w-9 rounded-lg bg-marca text-white'
       }`}
     >
       <svg viewBox="0 0 32 32" className={grande ? 'h-8 w-8' : 'h-5 w-5'} fill="currentColor">
