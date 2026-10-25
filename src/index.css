@@ -132,7 +132,13 @@ body,
 }
 
 body {
-  @apply bg-fundo text-texto antialiased;
+  /*
+    O corpo é 17px, o tamanho de leitura do sistema — e não os 16 que o
+    navegador assume. Dito aqui, e não no `html`, de propósito: o espaçamento
+    do Tailwind é em `rem`, e mexer na raiz esticaria junto todo padding, raio
+    e altura de alvo de toque.
+  */
+  @apply bg-fundo text-base text-texto antialiased;
   /* Respeita a area segura de aparelhos com notch. */
   padding-bottom: env(safe-area-inset-bottom);
 
@@ -152,6 +158,19 @@ body {
     @apply mb-2 block text-sm font-semibold text-texto;
   }
 
+  /*
+    A busca do sistema: pílula cinza com a lupa dentro e sem moldura.
+
+    Era um campo de formulário igual aos outros, com borda e canto de 12px.
+    Buscar não é preencher um formulário — e a forma arredondada é o que
+    distingue as duas coisas sem precisar de rótulo.
+  */
+  .busca {
+    @apply w-full rounded-full border-0 bg-superficie-2 py-3 pl-11 pr-4 text-texto
+           placeholder:text-texto-suave focus:outline-none focus:ring-2
+           focus:ring-marca-clara/40;
+  }
+
   /* O recuo ao toque é o aviso de que o toque pegou — num celular sem
      cursor, é o que o `hover` do mouse faz no computador. */
   .botao {
@@ -162,7 +181,7 @@ body {
       clicável; o cinza diz "ainda não" sem fingir que é um botão apagado.
     */
     @apply w-full rounded-xl bg-marca px-4 py-3 font-semibold text-white
-           transition active:scale-[0.98] hover:brightness-110 focus:outline-none
+           transition duration-200 ease-sistema active:scale-[0.98] hover:brightness-110 focus:outline-none
            focus:ring-2 focus:ring-marca-clara/50 disabled:cursor-not-allowed
            disabled:bg-superficie-2 disabled:text-texto-suave
            disabled:hover:brightness-100 disabled:active:scale-100;
@@ -177,7 +196,7 @@ body {
   */
   .botao-secundario {
     @apply rounded-xl bg-marca-suave px-4 py-2 font-semibold text-marca-clara
-           transition active:scale-[0.98] hover:brightness-95 focus:outline-none
+           transition duration-200 ease-sistema active:scale-[0.98] hover:brightness-95 focus:outline-none
            focus:ring-2 focus:ring-marca-clara/40 disabled:cursor-not-allowed
            disabled:opacity-60 disabled:active:scale-100;
   }
@@ -205,8 +224,35 @@ body {
     diz onde se esta, e nao e o conteudo — 20px dizem a mesma coisa e devolvem
     a primeira dobra para o que importa.
   */
+  /*
+    O título de página é grande de novo — 30px —, mas por outro motivo que o
+    de antes.
+
+    Ele já foi `text-3xl` e encolheu para 20px porque gastava uma linha e meia
+    repetindo o nome da tela. O que mudou é que agora ele é o único elemento
+    grande da dobra: o cabeçalho é uma faixa fina, os cartões não têm moldura e
+    o corpo é regular. Sem um ponto de peso, a tela vira um tapete cinza de
+    texto do mesmo tamanho — que é exatamente o que o título grande do sistema
+    resolve.
+
+    A entreletra fechada vem junto: em 30px, a entreletra solta é o que faz um
+    título parecer feito no navegador.
+  */
   .titulo {
-    @apply text-2xl font-bold tracking-[-0.021em];
+    @apply text-3xl font-bold;
+  }
+
+  /*
+    O título das telas que se abrem a partir de outra.
+
+    O grande é da tela de topo, onde ele é o começo da leitura. Numa tela
+    empilhada — a ficha, o prontuário — o título é o nome do paciente, e 30px
+    o quebram em três linhas antes de qualquer conteúdo aparecer. A régua é a
+    mesma do sistema: título grande onde não há de onde voltar, título curto
+    onde há.
+  */
+  .titulo-compacto {
+    @apply text-xl font-bold;
   }
 
   /*
@@ -227,7 +273,7 @@ body {
   */
   .opcao {
     @apply rounded-full border px-4 py-2 text-sm font-medium transition
-           active:scale-[0.97];
+           duration-200 ease-sistema active:scale-[0.97];
   }
 
   /*
