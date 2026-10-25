@@ -19,12 +19,25 @@
 */
 :root,
 [data-tema='claro'] {
-  --cor-fundo: 243 246 250;
+  /*
+    Os cinzas são quase neutros, e não azulados.
+
+    Eram tingidos de azul para puxar a marca, e o efeito era o contrário do
+    pretendido: num app em que a cor carrega significado clínico — as quatro do
+    START —, um fundo que já é meio azul faz o azul da marca valer menos. Cinza
+    neutro devolve a cor para quem precisa dela.
+  */
+  --cor-fundo: 242 242 247;
   --cor-superficie: 255 255 255;
-  --cor-superficie-2: 236 241 247;
-  --cor-borda: 205 215 229;
-  --cor-texto: 12 24 43;
-  --cor-texto-suave: 85 101 125;
+  --cor-superficie-2: 240 240 245;
+  --cor-borda: 214 214 220;
+  --cor-texto: 24 24 27;
+
+  /*
+    O apoio é mais escuro do que o cinza de interface costuma ser: a tela é
+    lida no sol, e o cinza claro de secundário some lá fora.
+  */
+  --cor-texto-suave: 90 90 100;
   --cor-marca: 20 55 113;
   --cor-marca-clara: 15 41 85;
   --cor-marca-escura: 9 26 55;
@@ -58,6 +71,17 @@
   --fundo-risco-preto: 233 236 240;
 
   /*
+    A elevação do cartão, num token só.
+
+    No claro é um contorno quase invisível mais uma sombra curta: o cartão
+    branco precisa se separar do fundo cinza sem desenhar uma moldura em volta
+    de cada bloco da tela. No escuro a sombra não aparece — ali quem separa é o
+    contorno, e por isso ele existe nos dois, com valores diferentes.
+  */
+  --sombra-cartao: 0 0 0 1px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.05),
+    0 12px 28px -22px rgb(0 0 0 / 0.45);
+
+  /*
     Faz o navegador desenhar o que e dele — seletor de data, barra de rolagem —
     no mesmo tema. Sem isso, um celular no modo escuro abria um calendario
     preto dentro de uma tela branca.
@@ -66,12 +90,12 @@
 }
 
 [data-tema='escuro'] {
-  --cor-fundo: 8 16 30;
-  --cor-superficie: 15 27 48;
-  --cor-superficie-2: 22 37 62;
-  --cor-borda: 38 57 89;
-  --cor-texto: 232 238 247;
-  --cor-texto-suave: 144 161 187;
+  --cor-fundo: 16 16 19;
+  --cor-superficie: 28 28 32;
+  --cor-superficie-2: 44 44 49;
+  --cor-borda: 58 58 64;
+  --cor-texto: 240 240 245;
+  --cor-texto-suave: 156 156 166;
   --cor-marca: 20 55 113;
   --cor-marca-clara: 126 168 232;
   --cor-marca-escura: 10 28 61;
@@ -92,7 +116,11 @@
   --fundo-risco-vermelho: 66 22 26;
   --fundo-risco-amarelo: 62 42 12;
   --fundo-risco-verde: 21 54 30;
-  --fundo-risco-preto: 34 45 63;
+  --fundo-risco-preto: 44 44 52;
+
+  /* No escuro não há sombra que se veja: quem separa o cartão do fundo é o
+     contorno claro. */
+  --sombra-cartao: 0 0 0 1px rgb(255 255 255 / 0.08);
 
   color-scheme: dark;
 }
@@ -107,6 +135,10 @@ body {
   @apply bg-fundo text-texto antialiased;
   /* Respeita a area segura de aparelhos com notch. */
   padding-bottom: env(safe-area-inset-bottom);
+
+  /* O retângulo cinza que o Android pinta sobre o que se toca briga com o
+     recuo dos botões, e chega atrasado. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 @layer components {
@@ -120,20 +152,48 @@ body {
     @apply mb-2 block text-sm font-semibold text-texto;
   }
 
+  /* O recuo ao toque é o aviso de que o toque pegou — num celular sem
+     cursor, é o que o `hover` do mouse faz no computador. */
   .botao {
+    /*
+      Desabilitado fica cinza, e não azul desbotado.
+
+      `opacity` sobre o azul da marca dava um azul sujo que ainda parecia
+      clicável; o cinza diz "ainda não" sem fingir que é um botão apagado.
+    */
     @apply w-full rounded-xl bg-marca px-4 py-3 font-semibold text-white
-           transition hover:brightness-110 focus:outline-none focus:ring-2
-           focus:ring-marca-clara/50 disabled:cursor-not-allowed disabled:opacity-60;
+           transition active:scale-[0.98] hover:brightness-110 focus:outline-none
+           focus:ring-2 focus:ring-marca-clara/50 disabled:cursor-not-allowed
+           disabled:bg-superficie-2 disabled:text-texto-suave
+           disabled:hover:brightness-100 disabled:active:scale-100;
   }
 
+  /*
+    O secundário é tingido da marca, e não cinza com borda.
+
+    Cinza com contorno pesava igual ao primário e disputava a atenção com ele;
+    tingido, lê-se como ação de apoio sem deixar de ser um botão — e some a
+    moldura, que é o que mais datava a tela.
+  */
   .botao-secundario {
-    @apply rounded-xl border border-borda bg-superficie-2 px-4 py-2 font-medium
-           text-texto transition hover:bg-superficie focus:outline-none
-           focus:ring-2 focus:ring-marca-clara/40;
+    @apply rounded-xl bg-marca-suave px-4 py-2 font-semibold text-marca-clara
+           transition active:scale-[0.98] hover:brightness-95 focus:outline-none
+           focus:ring-2 focus:ring-marca-clara/40 disabled:cursor-not-allowed
+           disabled:opacity-60 disabled:active:scale-100;
   }
 
+  /*
+    O cartão perdeu a borda.
+
+    Numa tela de prontuário são oito ou dez cartões empilhados, e dez molduras
+    de 1px fazem a página parecer uma grade de caixas. A elevação separa o
+    branco do fundo cinza sem desenhar nada em volta — e no tema escuro, onde
+    sombra não aparece, o mesmo token vira um contorno claro.
+  */
   .cartao {
-    @apply rounded-card border border-borda bg-superficie p-4;
+    @apply rounded-card bg-superficie p-4;
+
+    box-shadow: var(--sombra-cartao);
   }
 
   /*
@@ -146,7 +206,7 @@ body {
     a primeira dobra para o que importa.
   */
   .titulo {
-    @apply text-xl font-bold tracking-tight;
+    @apply text-2xl font-bold tracking-[-0.021em];
   }
 
   /*
@@ -166,15 +226,23 @@ body {
     da secao sumia entre eles.
   */
   .opcao {
-    @apply rounded-full border px-4 py-2 text-sm font-medium transition;
+    @apply rounded-full border px-4 py-2 text-sm font-medium transition
+           active:scale-[0.97];
   }
 
+  /*
+    Em repouso a opção é cinza com um fio de contorno.
+
+    Branca ela some: o lugar dela é dentro do cartão, que também é branco, e
+    sobraria só o fio de 1px para dizer onde a pílula começa. O cinza dá a
+    forma, e o fio garante o contorno quando o fundo por baixo é claro.
+  */
   .opcao-repouso {
     @apply border-borda bg-superficie-2 text-texto hover:border-marca-clara;
   }
 
   .opcao-ativa {
-    @apply border-marca bg-marca-suave font-semibold text-marca-clara;
+    @apply border-transparent bg-marca-suave font-semibold text-marca-clara;
   }
 
   /*
