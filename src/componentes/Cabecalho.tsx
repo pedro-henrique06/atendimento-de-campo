@@ -85,7 +85,27 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-marca text-white shadow-md">
+    /*
+      A faixa clara translúcida, no lugar do bloco azul.
+
+      O azul cheio era o maior contraste da tela e nunca deixava dúvida sobre
+      onde terminava o cabeçalho. Em troca, ele gastava a cor mais forte do app
+      numa barra que não carrega informação — e num app onde cor é significado
+      clínico, isso compete com as quatro do START.
+
+      Agora o cabeçalho é a própria página desfocada por baixo: o conteúdo
+      passa, borra e continua. Opacidade alta (85%) de propósito — a faixa
+      precisa continuar legível sob sol, e o vidro muito transparente que fica
+      bonito em ambiente fechado some lá fora.
+
+      O fio embaixo faz o trabalho que a sombra fazia: dizer onde a faixa
+      termina quando o conteúdo rola por baixo.
+    */
+    <header
+      className="sticky top-0 z-20 border-b border-borda bg-fundo/85 text-texto
+                 backdrop-blur-xl backdrop-saturate-150"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
       <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
         <button
           type="button"
@@ -108,7 +128,7 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
           type="button"
           onClick={alternarTema}
           aria-label={tema === 'escuro' ? t('temaClaro') : t('temaEscuro')}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-superficie-2 text-marca-clara"
         >
           {tema === 'escuro' ? <IconeSol /> : <IconeLua />}
         </button>
@@ -120,7 +140,7 @@ export function Cabecalho({ tema, alternarTema }: { tema: Tema; alternarTema: ()
             aria-expanded={menuAberto}
             aria-haspopup="menu"
             aria-label={profissional?.nome ?? t('menu')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-superficie-2 text-marca-clara"
           >
             <IconeMenu />
 

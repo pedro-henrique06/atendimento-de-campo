@@ -104,7 +104,7 @@ export function TrocaDeBase() {
         aria-expanded={aberto}
         aria-haspopup="menu"
         aria-label={t('trocarBase')}
-        className="flex w-full min-w-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-2 text-sm font-medium"
+        className="flex w-full min-w-0 items-center gap-1.5 rounded-full bg-superficie-2 px-3 py-2 text-sm font-semibold text-texto"
       >
         <IconeLocal className="h-4 w-4 shrink-0" />
         <span className="truncate">{base?.nome ?? t('base')}</span>

@@ -18,8 +18,8 @@ export default defineConfig({
         // Em campo o celular vai para o bolso e volta de qualquer jeito; travar
         // em retrato evita a tela girar no meio de um atendimento.
         orientation: 'portrait',
-        background_color: '#f3f6fa',
-        theme_color: '#143771',
+        background_color: '#f2f2f7',
+        theme_color: '#f2f2f7',
         lang: 'pt-BR',
         icons: [
           { src: '/icone-192.png', sizes: '192x192', type: 'image/png' },

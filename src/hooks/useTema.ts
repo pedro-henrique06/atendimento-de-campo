@@ -15,11 +15,29 @@ function temaInicial(): Tema {
   return guardado === 'claro' || guardado === 'escuro' ? guardado : 'claro';
 }
 
+/**
+ * A cor que o sistema pinta atrás da barra de status, no app instalado.
+ *
+ * Precisa ser a mesma da faixa do cabeçalho, senão sobra um naco de outra cor
+ * acima dela. Era fixa no azul da marca, e com o cabeçalho claro viraria uma
+ * tarja azul no topo de uma tela clara.
+ *
+ * Os valores repetem os de `--cor-fundo` em hexadecimal: a meta não entende
+ * `rgb(var(--cor-fundo))`, e quem a lê é o sistema operacional, não o CSS.
+ */
+const COR_DA_BARRA: Record<Tema, string> = {
+  claro: '#f2f2f7',
+  escuro: '#101013',
+};
+
 export function useTema() {
   const [tema, setTema] = useState<Tema>(temaInicial);
 
   useEffect(() => {
     document.documentElement.dataset.tema = tema;
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', COR_DA_BARRA[tema]);
   }, [tema]);
 
   /*
