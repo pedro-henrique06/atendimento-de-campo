@@ -68,6 +68,16 @@ export function IconeLua({ className }: Props) {
   );
 }
 
+/** A lupa dentro do campo de busca da fila. */
+export function IconeBusca({ className }: Props) {
+  return (
+    <Traco className={className}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.9-3.9" />
+    </Traco>
+  );
+}
+
 export function IconeOlho({ className }: Props) {
   return (
     <Traco className={className}>

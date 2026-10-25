@@ -47,6 +47,37 @@ export default {
       fontFamily: {
         sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
       },
+
+      /*
+        A escala do sistema operacional, e não a do framework.
+
+        O padrão do Tailwind é uma escala de web (12, 14, 16, 18, 20, 24) com
+        entreletra zero em todos os tamanhos. Celular não lê assim: tanto o iOS
+        quanto o Android apertam a entreletra conforme o corpo cresce e a
+        afrouxam no miúdo, e é disso que vem a sensação de texto "do aparelho"
+        em vez de texto "de site".
+
+        O corpo é 17, que é o tamanho de leitura do sistema — e um ponto a mais
+        do que havia, o que em campo, sob sol, não é detalhe.
+      */
+      fontSize: {
+        xs: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.004em' }],
+        sm: ['0.875rem', { lineHeight: '1.1875rem', letterSpacing: '-0.01em' }],
+        base: ['1.0625rem', { lineHeight: '1.375rem', letterSpacing: '-0.022em' }],
+        lg: ['1.1875rem', { lineHeight: '1.5rem', letterSpacing: '-0.024em' }],
+        xl: ['1.3125rem', { lineHeight: '1.625rem', letterSpacing: '-0.026em' }],
+        '2xl': ['1.5625rem', { lineHeight: '1.875rem', letterSpacing: '-0.028em' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem', letterSpacing: '-0.03em' }],
+      },
+
+      /*
+        A curva de quem solta o dedo: sai rápido e chega devagar, sem o
+        "elástico" do ease-out padrão. É a mesma sensação das transições do
+        sistema.
+      */
+      transitionTimingFunction: {
+        sistema: 'cubic-bezier(0.32, 0.72, 0, 1)',
+      },
     },
   },
   plugins: [],

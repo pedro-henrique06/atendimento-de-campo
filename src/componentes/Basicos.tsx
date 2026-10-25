@@ -364,6 +364,20 @@ export function Multiplas<T extends string>({
   );
 }
 
+/**
+ * Sim ou não, no formato do sistema: a chave que desliza.
+ *
+ * Era uma caixa de marcar de 24px. A caixa é a forma de "escolha um ou vários
+ * desta lista" — e aqui a lista é de um item só, onde o que se diz é ligado ou
+ * desligado. A chave diz isso pela posição, que se lê de longe e sem precisar
+ * enxergar se há um tique dentro do quadrado: no sol, com a tela suja, essa
+ * diferença é a leitura.
+ *
+ * O `input` continua existindo, só que invisível, e a `label` em volta continua
+ * sendo o alvo: quem usa leitor de tela ou teclado não perde nada, e o
+ * `peer-checked` do desenho acompanha o estado real do campo em vez de um
+ * estado paralelo em React.
+ */
 export function Interruptor({
   rotulo,
   valor,
@@ -374,14 +388,33 @@ export function Interruptor({
   aoMudar: (valor: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-borda bg-superficie-2 px-4 py-3">
+    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl bg-superficie-2 px-4 py-3">
       <span className="text-sm font-medium">{rotulo}</span>
+
       <input
         type="checkbox"
         checked={valor}
         onChange={(e) => aoMudar(e.target.checked)}
-        className="h-6 w-6 shrink-0 accent-[rgb(var(--cor-marca))]"
+        className="peer sr-only"
       />
+
+      {/*
+        O deslocamento da bolinha é escrito na pista, e não na bolinha:
+        `peer-checked` só enxerga irmão do campo, e a bolinha é neta dele.
+      */}
+      <span
+        aria-hidden
+        className="relative h-[31px] w-[51px] shrink-0 rounded-full bg-borda transition
+                   duration-200 ease-sistema peer-checked:bg-marca
+                   peer-checked:[&>span]:translate-x-5 peer-focus-visible:ring-2
+                   peer-focus-visible:ring-marca-clara/50"
+      >
+        <span
+          className="absolute left-[2px] top-[2px] h-[27px] w-[27px] rounded-full bg-white
+                     shadow-[0_1px_3px_rgb(0_0_0_/_0.3)] transition duration-200
+                     ease-sistema"
+        />
+      </span>
     </label>
   );
 }

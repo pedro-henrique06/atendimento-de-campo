@@ -11,7 +11,7 @@ import type {
 import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Carregando, Erros, EtiquetaRisco, PontoRisco, Vazio } from '../componentes/Basicos';
 import { Cronometro, Espera } from '../componentes/Cronometro';
-import { IconeConcluido, IconePendente } from '../componentes/Icones';
+import { IconeBusca, IconeConcluido, IconePendente } from '../componentes/Icones';
 import { useSessao } from '../hooks/useSessao';
 import { useI18n, traduzir } from '../i18n';
 import {
@@ -231,12 +231,17 @@ export function ListaAtendimentos() {
         }
       />
 
-      <input
-        className="campo"
-        placeholder={t('buscarPorCodigoOuNome')}
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-      />
+      {/* A lupa fica dentro da pílula, e não ao lado: é o que diz que aquele
+          campo é de busca antes de alguém ler o texto de dentro. */}
+      <div className="relative">
+        <IconeBusca className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-texto-suave" />
+        <input
+          className="busca"
+          placeholder={t('buscarPorCodigoOuNome')}
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      </div>
 
       <div className="-mx-4 overflow-x-auto px-4">
         <div className="flex gap-2 pb-1">

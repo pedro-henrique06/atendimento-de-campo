@@ -52,7 +52,13 @@ export function BarraDaPagina({
 
       <div className="min-w-0 flex-1 py-1.5">
         {sobretitulo ? <p className="sobretitulo">{sobretitulo}</p> : null}
-        <h1 className="titulo">{titulo}</h1>
+        {/*
+          O tamanho do título segue o `voltarPara`: com caminho de volta, a
+          tela é empilhada e o título é curto; sem ele, é tela de topo e o
+          título é grande. É a mesma régua do sistema, e é o que impede o nome
+          do paciente de ocupar três linhas no alto do prontuário.
+        */}
+        <h1 className={voltarPara ? 'titulo-compacto' : 'titulo'}>{titulo}</h1>
       </div>
 
       {acao ? <div className="shrink-0">{acao}</div> : null}
