@@ -53,7 +53,9 @@ function comSessao(children: React.ReactNode) {
 async function abrirFormulario(usuario: ReturnType<typeof userEvent.setup>) {
   await usuario.click(await screen.findByRole('button', { name: /Novo paciente/i }));
   await usuario.click(await screen.findByLabelText(/consente com o registro/i));
-  await screen.findByLabelText(/^Nome/);
+  // `/^Nome/` casaria também com "Nome da mãe", que agora aparece para todo
+  // mundo. O asterisco é o do campo obrigatório, colado no rótulo.
+  await screen.findByLabelText(/^Nome\*?$/);
 }
 
 beforeEach(() => {
@@ -105,7 +107,7 @@ describe('Cadastro do paciente', () => {
     expect(screen.queryByRole('combobox', { name: /Comunidade/i })).not.toBeInTheDocument();
   });
 
-  it('não pede nome da mãe para adulto', async () => {
+  it('pede o nome da mãe também para adulto, sem exigir', async () => {
     const usuario = userEvent.setup();
     comSessao(<NovoAtendimento />);
     await abrirFormulario(usuario);
@@ -113,7 +115,18 @@ describe('Cadastro do paciente', () => {
     await usuario.click(screen.getByLabelText(/Não sei a data de nascimento/i));
     await usuario.type(screen.getByLabelText(/Idade aproximada/i), '40');
 
-    expect(screen.queryByLabelText(/Nome da mãe/i)).not.toBeInTheDocument();
+    /*
+      O formulário de papel das missões pede o nome da mãe em toda ficha: é o
+      que distingue dois homônimos numa comunidade onde o sobrenome se repete.
+      Exigir de um adulto que não sabe, porém, travaria o cadastro na recepção.
+    */
+    const campo = await screen.findByLabelText(/Nome da mãe/i);
+    expect(campo).toBeInTheDocument();
+    expect(campo).not.toBeRequired();
+
+    // O endereço continua sendo coisa de menor: numa comunidade sem
+    // logradouro, seria linha vazia em toda ficha de adulto.
+    expect(screen.queryByLabelText(/Endereço/i)).not.toBeInTheDocument();
   });
 
   it('pede nome da mãe e endereço quando a idade indica menor', async () => {
@@ -124,9 +137,10 @@ describe('Cadastro do paciente', () => {
     await usuario.click(screen.getByLabelText(/Não sei a data de nascimento/i));
     await usuario.type(screen.getByLabelText(/Idade aproximada/i), '8');
 
-    // Em campo a criança chega acompanhada de quem não é o responsável legal.
-    expect(await screen.findByLabelText(/Nome da mãe/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Endereço/i)).toBeInTheDocument();
+    // Em campo a criança chega acompanhada de quem não é o responsável legal,
+    // e aí os dois deixam de ser opcionais.
+    expect(await screen.findByLabelText(/Nome da mãe/i)).toBeRequired();
+    expect(screen.getByLabelText(/Endereço/i)).toBeRequired();
   });
 
   it('a regra do menor também vale pela data de nascimento', async () => {
@@ -196,9 +210,12 @@ describe('Cadastro do paciente', () => {
     comSessao(<NovoAtendimento />);
     await abrirFormulario(usuario);
 
-    // Exigir nome da mãe de um adulto sem documento ensinaria a recepção a
-    // inventar dado, que é pior que não ter o dado.
-    expect(screen.queryByLabelText(/Nome da mãe/i)).not.toBeInTheDocument();
+    // Sem idade, o campo aparece como aparece para qualquer um — mas não pode
+    // ser exigido: exigir nome da mãe de um adulto sem documento ensinaria a
+    // recepção a inventar dado, que é pior que não ter o dado. O endereço, que
+    // só existe no menor, continua fora.
+    expect(screen.getByLabelText(/Nome da mãe/i)).not.toBeRequired();
+    expect(screen.queryByLabelText(/Endereço/i)).not.toBeInTheDocument();
   });
 });
 

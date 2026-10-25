@@ -543,30 +543,43 @@ export function NovoAtendimento() {
         )}
 
         {/*
-          Só para menor de idade. Em campo a criança costuma chegar acompanhada
-          de quem não é o responsável legal, e são estes dois campos que
-          permitem reencontrar a família depois.
+          O nome da mãe é perguntado para todo mundo, e não só para menor.
+
+          O formulário de papel das missões o pede em toda ficha, e com razão:
+          é o que distingue dois homônimos numa comunidade onde o sobrenome se
+          repete, e é por ele que o atendimento é reencontrado quando a pessoa
+          volta no ano seguinte sem o código. Obrigatório continua sendo só
+          para menor — num adulto que não sabe ou não quer dizer, exigir
+          travaria o cadastro.
+        */}
+        <Campo
+          rotulo={t('nomeDaMae')}
+          obrigatorio={ehMenor}
+          dica={ehMenor ? t('exigidoParaMenor') : undefined}
+        >
+          <input
+            className="campo"
+            value={form.nomeDaMae}
+            onChange={(e) => alterar({ nomeDaMae: e.target.value })}
+            required={ehMenor}
+          />
+        </Campo>
+
+        {/*
+          O endereço continua só para menor. Em campo a criança costuma chegar
+          acompanhada de quem não é o responsável legal, e é ele que permite
+          reencontrar a família depois; para adulto, numa comunidade sem
+          logradouro, é linha vazia em toda ficha.
         */}
         {ehMenor ? (
-          <>
-            <Campo rotulo={t('nomeDaMae')} obrigatorio dica={t('exigidoParaMenor')}>
-              <input
-                className="campo"
-                value={form.nomeDaMae}
-                onChange={(e) => alterar({ nomeDaMae: e.target.value })}
-                required
-              />
-            </Campo>
-
-            <Campo rotulo={t('endereco')} obrigatorio dica={t('exigidoParaMenor')}>
-              <input
-                className="campo"
-                value={form.endereco}
-                onChange={(e) => alterar({ endereco: e.target.value })}
-                required
-              />
-            </Campo>
-          </>
+          <Campo rotulo={t('endereco')} obrigatorio dica={t('exigidoParaMenor')}>
+            <input
+              className="campo"
+              value={form.endereco}
+              onChange={(e) => alterar({ endereco: e.target.value })}
+              required
+            />
+          </Campo>
         ) : null}
 
         <div>

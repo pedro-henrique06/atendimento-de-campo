@@ -303,15 +303,12 @@ export function Prontuario() {
           />
           <Linha rotulo={t('sexo')} valor={traduzir(sexos, idioma, paciente.sexo)} />
           {/*
-            Só aparecem para menor: num adulto seriam duas linhas vazias em toda
-            ficha, e linha vazia treina a equipe a parar de ler.
+            O nome da mãe aparece para qualquer idade, agora que é perguntado
+            para todos; sem resposta, a `Linha` não desenha nada. O endereço
+            segue só no menor, que é de quem ele é exigido.
           */}
-          {paciente.ehMenor ? (
-            <>
-              <Linha rotulo={t('nomeDaMae')} valor={paciente.nomeDaMae} />
-              <Linha rotulo={t('endereco')} valor={paciente.endereco} />
-            </>
-          ) : null}
+          <Linha rotulo={t('nomeDaMae')} valor={paciente.nomeDaMae} />
+          {paciente.ehMenor ? <Linha rotulo={t('endereco')} valor={paciente.endereco} /> : null}
         </dl>
 
         {/*
