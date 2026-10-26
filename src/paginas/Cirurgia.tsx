@@ -2,14 +2,34 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import type { Cirurgia as FichaCirurgica, DesfechoConsulta, Especialidade, Lateralidade, Prontuario } from '../api/tipos';
+import type {
+  Cirurgia as FichaCirurgica,
+  DesfechoConsulta,
+  DestinoPosOperatorio,
+  Especialidade,
+  Lateralidade,
+  NivelConsciencia,
+  PosicionamentoCirurgico,
+  Prontuario,
+  SuporteOxigenio,
+  TipoAnestesia,
+} from '../api/tipos';
+import {
+  DESTINOS_POS_OPERATORIO,
+  NIVEIS_CONSCIENCIA,
+  POSICIONAMENTOS,
+  SUPORTES_OXIGENIO,
+  TIPOS_ANESTESIA,
+} from '../api/tipos';
 import {
   AlertaAlergia,
   Campo,
   Carregando,
   Erros,
   Etiqueta,
+  Grupo,
   Interruptor,
+  Multiplas,
   Opcoes,
   RodapeDeSalvar,
   Secao,
@@ -20,7 +40,14 @@ import { Encerramento } from '../componentes/Encerramento';
 import { SecaoDesfecho, useTituloDaFila } from '../componentes/FichaDeEtapa';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n } from '../i18n';
-import { lateralidades } from '../i18n/enums';
+import {
+  destinosPosOperatorio,
+  lateralidades,
+  niveisConsciencia,
+  posicionamentos,
+  suportesOxigenio,
+  tiposAnestesia,
+} from '../i18n/enums';
 
 const LATERALIDADES: Lateralidade[] = ['NaoSeAplica', 'Direito', 'Esquerdo', 'Bilateral'];
 
@@ -46,6 +73,7 @@ interface FormCirurgia {
   pertencesRoupasAcessorios: boolean;
   pertencesDestino: string;
   encaminhadoAoCentro: string;
+  chegadaAoCentro: string;
 
   checkInIdentidadeConfirmada: boolean;
   checkInSitioMarcado: boolean;
@@ -57,23 +85,64 @@ interface FormCirurgia {
   timeOutUmMonitorizacaoOk: boolean;
   timeOutUmViaAereaAvaliada: boolean;
   timeOutUmRiscoSangramentoAvaliado: boolean;
+  timeOutUmExamesEmSala: boolean;
+  timeOutUmVerificacaoAnestesica: boolean;
+  timeOutUmViaAereaDificil: boolean;
 
   timeOutDoisPacienteSitioProcedimentoConfirmados: boolean;
   timeOutDoisAntibioticoProfilatico: boolean;
+  timeOutDoisAntibioticoQual: string;
   timeOutDoisImagensDisponiveis: boolean;
   timeOutDoisEventosCriticosRevistos: boolean;
   timeOutDoisMaterialEsterilizado: boolean;
+  timeOutDoisPrevisaoBiopsia: boolean;
+  timeOutDoisTempoPrevisto: string;
+  timeOutDoisInstrumentalIntegrador: boolean;
+
+  anestesia: TipoAnestesia[];
+  anestesiaLocal: string;
+  posicionamento: PosicionamentoCirurgico | null;
+  placaBisturi: boolean;
+  placaBisturiLocal: string;
+  preparoDaPele: string;
+  antissepsia: string;
+  incisaoCirurgica: string;
+  curativo: string;
+  medicacoesRealizadas: string;
+  gazesUtilizadas: string;
+  compressasUtilizadas: string;
+  evolucaoMedica: string;
+  evolucaoEnfermagem: string;
 
   checkOutProcedimentoRegistrado: boolean;
   checkOutContagemConfere: boolean;
   checkOutAmostrasIdentificadas: boolean;
+  checkOutBiopsiaQuantidade: string;
   checkOutProblemasComEquipamento: boolean;
   checkOutCuidadosRecuperacao: string;
 
+  destinoPosOperatorio: DestinoPosOperatorio | null;
   recuperacaoEntrada: string;
   recuperacaoSaida: string;
   intercorrencias: string;
   observacoesRecuperacao: string;
+  recuperacaoNivelConsciencia: NivelConsciencia | null;
+  recuperacaoSuporteOxigenio: SuporteOxigenio | null;
+  recuperacaoOxigenioDetalhe: string;
+  recuperacaoAcessoVenosoPeriferico: boolean;
+  recuperacaoAcessoVenosoDescricao: string;
+  recuperacaoIntervencaoIntensiva: boolean;
+  recuperacaoCateterVenosoCentral: boolean;
+  recuperacaoCateterVenosoCentralLocal: string;
+  recuperacaoDrogasVasoativas: string;
+  recuperacaoInfusoes: string;
+  recuperacaoDreno: boolean;
+  recuperacaoDrenoDescricao: string;
+  recuperacaoSondaVesical: boolean;
+  recuperacaoSondaNasogastrica: boolean;
+  recuperacaoOutroDispositivo: string;
+  recuperacaoEvolucaoMedica: string;
+  recuperacaoEvolucaoEnfermagem: string;
   pertencesDevolvidos: boolean;
   recuperacaoDieta: string;
 
@@ -103,6 +172,7 @@ const INICIAL: FormCirurgia = {
   pertencesRoupasAcessorios: false,
   pertencesDestino: '',
   encaminhadoAoCentro: '',
+  chegadaAoCentro: '',
 
   checkInIdentidadeConfirmada: false,
   checkInSitioMarcado: false,
@@ -114,23 +184,64 @@ const INICIAL: FormCirurgia = {
   timeOutUmMonitorizacaoOk: false,
   timeOutUmViaAereaAvaliada: false,
   timeOutUmRiscoSangramentoAvaliado: false,
+  timeOutUmExamesEmSala: false,
+  timeOutUmVerificacaoAnestesica: false,
+  timeOutUmViaAereaDificil: false,
 
   timeOutDoisPacienteSitioProcedimentoConfirmados: false,
   timeOutDoisAntibioticoProfilatico: false,
+  timeOutDoisAntibioticoQual: '',
   timeOutDoisImagensDisponiveis: false,
   timeOutDoisEventosCriticosRevistos: false,
   timeOutDoisMaterialEsterilizado: false,
+  timeOutDoisPrevisaoBiopsia: false,
+  timeOutDoisTempoPrevisto: '',
+  timeOutDoisInstrumentalIntegrador: false,
+
+  anestesia: [],
+  anestesiaLocal: '',
+  posicionamento: null,
+  placaBisturi: false,
+  placaBisturiLocal: '',
+  preparoDaPele: '',
+  antissepsia: '',
+  incisaoCirurgica: '',
+  curativo: '',
+  medicacoesRealizadas: '',
+  gazesUtilizadas: '',
+  compressasUtilizadas: '',
+  evolucaoMedica: '',
+  evolucaoEnfermagem: '',
 
   checkOutProcedimentoRegistrado: false,
   checkOutContagemConfere: false,
   checkOutAmostrasIdentificadas: false,
+  checkOutBiopsiaQuantidade: '',
   checkOutProblemasComEquipamento: false,
   checkOutCuidadosRecuperacao: '',
 
+  destinoPosOperatorio: null,
   recuperacaoEntrada: '',
   recuperacaoSaida: '',
   intercorrencias: '',
   observacoesRecuperacao: '',
+  recuperacaoNivelConsciencia: null,
+  recuperacaoSuporteOxigenio: null,
+  recuperacaoOxigenioDetalhe: '',
+  recuperacaoAcessoVenosoPeriferico: false,
+  recuperacaoAcessoVenosoDescricao: '',
+  recuperacaoIntervencaoIntensiva: false,
+  recuperacaoCateterVenosoCentral: false,
+  recuperacaoCateterVenosoCentralLocal: '',
+  recuperacaoDrogasVasoativas: '',
+  recuperacaoInfusoes: '',
+  recuperacaoDreno: false,
+  recuperacaoDrenoDescricao: '',
+  recuperacaoSondaVesical: false,
+  recuperacaoSondaNasogastrica: false,
+  recuperacaoOutroDispositivo: '',
+  recuperacaoEvolucaoMedica: '',
+  recuperacaoEvolucaoEnfermagem: '',
   pertencesDevolvidos: false,
   recuperacaoDieta: '',
 
@@ -163,6 +274,7 @@ function doServidor(c: FichaCirurgica): FormCirurgia {
     pertencesRoupasAcessorios: c.pertencesRoupasAcessorios,
     pertencesDestino: c.pertencesDestino ?? '',
     encaminhadoAoCentro: paraHoraLocal(c.encaminhadoAoCentroEm),
+    chegadaAoCentro: paraHoraLocal(c.chegadaAoCentroEm),
 
     checkInIdentidadeConfirmada: c.checkInIdentidadeConfirmada,
     checkInSitioMarcado: c.checkInSitioMarcado,
@@ -174,23 +286,66 @@ function doServidor(c: FichaCirurgica): FormCirurgia {
     timeOutUmMonitorizacaoOk: c.timeOutUmMonitorizacaoOk,
     timeOutUmViaAereaAvaliada: c.timeOutUmViaAereaAvaliada,
     timeOutUmRiscoSangramentoAvaliado: c.timeOutUmRiscoSangramentoAvaliado,
+    timeOutUmExamesEmSala: c.timeOutUmExamesEmSala,
+    timeOutUmVerificacaoAnestesica: c.timeOutUmVerificacaoAnestesica,
+    timeOutUmViaAereaDificil: c.timeOutUmViaAereaDificil,
 
     timeOutDoisPacienteSitioProcedimentoConfirmados: c.timeOutDoisPacienteSitioProcedimentoConfirmados,
     timeOutDoisAntibioticoProfilatico: c.timeOutDoisAntibioticoProfilatico,
+    timeOutDoisAntibioticoQual: c.timeOutDoisAntibioticoQual ?? '',
     timeOutDoisImagensDisponiveis: c.timeOutDoisImagensDisponiveis,
     timeOutDoisEventosCriticosRevistos: c.timeOutDoisEventosCriticosRevistos,
     timeOutDoisMaterialEsterilizado: c.timeOutDoisMaterialEsterilizado,
+    timeOutDoisPrevisaoBiopsia: c.timeOutDoisPrevisaoBiopsia,
+    timeOutDoisTempoPrevisto:
+      c.timeOutDoisTempoPrevistoMinutos === null ? '' : String(c.timeOutDoisTempoPrevistoMinutos),
+    timeOutDoisInstrumentalIntegrador: c.timeOutDoisInstrumentalIntegrador,
+
+    anestesia: c.anestesia,
+    anestesiaLocal: c.anestesiaLocal ?? '',
+    posicionamento: c.posicionamento,
+    placaBisturi: c.placaBisturi,
+    placaBisturiLocal: c.placaBisturiLocal ?? '',
+    preparoDaPele: c.preparoDaPele ?? '',
+    antissepsia: c.antissepsia ?? '',
+    incisaoCirurgica: c.incisaoCirurgica ?? '',
+    curativo: c.curativo ?? '',
+    medicacoesRealizadas: c.medicacoesRealizadas ?? '',
+    gazesUtilizadas: c.gazesUtilizadas === null ? '' : String(c.gazesUtilizadas),
+    compressasUtilizadas: c.compressasUtilizadas === null ? '' : String(c.compressasUtilizadas),
+    evolucaoMedica: c.evolucaoMedica ?? '',
+    evolucaoEnfermagem: c.evolucaoEnfermagem ?? '',
 
     checkOutProcedimentoRegistrado: c.checkOutProcedimentoRegistrado,
     checkOutContagemConfere: c.checkOutContagemConfere,
     checkOutAmostrasIdentificadas: c.checkOutAmostrasIdentificadas,
+    checkOutBiopsiaQuantidade:
+      c.checkOutBiopsiaQuantidade === null ? '' : String(c.checkOutBiopsiaQuantidade),
     checkOutProblemasComEquipamento: c.checkOutProblemasComEquipamento,
     checkOutCuidadosRecuperacao: c.checkOutCuidadosRecuperacao ?? '',
 
+    destinoPosOperatorio: c.destinoPosOperatorio,
     recuperacaoEntrada: paraHoraLocal(c.recuperacaoEntradaEm),
     recuperacaoSaida: paraHoraLocal(c.recuperacaoSaidaEm),
     intercorrencias: c.intercorrencias ?? '',
     observacoesRecuperacao: c.observacoesRecuperacao ?? '',
+    recuperacaoNivelConsciencia: c.recuperacaoNivelConsciencia,
+    recuperacaoSuporteOxigenio: c.recuperacaoSuporteOxigenio,
+    recuperacaoOxigenioDetalhe: c.recuperacaoOxigenioDetalhe ?? '',
+    recuperacaoAcessoVenosoPeriferico: c.recuperacaoAcessoVenosoPeriferico,
+    recuperacaoAcessoVenosoDescricao: c.recuperacaoAcessoVenosoDescricao ?? '',
+    recuperacaoIntervencaoIntensiva: c.recuperacaoIntervencaoIntensiva,
+    recuperacaoCateterVenosoCentral: c.recuperacaoCateterVenosoCentral,
+    recuperacaoCateterVenosoCentralLocal: c.recuperacaoCateterVenosoCentralLocal ?? '',
+    recuperacaoDrogasVasoativas: c.recuperacaoDrogasVasoativas ?? '',
+    recuperacaoInfusoes: c.recuperacaoInfusoes ?? '',
+    recuperacaoDreno: c.recuperacaoDreno,
+    recuperacaoDrenoDescricao: c.recuperacaoDrenoDescricao ?? '',
+    recuperacaoSondaVesical: c.recuperacaoSondaVesical,
+    recuperacaoSondaNasogastrica: c.recuperacaoSondaNasogastrica,
+    recuperacaoOutroDispositivo: c.recuperacaoOutroDispositivo ?? '',
+    recuperacaoEvolucaoMedica: c.recuperacaoEvolucaoMedica ?? '',
+    recuperacaoEvolucaoEnfermagem: c.recuperacaoEvolucaoEnfermagem ?? '',
     pertencesDevolvidos: c.pertencesDevolvidos,
     recuperacaoDieta: c.recuperacaoDieta ?? '',
 
@@ -330,17 +485,40 @@ export function Cirurgia() {
       timeOutUmMonitorizacaoOk: form.timeOutUmMonitorizacaoOk,
       timeOutUmViaAereaAvaliada: form.timeOutUmViaAereaAvaliada,
       timeOutUmRiscoSangramentoAvaliado: form.timeOutUmRiscoSangramentoAvaliado,
+      timeOutUmExamesEmSala: form.timeOutUmExamesEmSala,
+      timeOutUmVerificacaoAnestesica: form.timeOutUmVerificacaoAnestesica,
+      timeOutUmViaAereaDificil: form.timeOutUmViaAereaDificil,
 
       timeOutDoisPacienteSitioProcedimentoConfirmados:
         form.timeOutDoisPacienteSitioProcedimentoConfirmados,
       timeOutDoisAntibioticoProfilatico: form.timeOutDoisAntibioticoProfilatico,
+      timeOutDoisAntibioticoQual: form.timeOutDoisAntibioticoQual.trim() || null,
       timeOutDoisImagensDisponiveis: form.timeOutDoisImagensDisponiveis,
       timeOutDoisEventosCriticosRevistos: form.timeOutDoisEventosCriticosRevistos,
       timeOutDoisMaterialEsterilizado: form.timeOutDoisMaterialEsterilizado,
+      timeOutDoisPrevisaoBiopsia: form.timeOutDoisPrevisaoBiopsia,
+      timeOutDoisTempoPrevistoMinutos: numeroOuNulo(form.timeOutDoisTempoPrevisto),
+      timeOutDoisInstrumentalIntegrador: form.timeOutDoisInstrumentalIntegrador,
+
+      anestesia: form.anestesia,
+      anestesiaLocal: form.anestesiaLocal.trim() || null,
+      posicionamento: form.posicionamento,
+      placaBisturi: form.placaBisturi,
+      placaBisturiLocal: form.placaBisturiLocal.trim() || null,
+      preparoDaPele: form.preparoDaPele.trim() || null,
+      antissepsia: form.antissepsia.trim() || null,
+      incisaoCirurgica: form.incisaoCirurgica.trim() || null,
+      curativo: form.curativo.trim() || null,
+      medicacoesRealizadas: form.medicacoesRealizadas.trim() || null,
+      gazesUtilizadas: numeroOuNulo(form.gazesUtilizadas),
+      compressasUtilizadas: numeroOuNulo(form.compressasUtilizadas),
+      evolucaoMedica: form.evolucaoMedica.trim() || null,
+      evolucaoEnfermagem: form.evolucaoEnfermagem.trim() || null,
 
       checkOutProcedimentoRegistrado: form.checkOutProcedimentoRegistrado,
       checkOutContagemConfere: form.checkOutContagemConfere,
       checkOutAmostrasIdentificadas: form.checkOutAmostrasIdentificadas,
+      checkOutBiopsiaQuantidade: numeroOuNulo(form.checkOutBiopsiaQuantidade),
       checkOutProblemasComEquipamento: form.checkOutProblemasComEquipamento,
       checkOutCuidadosRecuperacao: form.checkOutCuidadosRecuperacao.trim() || null,
 
@@ -358,11 +536,31 @@ export function Cirurgia() {
       pertencesRoupasAcessorios: form.pertencesRoupasAcessorios,
       pertencesDestino: form.pertencesDestino.trim() || null,
       encaminhadoAoCentroEm: horaParaIso(form.encaminhadoAoCentro),
+      chegadaAoCentroEm: horaParaIso(form.chegadaAoCentro),
 
+      destinoPosOperatorio: form.destinoPosOperatorio,
       recuperacaoEntradaEm: horaParaIso(form.recuperacaoEntrada),
       recuperacaoSaidaEm: horaParaIso(form.recuperacaoSaida),
       intercorrencias: form.intercorrencias.trim() || null,
       observacoesRecuperacao: form.observacoesRecuperacao.trim() || null,
+      recuperacaoNivelConsciencia: form.recuperacaoNivelConsciencia,
+      recuperacaoSuporteOxigenio: form.recuperacaoSuporteOxigenio,
+      recuperacaoOxigenioDetalhe: form.recuperacaoOxigenioDetalhe.trim() || null,
+      recuperacaoAcessoVenosoPeriferico: form.recuperacaoAcessoVenosoPeriferico,
+      recuperacaoAcessoVenosoDescricao: form.recuperacaoAcessoVenosoDescricao.trim() || null,
+      recuperacaoIntervencaoIntensiva: form.recuperacaoIntervencaoIntensiva,
+      recuperacaoCateterVenosoCentral: form.recuperacaoCateterVenosoCentral,
+      recuperacaoCateterVenosoCentralLocal:
+        form.recuperacaoCateterVenosoCentralLocal.trim() || null,
+      recuperacaoDrogasVasoativas: form.recuperacaoDrogasVasoativas.trim() || null,
+      recuperacaoInfusoes: form.recuperacaoInfusoes.trim() || null,
+      recuperacaoDreno: form.recuperacaoDreno,
+      recuperacaoDrenoDescricao: form.recuperacaoDrenoDescricao.trim() || null,
+      recuperacaoSondaVesical: form.recuperacaoSondaVesical,
+      recuperacaoSondaNasogastrica: form.recuperacaoSondaNasogastrica,
+      recuperacaoOutroDispositivo: form.recuperacaoOutroDispositivo.trim() || null,
+      recuperacaoEvolucaoMedica: form.recuperacaoEvolucaoMedica.trim() || null,
+      recuperacaoEvolucaoEnfermagem: form.recuperacaoEvolucaoEnfermagem.trim() || null,
       pertencesDevolvidos: form.pertencesDevolvidos,
       recuperacaoDieta: form.recuperacaoDieta.trim() || null,
 
@@ -461,8 +659,7 @@ export function Cirurgia() {
           no lado errado é um dos erros que a lista existe para impedir, e
           "joelho D", "joelho dto" e "joelho direito" não conferem contra nada.
         */}
-        <div>
-          <span className="rotulo">{t('lateralidade')}</span>
+        <Grupo rotulo={t('lateralidade')}>
           <Opcoes
             valor={form.lateralidade}
             opcoes={LATERALIDADES}
@@ -470,7 +667,7 @@ export function Cirurgia() {
             tabela={lateralidades}
             idioma={idioma}
           />
-        </div>
+        </Grupo>
 
         <Campo rotulo={t('jejumHoras')}>
           <input
@@ -608,6 +805,20 @@ export function Cirurgia() {
       </Secao>
 
       <Parada titulo={t('checkIn')} concluidaEm={ficha?.checkInEm ?? null}>
+        {/*
+          A chegada abre a parada, como no papel. É o par da hora em que a maca
+          saiu: a distância entre as duas é paciente em jejum num corredor, e é
+          a única forma de ver que houve espera.
+        */}
+        <Campo rotulo={t('chegadaAoCentro')}>
+          <input
+            type="time"
+            className="campo"
+            value={form.chegadaAoCentro}
+            onChange={(e) => alterar({ chegadaAoCentro: e.target.value })}
+          />
+        </Campo>
+
         <Interruptor
           rotulo={t('checkInIdentidade')}
           valor={form.checkInIdentidadeConfirmada}
@@ -658,6 +869,37 @@ export function Cirurgia() {
             alterar({ timeOutUmRiscoSangramentoAvaliado })
           }
         />
+        <Interruptor
+          rotulo={t('timeOutUmExamesEmSala')}
+          valor={form.timeOutUmExamesEmSala}
+          aoMudar={(timeOutUmExamesEmSala) => alterar({ timeOutUmExamesEmSala })}
+        />
+
+        {/*
+          A conferência do carrinho, separada da avaliação do paciente: uma é
+          sobre a via aérea dele, a outra sobre o material. Numa caixa só, a
+          equipe confere uma e assina as duas.
+        */}
+        <Interruptor
+          rotulo={t('timeOutUmVerificacaoAnestesica')}
+          dica={t('dicaVerificacaoAnestesica')}
+          valor={form.timeOutUmVerificacaoAnestesica}
+          aoMudar={(timeOutUmVerificacaoAnestesica) => alterar({ timeOutUmVerificacaoAnestesica })}
+        />
+
+        {/*
+          Achado, e não conferência — por isso fica separado, abaixo da linha.
+          Dentro da lista, "via aérea difícil" leria como mais uma caixa a
+          marcar, e exigi-la para carimbar a parada obrigaria a equipe a
+          declarar uma via aérea difícil que o paciente não tem.
+        */}
+        <div className="border-t border-borda pt-2">
+          <Interruptor
+            rotulo={t('timeOutUmViaAereaDificil')}
+            valor={form.timeOutUmViaAereaDificil}
+            aoMudar={(timeOutUmViaAereaDificil) => alterar({ timeOutUmViaAereaDificil })}
+          />
+        </div>
       </Parada>
 
       <Parada titulo={t('timeOutDois')} concluidaEm={ficha?.timeOutDoisEm ?? null}>
@@ -675,6 +917,21 @@ export function Cirurgia() {
             alterar({ timeOutDoisAntibioticoProfilatico })
           }
         />
+
+        {/*
+          Qual, só depois do sim. A caixa sozinha não responde o que o
+          pós-operatório pergunta, e "qual" ao lado de "não foi feito" é
+          contradição gravada.
+        */}
+        {form.timeOutDoisAntibioticoProfilatico ? (
+          <Campo rotulo={t('antibioticoQual')} dica={t('dicaAntibioticoQual')}>
+            <input
+              className="campo"
+              value={form.timeOutDoisAntibioticoQual}
+              onChange={(e) => alterar({ timeOutDoisAntibioticoQual: e.target.value })}
+            />
+          </Campo>
+        ) : null}
         <Interruptor
           rotulo={t('timeOutDoisImagens')}
           valor={form.timeOutDoisImagensDisponiveis}
@@ -692,7 +949,191 @@ export function Cirurgia() {
           valor={form.timeOutDoisMaterialEsterilizado}
           aoMudar={(timeOutDoisMaterialEsterilizado) => alterar({ timeOutDoisMaterialEsterilizado })}
         />
+        <Interruptor
+          rotulo={t('timeOutDoisIntegrador')}
+          dica={t('dicaIntegrador')}
+          valor={form.timeOutDoisInstrumentalIntegrador}
+          aoMudar={(timeOutDoisInstrumentalIntegrador) =>
+            alterar({ timeOutDoisInstrumentalIntegrador })
+          }
+        />
+
+        {/*
+          Previsão de biópsia e tempo previsto são respostas, e não itens
+          conferidos: a maioria das cirurgias não tem biópsia prevista, e exigir
+          a marca para carimbar a parada inverteria o sentido da lista.
+        */}
+        <div className="space-y-2 border-t border-borda pt-2">
+          <Interruptor
+            rotulo={t('previsaoBiopsia')}
+            valor={form.timeOutDoisPrevisaoBiopsia}
+            aoMudar={(timeOutDoisPrevisaoBiopsia) => alterar({ timeOutDoisPrevisaoBiopsia })}
+          />
+
+          <Campo rotulo={t('tempoPrevisto')} dica={t('dicaTempoPrevisto')}>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={1440}
+              className="campo"
+              value={form.timeOutDoisTempoPrevisto}
+              onChange={(e) => alterar({ timeOutDoisTempoPrevisto: e.target.value })}
+            />
+          </Campo>
+        </div>
       </Parada>
+
+      {/*
+        O transoperatório: o que aconteceu entre a indução e o fecho.
+
+        Fica entre o time out e o check out porque é essa a ordem da sala. Até
+        aqui a ficha pulava daquele para este: a lista de verificação era
+        registrada inteira e o procedimento em si não tinha onde ser descrito.
+      */}
+      <Secao titulo={t('transoperatorio')}>
+        <Grupo rotulo={t('anestesia')} dica={t('dicaAnestesia')}>
+          <Multiplas
+            valores={form.anestesia}
+            opcoes={TIPOS_ANESTESIA}
+            aoAlternar={(tipo) =>
+              alterar({
+                anestesia: form.anestesia.includes(tipo)
+                  ? form.anestesia.filter((a) => a !== tipo)
+                  : [...form.anestesia, tipo],
+              })
+            }
+            tabela={tiposAnestesia}
+            idioma={idioma}
+          />
+        </Grupo>
+
+        <Campo rotulo={t('anestesiaLocal')}>
+          <input
+            className="campo"
+            value={form.anestesiaLocal}
+            onChange={(e) => alterar({ anestesiaLocal: e.target.value })}
+          />
+        </Campo>
+
+        <Grupo rotulo={t('posicionamento')} dica={t('dicaPosicionamento')}>
+          <Opcoes
+            valor={form.posicionamento}
+            opcoes={POSICIONAMENTOS}
+            aoEscolher={(posicionamento) => alterar({ posicionamento })}
+            tabela={posicionamentos}
+            idioma={idioma}
+          />
+        </Grupo>
+
+        <Interruptor
+          rotulo={t('placaBisturi')}
+          valor={form.placaBisturi}
+          aoMudar={(placaBisturi) => alterar({ placaBisturi })}
+        />
+
+        {/*
+          Onde, depois do sim: queimadura por placa é evento adverso conhecido,
+          e a investigação começa por onde ela estava.
+        */}
+        {form.placaBisturi ? (
+          <Campo rotulo={t('placaBisturiLocal')}>
+            <input
+              className="campo"
+              value={form.placaBisturiLocal}
+              onChange={(e) => alterar({ placaBisturiLocal: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Campo rotulo={t('preparoDaPele')}>
+          <input
+            className="campo"
+            value={form.preparoDaPele}
+            onChange={(e) => alterar({ preparoDaPele: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('antissepsia')}>
+          <input
+            className="campo"
+            value={form.antissepsia}
+            onChange={(e) => alterar({ antissepsia: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('incisaoCirurgica')}>
+          <input
+            className="campo"
+            value={form.incisaoCirurgica}
+            onChange={(e) => alterar({ incisaoCirurgica: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('curativo')}>
+          <input
+            className="campo"
+            value={form.curativo}
+            onChange={(e) => alterar({ curativo: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('medicacoesRealizadas')}>
+          <textarea
+            className="campo min-h-20"
+            aria-label={t('medicacoesRealizadas')}
+            value={form.medicacoesRealizadas}
+            onChange={(e) => alterar({ medicacoesRealizadas: e.target.value })}
+          />
+        </Campo>
+
+        {/*
+          Os dois números são o lado esquerdo da contagem do check out. Uma
+          conferência em que os dois lados são frase não é conferência.
+        */}
+        <div className="grid grid-cols-2 gap-3">
+          <Campo rotulo={t('gazesUtilizadas')}>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={999}
+              className="campo"
+              value={form.gazesUtilizadas}
+              onChange={(e) => alterar({ gazesUtilizadas: e.target.value })}
+            />
+          </Campo>
+          <Campo rotulo={t('compressasUtilizadas')}>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={999}
+              className="campo"
+              value={form.compressasUtilizadas}
+              onChange={(e) => alterar({ compressasUtilizadas: e.target.value })}
+            />
+          </Campo>
+        </div>
+
+        <Campo rotulo={t('evolucaoMedica')}>
+          <textarea
+            className="campo min-h-24"
+            aria-label={t('evolucaoMedica')}
+            value={form.evolucaoMedica}
+            onChange={(e) => alterar({ evolucaoMedica: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('evolucaoEnfermagem')}>
+          <textarea
+            className="campo min-h-24"
+            aria-label={t('evolucaoEnfermagem')}
+            value={form.evolucaoEnfermagem}
+            onChange={(e) => alterar({ evolucaoEnfermagem: e.target.value })}
+          />
+        </Campo>
+      </Secao>
 
       <Parada titulo={t('checkOut')} concluidaEm={ficha?.checkOutEm ?? null}>
         <Interruptor
@@ -710,6 +1151,25 @@ export function Cirurgia() {
           valor={form.checkOutAmostrasIdentificadas}
           aoMudar={(checkOutAmostrasIdentificadas) => alterar({ checkOutAmostrasIdentificadas })}
         />
+
+        {/*
+          Quantas, depois do sim: a caixa diz que foram identificadas, e o
+          número é o que o laboratório confere contra o que recebeu. Peça
+          perdida entre a sala e o laboratório só aparece com os dois.
+        */}
+        {form.checkOutAmostrasIdentificadas ? (
+          <Campo rotulo={t('biopsiaQuantidade')}>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={99}
+              className="campo"
+              value={form.checkOutBiopsiaQuantidade}
+              onChange={(e) => alterar({ checkOutBiopsiaQuantidade: e.target.value })}
+            />
+          </Campo>
+        ) : null}
 
         {/*
           Marcado significa que houve problema — é o único item da lista cuja
@@ -732,6 +1192,20 @@ export function Cirurgia() {
       </Parada>
 
       <Secao titulo={t('recuperacao')}>
+        {/*
+          Para onde o paciente foi ao sair da sala. Decide quem recebe: a
+          recuperação anestésica tem vigilância contínua, o pós-operatório não.
+        */}
+        <Grupo rotulo={t('destinoPosOperatorio')}>
+          <Opcoes
+            valor={form.destinoPosOperatorio}
+            opcoes={DESTINOS_POS_OPERATORIO}
+            aoEscolher={(destinoPosOperatorio) => alterar({ destinoPosOperatorio })}
+            tabela={destinosPosOperatorio}
+            idioma={idioma}
+          />
+        </Grupo>
+
         <div className="grid grid-cols-2 gap-3">
           <Campo rotulo={t('entradaRecuperacao')}>
             <input
@@ -751,6 +1225,163 @@ export function Cirurgia() {
           </Campo>
         </div>
 
+        {/*
+          Como o paciente chegou. É o primeiro dado que alguém olha ao chegar
+          perto do leito, e até aqui a recuperação tinha entrada, saída e dois
+          campos de texto — o estado em que ele chegou, nenhum.
+        */}
+        <Grupo rotulo={t('nivelConsciencia')}>
+          <Opcoes
+            valor={form.recuperacaoNivelConsciencia}
+            opcoes={NIVEIS_CONSCIENCIA}
+            aoEscolher={(recuperacaoNivelConsciencia) => alterar({ recuperacaoNivelConsciencia })}
+            tabela={niveisConsciencia}
+            idioma={idioma}
+          />
+        </Grupo>
+
+        <Grupo rotulo={t('suporteOxigenio')}>
+          <Opcoes
+            valor={form.recuperacaoSuporteOxigenio}
+            opcoes={SUPORTES_OXIGENIO}
+            aoEscolher={(recuperacaoSuporteOxigenio) => alterar({ recuperacaoSuporteOxigenio })}
+            tabela={suportesOxigenio}
+            idioma={idioma}
+          />
+        </Grupo>
+
+        {/*
+          O número só existe quando há o que medir: litros por minuto no
+          cateter, por cento na Venturi. Ar ambiente não tem número, e guardar
+          "3 l/min" ao lado dele seria guardar a resposta de uma pergunta que
+          não foi feita.
+        */}
+        {form.recuperacaoSuporteOxigenio === 'CateterNasal' ||
+        form.recuperacaoSuporteOxigenio === 'MascaraVenturi' ? (
+          <Campo
+            rotulo={
+              form.recuperacaoSuporteOxigenio === 'CateterNasal'
+                ? t('oxigenioLitros')
+                : t('oxigenioPorcento')
+            }
+          >
+            <input
+              className="campo"
+              value={form.recuperacaoOxigenioDetalhe}
+              onChange={(e) => alterar({ recuperacaoOxigenioDetalhe: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Interruptor
+          rotulo={t('acessoVenosoPeriferico')}
+          valor={form.recuperacaoAcessoVenosoPeriferico}
+          aoMudar={(recuperacaoAcessoVenosoPeriferico) =>
+            alterar({ recuperacaoAcessoVenosoPeriferico })
+          }
+        />
+
+        {form.recuperacaoAcessoVenosoPeriferico ? (
+          <Campo rotulo={t('acessoVenosoDescricao')} dica={t('dicaAcessoVenoso')}>
+            <input
+              className="campo"
+              value={form.recuperacaoAcessoVenosoDescricao}
+              onChange={(e) => alterar({ recuperacaoAcessoVenosoDescricao: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Campo rotulo={t('infusoes')}>
+          <textarea
+            className="campo min-h-20"
+            aria-label={t('infusoes')}
+            value={form.recuperacaoInfusoes}
+            onChange={(e) => alterar({ recuperacaoInfusoes: e.target.value })}
+          />
+        </Campo>
+
+        {/*
+          A intervenção intensiva abre o que vem com ela. É o desenho do próprio
+          formulário, e tem razão: cateter central e droga vasoativa num
+          pós-operatório de rotina são linhas vazias em toda ficha.
+        */}
+        <Interruptor
+          rotulo={t('intervencaoIntensiva')}
+          valor={form.recuperacaoIntervencaoIntensiva}
+          aoMudar={(recuperacaoIntervencaoIntensiva) =>
+            alterar({ recuperacaoIntervencaoIntensiva })
+          }
+        />
+
+        {form.recuperacaoIntervencaoIntensiva ? (
+          <div className="space-y-2 border-l-2 border-borda pl-3">
+            <Interruptor
+              rotulo={t('cateterVenosoCentral')}
+              valor={form.recuperacaoCateterVenosoCentral}
+              aoMudar={(recuperacaoCateterVenosoCentral) =>
+                alterar({ recuperacaoCateterVenosoCentral })
+              }
+            />
+
+            {form.recuperacaoCateterVenosoCentral ? (
+              <Campo rotulo={t('cateterCentralLocal')}>
+                <input
+                  className="campo"
+                  value={form.recuperacaoCateterVenosoCentralLocal}
+                  onChange={(e) =>
+                    alterar({ recuperacaoCateterVenosoCentralLocal: e.target.value })
+                  }
+                />
+              </Campo>
+            ) : null}
+
+            <Campo rotulo={t('drogasVasoativas')} dica={t('dicaDrogasVasoativas')}>
+              <textarea
+                className="campo min-h-20"
+                aria-label={t('drogasVasoativas')}
+                value={form.recuperacaoDrogasVasoativas}
+                onChange={(e) => alterar({ recuperacaoDrogasVasoativas: e.target.value })}
+              />
+            </Campo>
+          </div>
+        ) : null}
+
+        {/* O que saiu da sala com o paciente. */}
+        <Interruptor
+          rotulo={t('dreno')}
+          valor={form.recuperacaoDreno}
+          aoMudar={(recuperacaoDreno) => alterar({ recuperacaoDreno })}
+        />
+
+        {form.recuperacaoDreno ? (
+          <Campo rotulo={t('drenoDescricao')}>
+            <input
+              className="campo"
+              value={form.recuperacaoDrenoDescricao}
+              onChange={(e) => alterar({ recuperacaoDrenoDescricao: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Interruptor
+          rotulo={t('sondaVesical')}
+          valor={form.recuperacaoSondaVesical}
+          aoMudar={(recuperacaoSondaVesical) => alterar({ recuperacaoSondaVesical })}
+        />
+        <Interruptor
+          rotulo={t('sondaNasogastrica')}
+          valor={form.recuperacaoSondaNasogastrica}
+          aoMudar={(recuperacaoSondaNasogastrica) => alterar({ recuperacaoSondaNasogastrica })}
+        />
+
+        <Campo rotulo={t('outroDispositivo')}>
+          <input
+            className="campo"
+            value={form.recuperacaoOutroDispositivo}
+            onChange={(e) => alterar({ recuperacaoOutroDispositivo: e.target.value })}
+          />
+        </Campo>
+
         <Campo rotulo={t('intercorrencias')}>
           <textarea
             className="campo min-h-20"
@@ -765,6 +1396,24 @@ export function Cirurgia() {
             className="campo min-h-20"
             value={form.observacoesRecuperacao}
             onChange={(e) => alterar({ observacoesRecuperacao: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('evolucaoMedicaRecuperacao')}>
+          <textarea
+            className="campo min-h-24"
+            aria-label={t('evolucaoMedicaRecuperacao')}
+            value={form.recuperacaoEvolucaoMedica}
+            onChange={(e) => alterar({ recuperacaoEvolucaoMedica: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('evolucaoEnfermagemRecuperacao')}>
+          <textarea
+            className="campo min-h-24"
+            aria-label={t('evolucaoEnfermagemRecuperacao')}
+            value={form.recuperacaoEvolucaoEnfermagem}
+            onChange={(e) => alterar({ recuperacaoEvolucaoEnfermagem: e.target.value })}
           />
         </Campo>
 

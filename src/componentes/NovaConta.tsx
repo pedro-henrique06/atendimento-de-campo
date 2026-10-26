@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import { FILAS, FUNCOES_PARA_CADASTRO } from '../api/tipos';
-import type {
-  ConselhoTipo,
-  ContaCriada,
-  Especialidade,
-  FuncaoProfissional,
-} from '../api/tipos';
+import { FUNCOES_PARA_CADASTRO } from '../api/tipos';
+import { FILAS_POR_FUNCAO } from '../api/filas';
+import type { ConselhoTipo, ContaCriada, FuncaoProfissional } from '../api/tipos';
 import { Campo, Erros } from '../componentes/Basicos';
 import { useI18n, traduzir } from '../i18n';
 import { conselhos, especialidades, funcoes } from '../i18n/enums';
@@ -34,40 +30,6 @@ const CONSELHO_POR_FUNCAO: Record<FuncaoProfissional, ConselhoTipo> = {
   Recepcao: 'Nenhum',
   Coordenacao: 'Nenhum',
   Outro: 'Nenhum',
-};
-
-/**
- * Fila que cada profissão abre. Espelha `FilasDaFuncao` no backend.
- *
- * Existe aqui só para a coordenação ver, no momento em que escolhe a profissão,
- * onde aquela pessoa vai atender — que é a decisão que ela está tomando sem
- * perceber. Quem manda continua sendo o servidor: as filas de verdade chegam no
- * login, em `profissional.filas`.
- */
-const FILAS_POR_FUNCAO: Record<FuncaoProfissional, Especialidade[]> = {
-  Medico: ['ClinicaGeral', 'Pediatria', 'Ortopedia'],
-  ClinicoGeral: ['ClinicaGeral'],
-  Pediatra: ['Pediatria'],
-  Ortopedista: ['Ortopedia'],
-  Ginecologista: ['Ginecologia'],
-  Cirurgiao: ['Cirurgia'],
-  Cardiologista: ['Cardiologia'],
-  // Avaliar antes e acompanhar durante são o trabalho do anestesista, não uma
-  // exceção à regra de uma fila por profissão.
-  Anestesista: ['Anestesia', 'Cirurgia'],
-  Ultrassonografista: ['Ultrassom'],
-  Enfermeiro: ['Triagem', 'Enfermagem'],
-  TecnicoEnfermagem: ['Triagem', 'Enfermagem'],
-  Dentista: ['Odontologia'],
-  Psicologo: ['SaudeMental'],
-  Fisioterapeuta: ['Ortopedia'],
-  // Fila própria. Antes caía na enfermagem por não existir a da farmácia.
-  Farmaceutico: ['Farmacia'],
-  Recepcao: ['Triagem'],
-  // Quem enxerga a operação inteira precisa enxergar inteira mesmo: derivar de
-  // FILAS evita que uma fila nova suma daqui por esquecimento.
-  Coordenacao: FILAS,
-  Outro: FILAS,
 };
 
 /** Mesma normalização do backend, para o campo não aceitar o que a API recusa. */

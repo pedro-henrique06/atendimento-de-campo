@@ -397,12 +397,20 @@ export function blocoFichas() {
             pertencesRoupasAcessorios: true,
             pertencesDestino: 'Armário 3, chave com a irmã.',
             encaminhadoAoCentroEm: horas(5),
+            chegadaAoCentroEm: horas(4),
           });
 
           const comPreparo = (await cli.get(`/atendimentos/${id}`)).cirurgia;
 
           conferirIgual(comPreparo.preparoTricotomiaLocal, 'Inguinal direita.', 'local da tricotomia');
           conferirIgual(comPreparo.preOpAvaliacaoAnestesica, true, 'avaliação anestésica conferida');
+
+          // A distância entre a saída da enfermaria e a chegada na sala é
+          // paciente em jejum num corredor — e é a única forma de ver a espera.
+          conferir(
+            comPreparo.chegadaAoCentroEm > comPreparo.encaminhadoAoCentroEm,
+            'A chegada ao centro tinha que ser depois da saída da enfermaria.',
+          );
 
           /*
             E a hora da primeira parada continua em branco.
@@ -433,6 +441,8 @@ export function blocoFichas() {
                 timeOutUmMonitorizacaoOk: true,
                 timeOutUmViaAereaAvaliada: true,
                 timeOutUmRiscoSangramentoAvaliado: true,
+                timeOutUmExamesEmSala: true,
+                timeOutUmVerificacaoAnestesica: true,
               },
               carimbo: 'timeOutUmEm',
             },
@@ -441,9 +451,12 @@ export function blocoFichas() {
               campos: {
                 timeOutDoisPacienteSitioProcedimentoConfirmados: true,
                 timeOutDoisAntibioticoProfilatico: true,
+                timeOutDoisAntibioticoQual: 'Cefazolina 2 g, 30 min antes.',
                 timeOutDoisImagensDisponiveis: true,
                 timeOutDoisEventosCriticosRevistos: true,
                 timeOutDoisMaterialEsterilizado: true,
+                timeOutDoisInstrumentalIntegrador: true,
+                timeOutDoisTempoPrevistoMinutos: 90,
               },
               carimbo: 'timeOutDoisEm',
             },
@@ -480,11 +493,62 @@ export function blocoFichas() {
             conferir(ficha[parada.carimbo], `A parada "${parada.nome}" não foi carimbada.`);
           }
 
-          // Recuperação, com a devolução dos pertences e a dieta liberada.
+          /*
+            O transoperatório: o que aconteceu entre a indução e o fecho.
+
+            Salvo junto com as paradas, mas sem carimbar nenhuma — descrever a
+            incisão não é concluir uma parada da lista de verificação, e se
+            carimbasse, a hora da parada passaria a ser a hora em que alguém
+            teve a mão livre para escrever.
+          */
+          acumulado = {
+            ...acumulado,
+            anestesia: ['BloqueioRaqui', 'Sedacao'],
+            anestesiaLocal: 'L3-L4.',
+            posicionamento: 'DecubitoDorsal',
+            placaBisturi: true,
+            placaBisturiLocal: 'Coxa direita, face lateral.',
+            preparoDaPele: 'Tricotomia inguinal, pele íntegra.',
+            antissepsia: 'Clorexidina alcoólica 0,5%, dois tempos.',
+            incisaoCirurgica: 'Inguinotomia direita de 6 cm.',
+            curativo: 'Curativo oclusivo seco.',
+            medicacoesRealizadas: 'Cefazolina 2 g IV. Dipirona 2 g IV.',
+            gazesUtilizadas: 20,
+            compressasUtilizadas: 4,
+            evolucaoMedica: 'Procedimento sem intercorrências, sangramento mínimo.',
+            evolucaoEnfermagem: 'Paciente estável durante todo o ato.',
+          };
+
+          await cli.put(`/atendimentos/${id}/cirurgia`, acumulado);
+
+          const transoperatorio = (await cli.get(`/atendimentos/${id}`)).cirurgia;
+
+          conferir(
+            transoperatorio.anestesia.join() === 'BloqueioRaqui,Sedacao',
+            `anestesia voltou como ${transoperatorio.anestesia.join(', ')}`,
+          );
+          conferirIgual(transoperatorio.gazesUtilizadas, 20, 'gazes usadas');
+          conferirIgual(
+            transoperatorio.incisaoCirurgica,
+            'Inguinotomia direita de 6 cm.',
+            'incisão',
+          );
+
+          // Recuperação pós-anestésica: o estado em que o paciente chegou.
           await cli.put(`/atendimentos/${id}/cirurgia`, {
             ...acumulado,
+            destinoPosOperatorio: 'RecuperacaoAnestesica',
             recuperacaoEntradaEm: horas(3),
             recuperacaoSaidaEm: horas(1),
+            recuperacaoNivelConsciencia: 'Sonolento',
+            recuperacaoSuporteOxigenio: 'CateterNasal',
+            recuperacaoOxigenioDetalhe: '3 l/min',
+            recuperacaoAcessoVenosoPeriferico: true,
+            recuperacaoAcessoVenosoDescricao: 'Jelco 20, antebraço esquerdo.',
+            recuperacaoInfusoes: 'Ringer lactato 500 mL em 4 h.',
+            recuperacaoSondaVesical: true,
+            recuperacaoEvolucaoMedica: 'Estável, dor controlada.',
+            recuperacaoEvolucaoEnfermagem: 'SSVV de 2/2 h conforme prescrição.',
             intercorrencias: 'Sem intercorrências.',
             observacoesRecuperacao: 'Acordado, orientado, dor 2/10.',
             pertencesDevolvidos: true,
@@ -495,6 +559,9 @@ export function blocoFichas() {
           const ficha = (await cli.get(`/atendimentos/${id}`)).cirurgia;
 
           conferirIgual(ficha.pertencesDevolvidos, true, 'pertences devolvidos');
+          conferirIgual(ficha.recuperacaoNivelConsciencia, 'Sonolento', 'nível de consciência');
+          conferirIgual(ficha.recuperacaoOxigenioDetalhe, '3 l/min', 'fluxo de oxigênio');
+          conferirIgual(ficha.recuperacaoSondaVesical, true, 'sonda vesical');
           conferirIgual(
             ficha.recuperacaoDieta,
             'Líquida leve, liberada duas horas após o despertar.',

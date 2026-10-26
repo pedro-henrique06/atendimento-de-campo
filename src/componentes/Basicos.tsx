@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { Autor, ClassificacaoRisco, Idioma } from '../api/tipos';
 import { useI18n, traduzir } from '../i18n';
@@ -144,6 +145,41 @@ export function Campo({
       {children}
       {dica ? <span className="mt-1 block text-sm text-texto-suave">{dica}</span> : null}
     </label>
+  );
+}
+
+/**
+ * Um rótulo para um grupo de botões — `Opcoes`, `Multiplas` — em vez de para um
+ * campo.
+ *
+ * Existe porque `Campo` é um `<label>`, e `<button>` é elemento rotulável: um
+ * grupo de opções dentro de um `Campo` faz o rótulo ser associado ao PRIMEIRO
+ * botão da lista. "Ar ambiente" passa a se chamar "Oxigenação Ar ambiente" para
+ * quem usa leitor de tela, e tocar no texto do rótulo marca essa opção — as
+ * outras três ficam sem rótulo nenhum. O erro é silencioso: na tela tudo
+ * parece certo.
+ *
+ * Aqui o rótulo aponta para o grupo, e não para um dos botões.
+ */
+export function Grupo({
+  rotulo,
+  dica,
+  children,
+}: {
+  rotulo: string;
+  dica?: string;
+  children: ReactNode;
+}) {
+  const id = useId();
+
+  return (
+    <div role="group" aria-labelledby={id}>
+      <span className="rotulo" id={id}>
+        {rotulo}
+      </span>
+      {children}
+      {dica ? <span className="mt-1 block text-sm text-texto-suave">{dica}</span> : null}
+    </div>
   );
 }
 
@@ -380,16 +416,28 @@ export function Multiplas<T extends string>({
  */
 export function Interruptor({
   rotulo,
+  dica,
   valor,
   aoMudar,
 }: {
   rotulo: string;
+  /**
+   * O que o rótulo não cabe dizer.
+   *
+   * Existe para as conferências cujo nome é uma sigla: "verificação anestésica
+   * de segurança" só quer dizer alguma coisa com a lista do que se confere —
+   * ambu, laringoscópio, aspirador, seringas identificadas — ao lado.
+   */
+  dica?: string;
   valor: boolean;
   aoMudar: (valor: boolean) => void;
 }) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl bg-superficie-2 px-4 py-3">
-      <span className="text-sm font-medium">{rotulo}</span>
+      <span className="text-sm font-medium">
+        {rotulo}
+        {dica ? <span className="mt-0.5 block font-normal text-texto-suave">{dica}</span> : null}
+      </span>
 
       <input
         type="checkbox"

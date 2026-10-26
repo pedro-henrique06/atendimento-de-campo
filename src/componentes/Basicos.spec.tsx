@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ProvedorI18n } from '../i18n';
-import { AlertaAlergia, Medida, PontoRisco } from './Basicos';
+import { AlertaAlergia, Grupo, Medida, PontoRisco } from './Basicos';
 
 function comI18n(no: React.ReactNode) {
   return render(<ProvedorI18n>{no}</ProvedorI18n>);
@@ -100,5 +100,23 @@ describe('Medida', () => {
     // "Sem dor" é resposta. Tratar zero como vazio apagaria a única medida da
     // escala que significa que a pergunta foi feita e respondida.
     expect(screen.getByText('0')).toBeInTheDocument();
+  });
+  it('um grupo de opções rotula o grupo, e não o primeiro botão', () => {
+    /*
+      `Campo` é um `<label>`, e `<button>` é elemento rotulável: um grupo de
+      opções dentro dele faz o rótulo ser associado ao PRIMEIRO botão da lista.
+      "Ar ambiente" vira "Oxigenação Ar ambiente" para quem usa leitor de tela,
+      tocar no rótulo marca essa opção, e as outras ficam sem rótulo nenhum —
+      tudo isso sem nada parecer errado na tela.
+    */
+    render(
+      <Grupo rotulo="Oxigenação">
+        <button type="button">Ar ambiente</button>
+        <button type="button">Cateter</button>
+      </Grupo>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Ar ambiente' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Oxigenação' })).toBeInTheDocument();
   });
 });

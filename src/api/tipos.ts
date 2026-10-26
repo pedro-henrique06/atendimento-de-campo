@@ -678,6 +678,66 @@ export interface Enfermagem {
  */
 export type Lateralidade = 'NaoSeAplica' | 'Direito' | 'Esquerdo' | 'Bilateral';
 
+/** Técnica anestésica. Lista, porque se combinam: raqui com sedação é rotina. */
+export type TipoAnestesia =
+  | 'Local'
+  | 'BloqueioRaqui'
+  | 'BloqueioBulbar'
+  | 'Inalatoria'
+  | 'Sedacao'
+  | 'Geral';
+
+export const TIPOS_ANESTESIA: TipoAnestesia[] = [
+  'Local',
+  'BloqueioRaqui',
+  'BloqueioBulbar',
+  'Inalatoria',
+  'Sedacao',
+  'Geral',
+];
+
+export type PosicionamentoCirurgico =
+  | 'DecubitoDorsal'
+  | 'DecubitoVentral'
+  | 'DecubitoLateralEsquerdo'
+  | 'DecubitoLateralDireito';
+
+export const POSICIONAMENTOS: PosicionamentoCirurgico[] = [
+  'DecubitoDorsal',
+  'DecubitoVentral',
+  'DecubitoLateralEsquerdo',
+  'DecubitoLateralDireito',
+];
+
+export type DestinoPosOperatorio = 'RecuperacaoAnestesica' | 'PosOperatorio';
+
+export const DESTINOS_POS_OPERATORIO: DestinoPosOperatorio[] = [
+  'RecuperacaoAnestesica',
+  'PosOperatorio',
+];
+
+export type NivelConsciencia = 'Acordado' | 'Sonolento' | 'Adormecido' | 'Sedado';
+
+export const NIVEIS_CONSCIENCIA: NivelConsciencia[] = [
+  'Acordado',
+  'Sonolento',
+  'Adormecido',
+  'Sedado',
+];
+
+export type SuporteOxigenio =
+  | 'ArAmbiente'
+  | 'CateterNasal'
+  | 'MascaraVenturi'
+  | 'MascaraNaoReinalante';
+
+export const SUPORTES_OXIGENIO: SuporteOxigenio[] = [
+  'ArAmbiente',
+  'CateterNasal',
+  'MascaraVenturi',
+  'MascaraNaoReinalante',
+];
+
 /**
  * A ficha cirúrgica: pré-operatório, as quatro paradas da lista de verificação
  * e a recuperação.
@@ -721,6 +781,8 @@ export interface Cirurgia {
   pertencesDestino: string | null;
   /** A hora em que a maca saiu — digitada, não a hora do registro. */
   encaminhadoAoCentroEm: string | null;
+  /** A hora em que o paciente chegou na sala. A distância entre as duas é espera. */
+  chegadaAoCentroEm: string | null;
 
   checkInIdentidadeConfirmada: boolean;
   checkInSitioMarcado: boolean;
@@ -734,26 +796,78 @@ export interface Cirurgia {
   timeOutUmMonitorizacaoOk: boolean;
   timeOutUmViaAereaAvaliada: boolean;
   timeOutUmRiscoSangramentoAvaliado: boolean;
+  timeOutUmExamesEmSala: boolean;
+  timeOutUmVerificacaoAnestesica: boolean;
+  /** Achado, e não conferência: a resposta de "a via aérea foi avaliada". */
+  timeOutUmViaAereaDificil: boolean;
   timeOutUmEm: string | null;
 
   timeOutDoisPacienteSitioProcedimentoConfirmados: boolean;
   timeOutDoisAntibioticoProfilatico: boolean;
+  timeOutDoisAntibioticoQual: string | null;
   timeOutDoisImagensDisponiveis: boolean;
   timeOutDoisEventosCriticosRevistos: boolean;
   timeOutDoisMaterialEsterilizado: boolean;
+  timeOutDoisPrevisaoBiopsia: boolean;
+  timeOutDoisTempoPrevistoMinutos: number | null;
+  timeOutDoisInstrumentalIntegrador: boolean;
   timeOutDoisEm: string | null;
+
+  /*
+    O transoperatório: o que aconteceu na sala, entre a indução e o fecho.
+
+    Até aqui a ficha ia do time out direto para o check out — a lista de
+    verificação era registrada inteira e o procedimento em si não tinha onde
+    ser descrito.
+  */
+  anestesia: TipoAnestesia[];
+  anestesiaLocal: string | null;
+  posicionamento: PosicionamentoCirurgico | null;
+  placaBisturi: boolean;
+  placaBisturiLocal: string | null;
+  preparoDaPele: string | null;
+  antissepsia: string | null;
+  incisaoCirurgica: string | null;
+  curativo: string | null;
+  medicacoesRealizadas: string | null;
+  /** O lado esquerdo da contagem do check out. */
+  gazesUtilizadas: number | null;
+  compressasUtilizadas: number | null;
+  evolucaoMedica: string | null;
+  evolucaoEnfermagem: string | null;
 
   checkOutProcedimentoRegistrado: boolean;
   checkOutContagemConfere: boolean;
   checkOutAmostrasIdentificadas: boolean;
+  checkOutBiopsiaQuantidade: number | null;
   checkOutProblemasComEquipamento: boolean;
   checkOutCuidadosRecuperacao: string | null;
   checkOutEm: string | null;
 
+  /** Para onde o paciente foi ao sair da sala. */
+  destinoPosOperatorio: DestinoPosOperatorio | null;
   recuperacaoEntradaEm: string | null;
   recuperacaoSaidaEm: string | null;
   intercorrencias: string | null;
   observacoesRecuperacao: string | null;
+  recuperacaoNivelConsciencia: NivelConsciencia | null;
+  recuperacaoSuporteOxigenio: SuporteOxigenio | null;
+  /** Litros por minuto no cateter, por cento na Venturi. Vazio em ar ambiente. */
+  recuperacaoOxigenioDetalhe: string | null;
+  recuperacaoAcessoVenosoPeriferico: boolean;
+  recuperacaoAcessoVenosoDescricao: string | null;
+  recuperacaoCateterVenosoCentral: boolean;
+  recuperacaoCateterVenosoCentralLocal: string | null;
+  recuperacaoInfusoes: string | null;
+  recuperacaoIntervencaoIntensiva: boolean;
+  recuperacaoDrogasVasoativas: string | null;
+  recuperacaoDreno: boolean;
+  recuperacaoDrenoDescricao: string | null;
+  recuperacaoSondaVesical: boolean;
+  recuperacaoSondaNasogastrica: boolean;
+  recuperacaoOutroDispositivo: string | null;
+  recuperacaoEvolucaoMedica: string | null;
+  recuperacaoEvolucaoEnfermagem: string | null;
   /** Fecha o laço do que foi retirado antes da sala. */
   pertencesDevolvidos: boolean;
   recuperacaoDieta: string | null;

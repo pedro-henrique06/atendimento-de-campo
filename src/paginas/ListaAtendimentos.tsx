@@ -7,7 +7,9 @@ import type {
   ClassificacaoRisco,
   Especialidade,
   EtapaResumo,
+  FuncaoProfissional,
 } from '../api/tipos';
+import { FILAS_POR_FUNCAO, FUNCOES_PARA_LENTE } from '../api/filas';
 import { BarraDaPagina } from '../componentes/BarraDaPagina';
 import { Carregando, Erros, EtiquetaRisco, PontoRisco, Vazio } from '../componentes/Basicos';
 import { Cronometro, Espera } from '../componentes/Cronometro';
@@ -17,6 +19,7 @@ import { useI18n, traduzir } from '../i18n';
 import {
   classificacoesCurtas,
   especialidades,
+  funcoes,
   statusAtendimento,
   statusEtapa,
 } from '../i18n/enums';
@@ -68,7 +71,26 @@ export function ListaAtendimentos() {
 
     Não é permissão — "Todas" continua ali, e em campo as funções se cobrem.
   */
-  const filasDaFuncao = profissional?.filas ?? [];
+  /*
+    A lente: por qual profissão a coordenação quer olhar a operação.
+
+    Não é permissão, e não abre nada — todas as treze filas já estão na barra
+    para todo mundo, e assumir fora da própria fila já era permitido, porque em
+    campo as funções se cobrem. O que a lente muda é a ordem: quem coordena e
+    precisa saber como está a pediatria hoje tinha que caçar a aba no meio de
+    treze, toda vez, e a tela abria sempre na fila da própria função.
+
+    Só para administradores, pelo mesmo eixo que decide o resto: a função diz em
+    que fila a pessoa cai, a permissão de administrador diz o que ela governa.
+
+    Não sobrevive a um recarregamento, de propósito. Uma lente guardada faria a
+    tela abrir na fila de outra profissão sem ninguém ter pedido — e o caso de
+    uso é olhar, não morar ali.
+  */
+  const podeUsarLente = profissional?.ehAdministrador ?? false;
+  const [lente, setLente] = useState<FuncaoProfissional | null>(null);
+
+  const filasDaFuncao = (lente ? FILAS_POR_FUNCAO[lente] : profissional?.filas) ?? [];
   const outrasFilas = FILAS.filter((f) => !filasDaFuncao.includes(f));
 
   const [atendimentos, setAtendimentos] = useState<AtendimentoResumo[] | null>(null);
@@ -242,6 +264,37 @@ export function ListaAtendimentos() {
           onChange={(e) => setBusca(e.target.value)}
         />
       </div>
+
+      {/*
+        A lente, acima da barra: quem está olhando por outra profissão precisa
+        ver isso antes de ler a fila, e não depois de estranhar o que apareceu.
+      */}
+      {podeUsarLente ? (
+        <label className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-texto-suave">{t('verComo')}</span>
+          <select
+            className="campo w-auto grow py-2"
+            value={lente ?? ''}
+            onChange={(e) => {
+              const escolhida = (e.target.value || null) as FuncaoProfissional | null;
+              const filas = escolhida ? FILAS_POR_FUNCAO[escolhida] : (profissional?.filas ?? []);
+
+              // Trocar a lente leva junto para a fila que aquela profissão abre:
+              // deixar a aba onde estava mostraria a barra de uma profissão com
+              // a fila de outra selecionada.
+              setLente(escolhida);
+              setAba(filas[0] ?? 'Todas');
+            }}
+          >
+            <option value="">{t('minhasFilas')}</option>
+            {FUNCOES_PARA_LENTE.map((funcao) => (
+              <option key={funcao} value={funcao}>
+                {traduzir(funcoes, idioma, funcao)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       <div className="-mx-4 overflow-x-auto px-4">
         <div className="flex gap-2 pb-1">

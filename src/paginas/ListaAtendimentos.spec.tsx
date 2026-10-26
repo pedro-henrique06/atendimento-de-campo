@@ -25,6 +25,33 @@ const DENTISTA: Profissional = {
   precisaTrocarSenha: false,
 };
 
+/** Coordenação com a permissão: é quem tem a lente. */
+const COORDENACAO: Profissional = {
+  ...DENTISTA,
+  id: 'p2',
+  usuario: 'paulo.coord',
+  nome: 'Paulo Serra',
+  funcao: 'Coordenacao',
+  conselhoTipo: 'Nenhum',
+  registro: null,
+  ehAdministrador: true,
+  filas: [
+    'Triagem',
+    'ClinicaGeral',
+    'Pediatria',
+    'Ortopedia',
+    'Odontologia',
+    'Enfermagem',
+    'SaudeMental',
+    'Ginecologia',
+    'Cirurgia',
+    'Anestesia',
+    'Cardiologia',
+    'Ultrassom',
+    'Farmacia',
+  ],
+};
+
 function atendimento(sobre: Partial<AtendimentoResumo> = {}): AtendimentoResumo {
   return {
     id: 'a1',
@@ -591,6 +618,81 @@ describe('Fila sem função definida', () => {
         'aria-pressed',
         'true',
       ),
+    );
+  });
+  it('quem não é administrador não tem a lente', async () => {
+    vi.spyOn(api, 'atendimentos').mockResolvedValue([]);
+
+    renderizar();
+
+    await screen.findByRole('button', { name: 'Todas as filas' });
+
+    // A lente não abre nada — todas as filas já estão na barra para todo mundo.
+    // O que ela governa é a ordem, e ordem da operação é da coordenação.
+    expect(screen.queryByLabelText(/Ver como/)).not.toBeInTheDocument();
+  });
+
+  it('a lente leva a coordenação para a fila da profissão escolhida', async () => {
+    const usuario = userEvent.setup();
+    const buscar = vi.spyOn(api, 'atendimentos').mockResolvedValue([]);
+
+    renderizar(COORDENACAO);
+
+    const lente = await screen.findByLabelText(/Ver como/);
+
+    buscar.mockClear();
+    await usuario.selectOptions(lente, 'Pediatra');
+
+    // Quem coordena e quer saber como está a pediatria tinha que caçar a aba no
+    // meio de treze, toda vez. A lente abre direto nela.
+    await waitFor(() =>
+      expect(buscar).toHaveBeenCalledWith(expect.objectContaining({ fila: 'Pediatria' })),
+    );
+  });
+
+  it('a lente do anestesista traz as duas filas dele, na ordem dele', async () => {
+    const usuario = userEvent.setup();
+    const buscar = vi.spyOn(api, 'atendimentos').mockResolvedValue([]);
+
+    renderizar(COORDENACAO);
+
+    await usuario.selectOptions(await screen.findByLabelText(/Ver como/), 'Anestesista');
+
+    // Avaliar antes e acompanhar durante são o trabalho dele: a lente tem que
+    // mostrar as duas, e abrir na primeira.
+    await waitFor(() =>
+      expect(buscar).toHaveBeenCalledWith(expect.objectContaining({ fila: 'Anestesia' })),
+    );
+
+    const abas = screen.getAllByRole('button').map((b) => b.textContent);
+    const anestesia = abas.indexOf('Anestesia');
+    const cirurgia = abas.indexOf('Cirurgia');
+    const todas = abas.indexOf('Todas as filas');
+
+    expect(anestesia).toBeGreaterThan(-1);
+    expect(cirurgia).toBeGreaterThan(anestesia);
+    expect(todas).toBeGreaterThan(cirurgia);
+  });
+
+  it('voltar para "minhas filas" devolve a barra de quem está logado', async () => {
+    const usuario = userEvent.setup();
+    const buscar = vi.spyOn(api, 'atendimentos').mockResolvedValue([]);
+
+    renderizar(COORDENACAO);
+
+    const lente = await screen.findByLabelText(/Ver como/);
+    await usuario.selectOptions(lente, 'Dentista');
+
+    await waitFor(() =>
+      expect(buscar).toHaveBeenCalledWith(expect.objectContaining({ fila: 'Odontologia' })),
+    );
+
+    buscar.mockClear();
+    await usuario.selectOptions(lente, '');
+
+    // A coordenação vê as treze, e a primeira delas é a triagem.
+    await waitFor(() =>
+      expect(buscar).toHaveBeenCalledWith(expect.objectContaining({ fila: 'Triagem' })),
     );
   });
 });
