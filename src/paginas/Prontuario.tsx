@@ -37,6 +37,11 @@ import {
   statusAtendimento,
   tiposDocumento,
   tiposMissao,
+  tiposAnestesia,
+  posicionamentos,
+  destinosPosOperatorio,
+  niveisConsciencia,
+  suportesOxigenio,
 } from '../i18n/enums';
 
 function Linha({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
@@ -701,6 +706,16 @@ export function Prontuario() {
                     )
               }
             />
+            <Linha
+              rotulo={t('chegadaAoCentro')}
+              valor={
+                prontuario.cirurgia.chegadaAoCentroEm === null
+                  ? null
+                  : new Date(prontuario.cirurgia.chegadaAoCentroEm).toLocaleTimeString(undefined, {
+                      timeStyle: 'short',
+                    })
+              }
+            />
           </dl>
 
           {/*
@@ -732,6 +747,85 @@ export function Prontuario() {
           </div>
 
           <dl className="divide-y divide-borda">
+            {/*
+              O transoperatório. Cada linha só aparece quando houve o que
+              dizer — num prontuário, campo em branco e pergunta não feita são
+              coisas diferentes, e uma coluna de "Não" treina a equipe a parar
+              de ler.
+            */}
+            <Linha
+              rotulo={t('anestesia')}
+              valor={
+                prontuario.cirurgia.anestesia
+                  .map((a) => traduzir(tiposAnestesia, idioma, a))
+                  .join(', ') || null
+              }
+            />
+            <Linha rotulo={t('anestesiaLocal')} valor={prontuario.cirurgia.anestesiaLocal} />
+            <Linha
+              rotulo={t('posicionamento')}
+              valor={
+                prontuario.cirurgia.posicionamento
+                  ? traduzir(posicionamentos, idioma, prontuario.cirurgia.posicionamento)
+                  : null
+              }
+            />
+            <Linha
+              rotulo={t('placaBisturi')}
+              valor={
+                prontuario.cirurgia.placaBisturi
+                  ? (prontuario.cirurgia.placaBisturiLocal ?? t('sim'))
+                  : null
+              }
+            />
+            <Linha
+              rotulo={t('timeOutUmViaAereaDificil')}
+              valor={prontuario.cirurgia.timeOutUmViaAereaDificil ? t('sim') : null}
+            />
+            <Linha
+              rotulo={t('antibioticoQual')}
+              valor={prontuario.cirurgia.timeOutDoisAntibioticoQual}
+            />
+            <Linha rotulo={t('preparoDaPele')} valor={prontuario.cirurgia.preparoDaPele} />
+            <Linha rotulo={t('antissepsia')} valor={prontuario.cirurgia.antissepsia} />
+            <Linha
+              rotulo={t('incisaoCirurgica')}
+              valor={prontuario.cirurgia.incisaoCirurgica}
+            />
+            <Linha rotulo={t('curativo')} valor={prontuario.cirurgia.curativo} />
+            <Linha
+              rotulo={t('medicacoesRealizadas')}
+              valor={prontuario.cirurgia.medicacoesRealizadas}
+            />
+
+            {/*
+              Gazes e compressas numa linha só, com as peças de biópsia ao
+              lado: é a contagem, e a contagem se lê junto.
+            */}
+            <Linha
+              rotulo={t('contagemDeMaterial')}
+              valor={
+                [
+                  prontuario.cirurgia.gazesUtilizadas === null
+                    ? null
+                    : `${prontuario.cirurgia.gazesUtilizadas} ${t('gazesUtilizadas').toLowerCase()}`,
+                  prontuario.cirurgia.compressasUtilizadas === null
+                    ? null
+                    : `${prontuario.cirurgia.compressasUtilizadas} ${t('compressasUtilizadas').toLowerCase()}`,
+                  prontuario.cirurgia.checkOutBiopsiaQuantidade === null
+                    ? null
+                    : `${prontuario.cirurgia.checkOutBiopsiaQuantidade} ${t('biopsiaPecas')}`,
+                ]
+                  .filter((x): x is string => x !== null)
+                  .join(' · ') || null
+              }
+            />
+            <Linha rotulo={t('evolucaoMedica')} valor={prontuario.cirurgia.evolucaoMedica} />
+            <Linha
+              rotulo={t('evolucaoEnfermagem')}
+              valor={prontuario.cirurgia.evolucaoEnfermagem}
+            />
+
             <Linha
               rotulo={t('checkOutProblemaEquipamento')}
               valor={prontuario.cirurgia.checkOutProblemasComEquipamento ? t('sim') : null}
@@ -757,8 +851,101 @@ export function Prontuario() {
                     }`
               }
             />
+            <Linha
+              rotulo={t('destinoPosOperatorio')}
+              valor={
+                prontuario.cirurgia.destinoPosOperatorio
+                  ? traduzir(destinosPosOperatorio, idioma, prontuario.cirurgia.destinoPosOperatorio)
+                  : null
+              }
+            />
+            <Linha
+              rotulo={t('nivelConsciencia')}
+              valor={
+                prontuario.cirurgia.recuperacaoNivelConsciencia
+                  ? traduzir(
+                      niveisConsciencia,
+                      idioma,
+                      prontuario.cirurgia.recuperacaoNivelConsciencia,
+                    )
+                  : null
+              }
+            />
+            <Linha
+              rotulo={t('suporteOxigenio')}
+              valor={
+                prontuario.cirurgia.recuperacaoSuporteOxigenio
+                  ? [
+                      traduzir(
+                        suportesOxigenio,
+                        idioma,
+                        prontuario.cirurgia.recuperacaoSuporteOxigenio,
+                      ),
+                      prontuario.cirurgia.recuperacaoOxigenioDetalhe,
+                    ]
+                      .filter((x): x is string => !!x)
+                      .join(' · ')
+                  : null
+              }
+            />
+
+            {/*
+              Os dispositivos numa linha só, cada um com o seu detalhe: o que
+              se pergunta depois é "o paciente saiu com o quê?", e cinco linhas
+              de sim e não respondem pior do que uma.
+            */}
+            <Linha
+              rotulo={t('dispositivos')}
+              valor={
+                [
+                  prontuario.cirurgia.recuperacaoAcessoVenosoPeriferico
+                    ? `${t('acessoVenosoPeriferico')}${
+                        prontuario.cirurgia.recuperacaoAcessoVenosoDescricao
+                          ? ` (${prontuario.cirurgia.recuperacaoAcessoVenosoDescricao})`
+                          : ''
+                      }`
+                    : null,
+                  prontuario.cirurgia.recuperacaoCateterVenosoCentral
+                    ? `${t('cateterVenosoCentral')}${
+                        prontuario.cirurgia.recuperacaoCateterVenosoCentralLocal
+                          ? ` (${prontuario.cirurgia.recuperacaoCateterVenosoCentralLocal})`
+                          : ''
+                      }`
+                    : null,
+                  prontuario.cirurgia.recuperacaoDreno
+                    ? `${t('dreno')}${
+                        prontuario.cirurgia.recuperacaoDrenoDescricao
+                          ? ` (${prontuario.cirurgia.recuperacaoDrenoDescricao})`
+                          : ''
+                      }`
+                    : null,
+                  prontuario.cirurgia.recuperacaoSondaVesical ? t('sondaVesical') : null,
+                  prontuario.cirurgia.recuperacaoSondaNasogastrica ? t('sondaNasogastrica') : null,
+                  prontuario.cirurgia.recuperacaoOutroDispositivo,
+                ]
+                  .filter((x): x is string => !!x)
+                  .join(' · ') || null
+              }
+            />
+            <Linha rotulo={t('infusoes')} valor={prontuario.cirurgia.recuperacaoInfusoes} />
+            <Linha
+              rotulo={t('intervencaoIntensiva')}
+              valor={prontuario.cirurgia.recuperacaoIntervencaoIntensiva ? t('sim') : null}
+            />
+            <Linha
+              rotulo={t('drogasVasoativas')}
+              valor={prontuario.cirurgia.recuperacaoDrogasVasoativas}
+            />
             <Linha rotulo={t('intercorrencias')} valor={prontuario.cirurgia.intercorrencias} />
             <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesRecuperacao} />
+            <Linha
+              rotulo={t('evolucaoMedicaRecuperacao')}
+              valor={prontuario.cirurgia.recuperacaoEvolucaoMedica}
+            />
+            <Linha
+              rotulo={t('evolucaoEnfermagemRecuperacao')}
+              valor={prontuario.cirurgia.recuperacaoEvolucaoEnfermagem}
+            />
             <Linha rotulo={t('dietaAposJejum')} valor={prontuario.cirurgia.recuperacaoDieta} />
 
             {/*

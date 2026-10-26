@@ -30,6 +30,11 @@ import type {
   UnidadeDispensacao,
   ViaAdministracao,
   Vulnerabilidade,
+  TipoAnestesia,
+  PosicionamentoCirurgico,
+  DestinoPosOperatorio,
+  NivelConsciencia,
+  SuporteOxigenio,
 } from '../api/tipos';
 
 type Traducao<T extends string> = Record<Idioma, Record<T, string>>;
@@ -318,6 +323,118 @@ export const lateralidades: Traducao<Lateralidade> = {
     Direito: 'Right',
     Esquerdo: 'Left',
     Bilateral: 'Bilateral',
+  },
+};
+
+/*
+  Técnica anestésica.
+
+  "Bloqueio" no papel vem com quatro caixas ao lado — raqui, bulbar, inalatória,
+  sedação —, que na prática são as técnicas em si. Aqui elas são valores da
+  lista, e não um detalhe de "bloqueio": inalatória não é bloqueio nenhum.
+*/
+export const tiposAnestesia: Traducao<TipoAnestesia> = {
+  Pt: {
+    Local: 'Local',
+    BloqueioRaqui: 'Raquianestesia',
+    BloqueioBulbar: 'Bloqueio bulbar',
+    Inalatoria: 'Inalatória',
+    Sedacao: 'Sedação',
+    Geral: 'Geral',
+  },
+  Es: {
+    Local: 'Local',
+    BloqueioRaqui: 'Raquídea',
+    BloqueioBulbar: 'Bloqueo bulbar',
+    Inalatoria: 'Inhalatoria',
+    Sedacao: 'Sedación',
+    Geral: 'General',
+  },
+  En: {
+    Local: 'Local',
+    BloqueioRaqui: 'Spinal',
+    BloqueioBulbar: 'Bulbar block',
+    Inalatoria: 'Inhalational',
+    Sedacao: 'Sedation',
+    Geral: 'General',
+  },
+};
+
+export const posicionamentos: Traducao<PosicionamentoCirurgico> = {
+  Pt: {
+    DecubitoDorsal: 'Decúbito dorsal',
+    DecubitoVentral: 'Decúbito ventral',
+    DecubitoLateralEsquerdo: 'Decúbito lateral esquerdo',
+    DecubitoLateralDireito: 'Decúbito lateral direito',
+  },
+  Es: {
+    DecubitoDorsal: 'Decúbito dorsal',
+    DecubitoVentral: 'Decúbito ventral',
+    DecubitoLateralEsquerdo: 'Decúbito lateral izquierdo',
+    DecubitoLateralDireito: 'Decúbito lateral derecho',
+  },
+  En: {
+    DecubitoDorsal: 'Supine',
+    DecubitoVentral: 'Prone',
+    DecubitoLateralEsquerdo: 'Left lateral',
+    DecubitoLateralDireito: 'Right lateral',
+  },
+};
+
+export const destinosPosOperatorio: Traducao<DestinoPosOperatorio> = {
+  Pt: {
+    RecuperacaoAnestesica: 'Recuperação anestésica',
+    PosOperatorio: 'Pós-operatório',
+  },
+  Es: {
+    RecuperacaoAnestesica: 'Recuperación anestésica',
+    PosOperatorio: 'Postoperatorio',
+  },
+  En: {
+    RecuperacaoAnestesica: 'Post-anaesthesia care',
+    PosOperatorio: 'Post-operative ward',
+  },
+};
+
+export const niveisConsciencia: Traducao<NivelConsciencia> = {
+  Pt: {
+    Acordado: 'Acordado',
+    Sonolento: 'Sonolento',
+    Adormecido: 'Adormecido',
+    Sedado: 'Sedado',
+  },
+  Es: {
+    Acordado: 'Despierto',
+    Sonolento: 'Somnoliento',
+    Adormecido: 'Dormido',
+    Sedado: 'Sedado',
+  },
+  En: {
+    Acordado: 'Awake',
+    Sonolento: 'Drowsy',
+    Adormecido: 'Asleep',
+    Sedado: 'Sedated',
+  },
+};
+
+export const suportesOxigenio: Traducao<SuporteOxigenio> = {
+  Pt: {
+    ArAmbiente: 'Ar ambiente',
+    CateterNasal: 'Cateter de O₂',
+    MascaraVenturi: 'Máscara de Venturi',
+    MascaraNaoReinalante: 'Máscara não reinalante',
+  },
+  Es: {
+    ArAmbiente: 'Aire ambiente',
+    CateterNasal: 'Cánula de O₂',
+    MascaraVenturi: 'Mascarilla Venturi',
+    MascaraNaoReinalante: 'Mascarilla no reinhalante',
+  },
+  En: {
+    ArAmbiente: 'Room air',
+    CateterNasal: 'Nasal cannula',
+    MascaraVenturi: 'Venturi mask',
+    MascaraNaoReinalante: 'Non-rebreather mask',
   },
 };
 
@@ -934,6 +1051,11 @@ export const tabelasDeEnum = {
   desfechosAtendimento,
   tiposMissao,
   lateralidades,
+  tiposAnestesia,
+  posicionamentos,
+  destinosPosOperatorio,
+  niveisConsciencia,
+  suportesOxigenio,
   racasCor,
   resultadosTesteRapido,
   sexos,
