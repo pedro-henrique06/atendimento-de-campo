@@ -622,6 +622,85 @@ export function Prontuario() {
               valor={prontuario.cirurgia.consentimentoAssinado ? t('sim') : t('nao')}
             />
             <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesPreOperatorio} />
+
+            {/*
+              O preparo da enfermagem. Cada linha só aparece quando houve o
+              que dizer: num prontuário, caixa desmarcada e pergunta não feita
+              são coisas diferentes, e uma lista de "Não" em toda ficha treina
+              a equipe a parar de ler.
+            */}
+            <Linha
+              rotulo={t('preparoTricotomia')}
+              valor={
+                prontuario.cirurgia.preparoTricotomia
+                  ? (prontuario.cirurgia.preparoTricotomiaLocal ?? t('sim'))
+                  : null
+              }
+            />
+            <Linha
+              rotulo={t('preparoBanhoClorexidine')}
+              valor={prontuario.cirurgia.preparoBanhoClorexidine ? t('sim') : null}
+            />
+            <Linha
+              rotulo={t('preparoPulseira')}
+              valor={prontuario.cirurgia.preparoPulseiraIdentificacao ? t('sim') : null}
+            />
+            <Linha
+              rotulo={t('preparoCuidados')}
+              valor={prontuario.cirurgia.preparoCuidadosEnfermagem}
+            />
+
+            {/*
+              Os exames e a avaliação numa linha só: é a pergunta "o que já
+              está pronto?", e quatro linhas de sim e não respondem pior que
+              uma lista do que foi conferido.
+            */}
+            <Linha
+              rotulo={t('conferenciasPreOperatorias')}
+              valor={
+                [
+                  prontuario.cirurgia.preOpEcg ? t('preOpEcg') : null,
+                  prontuario.cirurgia.preOpLaboratorial ? t('preOpLaboratorial') : null,
+                  prontuario.cirurgia.preOpUltrassom ? t('preOpUltrassom') : null,
+                  prontuario.cirurgia.preOpAvaliacaoAnestesica
+                    ? t('preOpAvaliacaoAnestesica')
+                    : null,
+                ]
+                  .filter((x): x is string => x !== null)
+                  .join(', ') || null
+              }
+            />
+            <Linha
+              rotulo={t('preOpExamesObservacao')}
+              valor={prontuario.cirurgia.preOpExamesObservacao}
+            />
+
+            <Linha
+              rotulo={t('pertencesDoPaciente')}
+              valor={
+                [
+                  prontuario.cirurgia.pertencesProteseDentaria ? t('pertencesProtese') : null,
+                  prontuario.cirurgia.pertencesRoupasAcessorios ? t('pertencesRoupas') : null,
+                ]
+                  .filter((x): x is string => x !== null)
+                  .join(', ') || null
+              }
+            />
+            <Linha
+              rotulo={t('pertencesDestino')}
+              valor={prontuario.cirurgia.pertencesDestino}
+            />
+            <Linha
+              rotulo={t('encaminhadoAoCentro')}
+              valor={
+                prontuario.cirurgia.encaminhadoAoCentroEm === null
+                  ? null
+                  : new Date(prontuario.cirurgia.encaminhadoAoCentroEm).toLocaleTimeString(
+                      undefined,
+                      { timeStyle: 'short' },
+                    )
+              }
+            />
           </dl>
 
           {/*
@@ -680,6 +759,23 @@ export function Prontuario() {
             />
             <Linha rotulo={t('intercorrencias')} valor={prontuario.cirurgia.intercorrencias} />
             <Linha rotulo={t('observacoes')} valor={prontuario.cirurgia.observacoesRecuperacao} />
+            <Linha rotulo={t('dietaAposJejum')} valor={prontuario.cirurgia.recuperacaoDieta} />
+
+            {/*
+              Só quando houve retirada: "pertences devolvidos: não" numa ficha
+              em que nada foi tirado do paciente não quer dizer nada.
+            */}
+            <Linha
+              rotulo={t('pertencesDevolvidos')}
+              valor={
+                prontuario.cirurgia.pertencesProteseDentaria ||
+                prontuario.cirurgia.pertencesRoupasAcessorios
+                  ? prontuario.cirurgia.pertencesDevolvidos
+                    ? t('sim')
+                    : t('nao')
+                  : null
+              }
+            />
             <Linha
               rotulo={t('desfecho')}
               valor={

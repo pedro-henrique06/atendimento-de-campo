@@ -624,6 +624,16 @@ export interface Consulta {
   encaminhadoPara: Especialidade | null;
   ortopedia: Ortopedia | null;
   ginecologia: Ginecologia | null;
+  /**
+   * Os dois blocos da ficha de saúde mental. Vazios nas outras especialidades.
+   *
+   * A API os aceitava e os gravava sem devolvê-los, então a ficha de saúde
+   * mental era lida como consulta genérica. "Perdas vivenciadas" é pergunta do
+   * formulário de catástrofe — casa, familiar, documentos — e é o dado que
+   * orienta o acompanhamento.
+   */
+  sintomasSaudeMental: SintomaSaudeMental[];
+  perdasVivenciadas: PerdaVivenciada[];
   dispensacoes: Dispensacao[];
   concluidaEm: string | null;
 }
@@ -687,6 +697,31 @@ export interface Cirurgia {
   consentimentoAssinado: boolean;
   observacoesPreOperatorio: string | null;
 
+  /*
+    O preparo da enfermagem, antes de o paciente sair da enfermaria.
+
+    Não é o check-in: aquele acontece na porta da sala e é conferência da
+    equipe cirúrgica. Aqui é o que se faz *com* o paciente e o que se guarda
+    dele.
+  */
+  preparoCuidadosEnfermagem: string | null;
+  preparoTricotomia: boolean;
+  preparoTricotomiaLocal: string | null;
+  preparoBanhoClorexidine: boolean;
+  preparoPulseiraIdentificacao: boolean;
+
+  preOpEcg: boolean;
+  preOpLaboratorial: boolean;
+  preOpUltrassom: boolean;
+  preOpExamesObservacao: string | null;
+  preOpAvaliacaoAnestesica: boolean;
+
+  pertencesProteseDentaria: boolean;
+  pertencesRoupasAcessorios: boolean;
+  pertencesDestino: string | null;
+  /** A hora em que a maca saiu — digitada, não a hora do registro. */
+  encaminhadoAoCentroEm: string | null;
+
   checkInIdentidadeConfirmada: boolean;
   checkInSitioMarcado: boolean;
   checkInConsentimentoConferido: boolean;
@@ -719,6 +754,9 @@ export interface Cirurgia {
   recuperacaoSaidaEm: string | null;
   intercorrencias: string | null;
   observacoesRecuperacao: string | null;
+  /** Fecha o laço do que foi retirado antes da sala. */
+  pertencesDevolvidos: boolean;
+  recuperacaoDieta: string | null;
 
   desfecho: DesfechoConsulta | null;
   concluidaEm: string | null;

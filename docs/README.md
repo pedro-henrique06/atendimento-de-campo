@@ -20,6 +20,7 @@ de verdade. Os pacientes e a equipe são fictícios.
 | Ultrassonografista | [Ultrassom](09-ultrassom.md) |
 | Cirurgião, anestesista | [Cirurgia e anestesia](10-cirurgia-e-anestesia.md) |
 | Todos | [Alta e desfecho](11-alta-e-desfecho.md) e [Prontuário e auditoria](12-prontuario-e-auditoria.md) |
+| Quem quer ver as treze filas lado a lado | [As filas](13-filas.md) |
 
 ## O caminho do paciente
 
