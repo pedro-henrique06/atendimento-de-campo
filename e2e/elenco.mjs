@@ -14,153 +14,14 @@
 export const SENHA = 'Campo#E2E2026';
 
 /**
- * Cada conta diz também qual fila deve abrir para ela. É a asserção que dá
- * sentido a ter uma conta por profissão.
+ * Cada conta diz também as filas que a API deve devolver para ela, na ordem.
+ *
+ * É a asserção que dá sentido a ter uma conta por profissão — e é uma das duas
+ * guardas contra a tabela de filas divergir entre as pontas. Esta prende a API
+ * contra o que está escrito aqui; a outra, em `src/api/filas.spec.ts`, prende a
+ * cópia que o app usa para falar de uma profissão que não é a de quem olha.
+ * Uma fila nova que entre só de um lado derruba uma das duas.
  */
-/*
-  O registro é só o número: o conselho vem da profissão, e a tela monta
-  "CRM 10001" juntando os dois. Gravar "CRM 10001" aqui faria a tela escrever
-  "CRM CRM 10001".
-*/
-export const ELENCO = [
-  {
-    chave: 'clinico',
-    usuario: 'clinico.e2e',
-    nome: 'Alda Vieira',
-    funcao: 'ClinicoGeral',
-    registro: '10001',
-    filaPadrao: 'ClinicaGeral',
-  },
-  {
-    chave: 'pediatra',
-    usuario: 'pediatra.e2e',
-    nome: 'Bruno Sato',
-    funcao: 'Pediatra',
-    registro: '10002',
-    filaPadrao: 'Pediatria',
-  },
-  {
-    chave: 'ortopedista',
-    usuario: 'ortopedista.e2e',
-    nome: 'Clara Mendes',
-    funcao: 'Ortopedista',
-    registro: '10003',
-    filaPadrao: 'Ortopedia',
-  },
-  {
-    chave: 'ginecologista',
-    usuario: 'gineco.e2e',
-    nome: 'Dora Alencar',
-    funcao: 'Ginecologista',
-    registro: '10004',
-    filaPadrao: 'Ginecologia',
-  },
-  {
-    chave: 'cirurgiao',
-    usuario: 'cirurgiao.e2e',
-    nome: 'Elias Prado',
-    funcao: 'Cirurgiao',
-    registro: '10005',
-    filaPadrao: 'Cirurgia',
-  },
-  {
-    chave: 'anestesista',
-    usuario: 'anestesista.e2e',
-    nome: 'Fabio Rocha',
-    funcao: 'Anestesista',
-    registro: '10006',
-    filaPadrao: 'Anestesia',
-  },
-  {
-    chave: 'cardiologista',
-    usuario: 'cardio.e2e',
-    nome: 'Gilda Nunes',
-    funcao: 'Cardiologista',
-    registro: '10007',
-    filaPadrao: 'Cardiologia',
-  },
-  {
-    chave: 'ultrassonografista',
-    usuario: 'usg.e2e',
-    nome: 'Hugo Barreto',
-    funcao: 'Ultrassonografista',
-    registro: '10008',
-    filaPadrao: 'Ultrassom',
-  },
-  {
-    chave: 'dentista',
-    usuario: 'dentista.e2e',
-    nome: 'Iara Lopes',
-    funcao: 'Dentista',
-    registro: '20001',
-    filaPadrao: 'Odontologia',
-  },
-  {
-    chave: 'enfermeiro',
-    usuario: 'enfermeiro.e2e',
-    nome: 'Joel Tavares',
-    funcao: 'Enfermeiro',
-    registro: '30001',
-    filaPadrao: 'Triagem',
-  },
-  {
-    chave: 'tecnico',
-    usuario: 'tecnico.e2e',
-    nome: 'Kelly Dias',
-    funcao: 'TecnicoEnfermagem',
-    registro: '30002',
-    filaPadrao: 'Triagem',
-  },
-  {
-    chave: 'psicologo',
-    usuario: 'psicologo.e2e',
-    nome: 'Lucio Amaral',
-    funcao: 'Psicologo',
-    registro: '40001',
-    filaPadrao: 'SaudeMental',
-  },
-  {
-    chave: 'fisioterapeuta',
-    usuario: 'fisio.e2e',
-    nome: 'Marta Belo',
-    funcao: 'Fisioterapeuta',
-    registro: '50001',
-    filaPadrao: 'Ortopedia',
-  },
-  {
-    chave: 'farmaceutico',
-    usuario: 'farmaceutico.e2e',
-    nome: 'Nilo Craveiro',
-    funcao: 'Farmaceutico',
-    registro: '60001',
-    filaPadrao: 'Farmacia',
-  },
-  {
-    chave: 'recepcao',
-    usuario: 'recepcao.e2e',
-    nome: 'Olga Pimenta',
-    funcao: 'Recepcao',
-    registro: null,
-    filaPadrao: 'Triagem',
-  },
-  {
-    chave: 'coordenacao',
-    usuario: 'coordenacao.e2e',
-    nome: 'Paulo Serra',
-    funcao: 'Coordenacao',
-    registro: null,
-    filaPadrao: 'Triagem',
-  },
-  {
-    chave: 'outro',
-    usuario: 'outro.e2e',
-    nome: 'Rita Queiroz',
-    funcao: 'Outro',
-    registro: null,
-    filaPadrao: 'Triagem',
-  },
-];
-
 /** As treze filas, na ordem do enum. */
 export const FILAS = [
   'Triagem',
@@ -177,6 +38,168 @@ export const FILAS = [
   'Ultrassom',
   'Farmacia',
 ];
+
+/*
+  O registro é só o número: o conselho vem da profissão, e a tela monta
+  "CRM 10001" juntando os dois. Gravar "CRM 10001" aqui faria a tela escrever
+  "CRM CRM 10001".
+*/
+export const ELENCO = [
+  {
+    chave: 'clinico',
+    usuario: 'clinico.e2e',
+    nome: 'Alda Vieira',
+    funcao: 'ClinicoGeral',
+    registro: '10001',
+    filaPadrao: 'ClinicaGeral',
+    filas: ['ClinicaGeral'],
+  },
+  {
+    chave: 'pediatra',
+    usuario: 'pediatra.e2e',
+    nome: 'Bruno Sato',
+    funcao: 'Pediatra',
+    registro: '10002',
+    filaPadrao: 'Pediatria',
+    filas: ['Pediatria'],
+  },
+  {
+    chave: 'ortopedista',
+    usuario: 'ortopedista.e2e',
+    nome: 'Clara Mendes',
+    funcao: 'Ortopedista',
+    registro: '10003',
+    filaPadrao: 'Ortopedia',
+    filas: ['Ortopedia'],
+  },
+  {
+    chave: 'ginecologista',
+    usuario: 'gineco.e2e',
+    nome: 'Dora Alencar',
+    funcao: 'Ginecologista',
+    registro: '10004',
+    filaPadrao: 'Ginecologia',
+    filas: ['Ginecologia'],
+  },
+  {
+    chave: 'cirurgiao',
+    usuario: 'cirurgiao.e2e',
+    nome: 'Elias Prado',
+    funcao: 'Cirurgiao',
+    registro: '10005',
+    filaPadrao: 'Cirurgia',
+    filas: ['Cirurgia'],
+  },
+  {
+    chave: 'anestesista',
+    usuario: 'anestesista.e2e',
+    nome: 'Fabio Rocha',
+    funcao: 'Anestesista',
+    registro: '10006',
+    filaPadrao: 'Anestesia',
+    filas: ['Anestesia', 'Cirurgia'],
+  },
+  {
+    chave: 'cardiologista',
+    usuario: 'cardio.e2e',
+    nome: 'Gilda Nunes',
+    funcao: 'Cardiologista',
+    registro: '10007',
+    filaPadrao: 'Cardiologia',
+    filas: ['Cardiologia'],
+  },
+  {
+    chave: 'ultrassonografista',
+    usuario: 'usg.e2e',
+    nome: 'Hugo Barreto',
+    funcao: 'Ultrassonografista',
+    registro: '10008',
+    filaPadrao: 'Ultrassom',
+    filas: ['Ultrassom'],
+  },
+  {
+    chave: 'dentista',
+    usuario: 'dentista.e2e',
+    nome: 'Iara Lopes',
+    funcao: 'Dentista',
+    registro: '20001',
+    filaPadrao: 'Odontologia',
+    filas: ['Odontologia'],
+  },
+  {
+    chave: 'enfermeiro',
+    usuario: 'enfermeiro.e2e',
+    nome: 'Joel Tavares',
+    funcao: 'Enfermeiro',
+    registro: '30001',
+    filaPadrao: 'Triagem',
+    filas: ['Triagem', 'Enfermagem'],
+  },
+  {
+    chave: 'tecnico',
+    usuario: 'tecnico.e2e',
+    nome: 'Kelly Dias',
+    funcao: 'TecnicoEnfermagem',
+    registro: '30002',
+    filaPadrao: 'Triagem',
+    filas: ['Triagem', 'Enfermagem'],
+  },
+  {
+    chave: 'psicologo',
+    usuario: 'psicologo.e2e',
+    nome: 'Lucio Amaral',
+    funcao: 'Psicologo',
+    registro: '40001',
+    filaPadrao: 'SaudeMental',
+    filas: ['SaudeMental'],
+  },
+  {
+    chave: 'fisioterapeuta',
+    usuario: 'fisio.e2e',
+    nome: 'Marta Belo',
+    funcao: 'Fisioterapeuta',
+    registro: '50001',
+    filaPadrao: 'Ortopedia',
+    filas: ['Ortopedia'],
+  },
+  {
+    chave: 'farmaceutico',
+    usuario: 'farmaceutico.e2e',
+    nome: 'Nilo Craveiro',
+    funcao: 'Farmaceutico',
+    registro: '60001',
+    filaPadrao: 'Farmacia',
+    filas: ['Farmacia'],
+  },
+  {
+    chave: 'recepcao',
+    usuario: 'recepcao.e2e',
+    nome: 'Olga Pimenta',
+    funcao: 'Recepcao',
+    registro: null,
+    filaPadrao: 'Triagem',
+    filas: ['Triagem'],
+  },
+  {
+    chave: 'coordenacao',
+    usuario: 'coordenacao.e2e',
+    nome: 'Paulo Serra',
+    funcao: 'Coordenacao',
+    registro: null,
+    filaPadrao: 'Triagem',
+    filas: FILAS,
+  },
+  {
+    chave: 'outro',
+    usuario: 'outro.e2e',
+    nome: 'Rita Queiroz',
+    funcao: 'Outro',
+    registro: null,
+    filaPadrao: 'Triagem',
+    filas: FILAS,
+  },
+];
+
 
 /**
  * Quem tira o print de cada fila.

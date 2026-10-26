@@ -142,6 +142,22 @@ export function blocoContas() {
           `fila padrão de ${papel.usuario}`,
         );
 
+        /*
+          E as filas inteiras, na ordem, contra o que o elenco declara.
+
+          O app tem uma cópia de `FilasDaFuncao` — é dela que saem o cadastro
+          ("onde essa pessoa vai atender") e a lente de "ver como". Cópia que
+          diverge em silêncio é o pior dos dois mundos: a tela promete uma fila
+          e o servidor abre outra. Esta conferência prende o servidor; o teste
+          de `src/api/filas.spec.ts` prende a cópia. Uma fila nova que entre só
+          de um lado derruba uma das duas.
+        */
+        conferirIgual(
+          sessao.profissional.filas.join(','),
+          papel.filas.join(','),
+          `as filas de ${papel.funcao}`,
+        );
+
         ctx.contas[papel.chave] = {
           ...papel,
           id: conta?.id ?? sessao.profissional.id,
