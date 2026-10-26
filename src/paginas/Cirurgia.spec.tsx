@@ -17,6 +17,20 @@ function ficha(sobre: Partial<FichaCirurgica> = {}): FichaCirurgica {
     jejumHoras: null,
     consentimentoAssinado: false,
     observacoesPreOperatorio: null,
+    preparoCuidadosEnfermagem: null,
+    preparoTricotomia: false,
+    preparoTricotomiaLocal: null,
+    preparoBanhoClorexidine: false,
+    preparoPulseiraIdentificacao: false,
+    preOpEcg: false,
+    preOpLaboratorial: false,
+    preOpUltrassom: false,
+    preOpExamesObservacao: null,
+    preOpAvaliacaoAnestesica: false,
+    pertencesProteseDentaria: false,
+    pertencesRoupasAcessorios: false,
+    pertencesDestino: null,
+    encaminhadoAoCentroEm: null,
     checkInIdentidadeConfirmada: false,
     checkInSitioMarcado: false,
     checkInConsentimentoConferido: false,
@@ -44,6 +58,8 @@ function ficha(sobre: Partial<FichaCirurgica> = {}): FichaCirurgica {
     recuperacaoSaidaEm: null,
     intercorrencias: null,
     observacoesRecuperacao: null,
+    pertencesDevolvidos: false,
+    recuperacaoDieta: null,
     desfecho: null,
     concluidaEm: null,
     ...sobre,
@@ -142,6 +158,71 @@ describe('Ficha cirúrgica', () => {
     // obrigaria a voltar três vezes.
     expect(screen.queryByText('prontuário')).not.toBeInTheDocument();
     expect(await screen.findByText(/Parada salva/)).toBeInTheDocument();
+  });
+
+  it('o local da tricotomia só é pedido depois do sim', async () => {
+    const usuario = userEvent.setup();
+    vi.spyOn(api, 'prontuario').mockResolvedValue(prontuario(ficha()));
+
+    renderizar();
+
+    // Perguntar onde foi feito o que não foi feito é linha vazia em toda ficha.
+    await screen.findByLabelText(/Tricotomia realizada/);
+    expect(screen.queryByLabelText(/Local da tricotomia/)).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByLabelText(/Tricotomia realizada/));
+
+    expect(await screen.findByLabelText(/Local da tricotomia/)).toBeInTheDocument();
+  });
+
+  it('devolver pertences só aparece quando houve o que guardar', async () => {
+    const usuario = userEvent.setup();
+    vi.spyOn(api, 'prontuario').mockResolvedValue(prontuario(ficha()));
+
+    renderizar();
+
+    await screen.findByLabelText(/Prótese dentária retirada/);
+    expect(screen.queryByLabelText(/Pertences devolvidos/)).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByLabelText(/Prótese dentária retirada/));
+
+    // Sem este par, o registro diria o que foi tirado e nunca o que voltou.
+    expect(await screen.findByLabelText(/Pertences devolvidos/)).toBeInTheDocument();
+  });
+
+  it('o preparo da enfermagem é salvo sem carimbar a parada', async () => {
+    const usuario = userEvent.setup();
+
+    vi.spyOn(api, 'prontuario').mockResolvedValue(prontuario(ficha()));
+    const salvar = vi.spyOn(api, 'registrarCirurgia').mockResolvedValue(undefined);
+
+    renderizar();
+
+    await screen.findByLabelText(/Tricotomia realizada/);
+    await usuario.click(screen.getByLabelText(/Tricotomia realizada/));
+    await usuario.type(
+      await screen.findByLabelText(/Local da tricotomia/),
+      'Inguinal direita',
+    );
+    await usuario.click(screen.getByLabelText(/Pulseira de identificação/));
+    await usuario.click(screen.getByRole('button', { name: 'Salvar parada' }));
+
+    await waitFor(() => expect(salvar).toHaveBeenCalled());
+
+    /*
+      O preparo acontece na enfermaria; o check-in, na porta da sala. Se o
+      preparo entrasse na primeira parada, a lista de verificação passaria a
+      carimbar uma hora que não é a dela.
+    */
+    expect(salvar).toHaveBeenCalledWith(
+      'a1',
+      expect.objectContaining({
+        preparoTricotomia: true,
+        preparoTricotomiaLocal: 'Inguinal direita',
+        preparoPulseiraIdentificacao: true,
+        checkInIdentidadeConfirmada: false,
+      }),
+    );
   });
 
   it('mostra a hora de cada parada concluída, e o que ainda falta', async () => {

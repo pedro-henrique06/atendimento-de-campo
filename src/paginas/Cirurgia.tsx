@@ -32,6 +32,21 @@ interface FormCirurgia {
   consentimentoAssinado: boolean;
   observacoesPreOperatorio: string;
 
+  preparoCuidadosEnfermagem: string;
+  preparoTricotomia: boolean;
+  preparoTricotomiaLocal: string;
+  preparoBanhoClorexidine: boolean;
+  preparoPulseiraIdentificacao: boolean;
+  preOpEcg: boolean;
+  preOpLaboratorial: boolean;
+  preOpUltrassom: boolean;
+  preOpExamesObservacao: string;
+  preOpAvaliacaoAnestesica: boolean;
+  pertencesProteseDentaria: boolean;
+  pertencesRoupasAcessorios: boolean;
+  pertencesDestino: string;
+  encaminhadoAoCentro: string;
+
   checkInIdentidadeConfirmada: boolean;
   checkInSitioMarcado: boolean;
   checkInConsentimentoConferido: boolean;
@@ -59,6 +74,8 @@ interface FormCirurgia {
   recuperacaoSaida: string;
   intercorrencias: string;
   observacoesRecuperacao: string;
+  pertencesDevolvidos: boolean;
+  recuperacaoDieta: string;
 
   desfecho: DesfechoConsulta | null;
   encaminhadoPara: Especialidade | null;
@@ -71,6 +88,21 @@ const INICIAL: FormCirurgia = {
   jejumHoras: '',
   consentimentoAssinado: false,
   observacoesPreOperatorio: '',
+
+  preparoCuidadosEnfermagem: '',
+  preparoTricotomia: false,
+  preparoTricotomiaLocal: '',
+  preparoBanhoClorexidine: false,
+  preparoPulseiraIdentificacao: false,
+  preOpEcg: false,
+  preOpLaboratorial: false,
+  preOpUltrassom: false,
+  preOpExamesObservacao: '',
+  preOpAvaliacaoAnestesica: false,
+  pertencesProteseDentaria: false,
+  pertencesRoupasAcessorios: false,
+  pertencesDestino: '',
+  encaminhadoAoCentro: '',
 
   checkInIdentidadeConfirmada: false,
   checkInSitioMarcado: false,
@@ -99,6 +131,8 @@ const INICIAL: FormCirurgia = {
   recuperacaoSaida: '',
   intercorrencias: '',
   observacoesRecuperacao: '',
+  pertencesDevolvidos: false,
+  recuperacaoDieta: '',
 
   desfecho: null,
   encaminhadoPara: null,
@@ -114,6 +148,21 @@ function doServidor(c: FichaCirurgica): FormCirurgia {
     jejumHoras: c.jejumHoras === null ? '' : String(c.jejumHoras),
     consentimentoAssinado: c.consentimentoAssinado,
     observacoesPreOperatorio: c.observacoesPreOperatorio ?? '',
+
+    preparoCuidadosEnfermagem: c.preparoCuidadosEnfermagem ?? '',
+    preparoTricotomia: c.preparoTricotomia,
+    preparoTricotomiaLocal: c.preparoTricotomiaLocal ?? '',
+    preparoBanhoClorexidine: c.preparoBanhoClorexidine,
+    preparoPulseiraIdentificacao: c.preparoPulseiraIdentificacao,
+    preOpEcg: c.preOpEcg,
+    preOpLaboratorial: c.preOpLaboratorial,
+    preOpUltrassom: c.preOpUltrassom,
+    preOpExamesObservacao: c.preOpExamesObservacao ?? '',
+    preOpAvaliacaoAnestesica: c.preOpAvaliacaoAnestesica,
+    pertencesProteseDentaria: c.pertencesProteseDentaria,
+    pertencesRoupasAcessorios: c.pertencesRoupasAcessorios,
+    pertencesDestino: c.pertencesDestino ?? '',
+    encaminhadoAoCentro: paraHoraLocal(c.encaminhadoAoCentroEm),
 
     checkInIdentidadeConfirmada: c.checkInIdentidadeConfirmada,
     checkInSitioMarcado: c.checkInSitioMarcado,
@@ -142,6 +191,8 @@ function doServidor(c: FichaCirurgica): FormCirurgia {
     recuperacaoSaida: paraHoraLocal(c.recuperacaoSaidaEm),
     intercorrencias: c.intercorrencias ?? '',
     observacoesRecuperacao: c.observacoesRecuperacao ?? '',
+    pertencesDevolvidos: c.pertencesDevolvidos,
+    recuperacaoDieta: c.recuperacaoDieta ?? '',
 
     desfecho: null,
     encaminhadoPara: null,
@@ -293,10 +344,27 @@ export function Cirurgia() {
       checkOutProblemasComEquipamento: form.checkOutProblemasComEquipamento,
       checkOutCuidadosRecuperacao: form.checkOutCuidadosRecuperacao.trim() || null,
 
+      preparoCuidadosEnfermagem: form.preparoCuidadosEnfermagem.trim() || null,
+      preparoTricotomia: form.preparoTricotomia,
+      preparoTricotomiaLocal: form.preparoTricotomiaLocal.trim() || null,
+      preparoBanhoClorexidine: form.preparoBanhoClorexidine,
+      preparoPulseiraIdentificacao: form.preparoPulseiraIdentificacao,
+      preOpEcg: form.preOpEcg,
+      preOpLaboratorial: form.preOpLaboratorial,
+      preOpUltrassom: form.preOpUltrassom,
+      preOpExamesObservacao: form.preOpExamesObservacao.trim() || null,
+      preOpAvaliacaoAnestesica: form.preOpAvaliacaoAnestesica,
+      pertencesProteseDentaria: form.pertencesProteseDentaria,
+      pertencesRoupasAcessorios: form.pertencesRoupasAcessorios,
+      pertencesDestino: form.pertencesDestino.trim() || null,
+      encaminhadoAoCentroEm: horaParaIso(form.encaminhadoAoCentro),
+
       recuperacaoEntradaEm: horaParaIso(form.recuperacaoEntrada),
       recuperacaoSaidaEm: horaParaIso(form.recuperacaoSaida),
       intercorrencias: form.intercorrencias.trim() || null,
       observacoesRecuperacao: form.observacoesRecuperacao.trim() || null,
+      pertencesDevolvidos: form.pertencesDevolvidos,
+      recuperacaoDieta: form.recuperacaoDieta.trim() || null,
 
       desfecho: form.desfecho,
       encaminhadoPara: form.encaminhadoPara,
@@ -426,6 +494,115 @@ export function Cirurgia() {
             className="campo min-h-20"
             value={form.observacoesPreOperatorio}
             onChange={(e) => alterar({ observacoesPreOperatorio: e.target.value })}
+          />
+        </Campo>
+      </Secao>
+
+      {/*
+        O preparo da enfermagem é seção própria, antes do check-in.
+
+        Não é a mesma coisa que a primeira parada da lista: o check-in acontece
+        na porta da sala e é conferência da equipe cirúrgica. Aqui é o que se
+        faz com o paciente ainda na enfermaria — tricotomia, banho, pulseira —
+        e o que se tira dele. Misturados, o preparo entraria no carimbo da
+        parada e a lista passaria a marcar uma hora que não é a dela.
+      */}
+      <Secao titulo={t('preparoEnfermagem')}>
+        <Interruptor
+          rotulo={t('preparoTricotomia')}
+          valor={form.preparoTricotomia}
+          aoMudar={(preparoTricotomia) => alterar({ preparoTricotomia })}
+        />
+
+        {/* Só depois do sim: perguntar onde foi feito o que não foi feito é
+            linha vazia em toda ficha. */}
+        {form.preparoTricotomia ? (
+          <Campo rotulo={t('preparoTricotomiaLocal')}>
+            <input
+              className="campo"
+              value={form.preparoTricotomiaLocal}
+              onChange={(e) => alterar({ preparoTricotomiaLocal: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Interruptor
+          rotulo={t('preparoBanhoClorexidine')}
+          valor={form.preparoBanhoClorexidine}
+          aoMudar={(preparoBanhoClorexidine) => alterar({ preparoBanhoClorexidine })}
+        />
+        <Interruptor
+          rotulo={t('preparoPulseira')}
+          valor={form.preparoPulseiraIdentificacao}
+          aoMudar={(preparoPulseiraIdentificacao) => alterar({ preparoPulseiraIdentificacao })}
+        />
+
+        <Campo rotulo={t('preparoCuidados')}>
+          <textarea
+            className="campo min-h-20"
+            value={form.preparoCuidadosEnfermagem}
+            onChange={(e) => alterar({ preparoCuidadosEnfermagem: e.target.value })}
+          />
+        </Campo>
+      </Secao>
+
+      <Secao titulo={t('conferenciasPreOperatorias')}>
+        <Interruptor
+          rotulo={t('preOpEcg')}
+          valor={form.preOpEcg}
+          aoMudar={(preOpEcg) => alterar({ preOpEcg })}
+        />
+        <Interruptor
+          rotulo={t('preOpLaboratorial')}
+          valor={form.preOpLaboratorial}
+          aoMudar={(preOpLaboratorial) => alterar({ preOpLaboratorial })}
+        />
+        <Interruptor
+          rotulo={t('preOpUltrassom')}
+          valor={form.preOpUltrassom}
+          aoMudar={(preOpUltrassom) => alterar({ preOpUltrassom })}
+        />
+        <Interruptor
+          rotulo={t('preOpAvaliacaoAnestesica')}
+          valor={form.preOpAvaliacaoAnestesica}
+          aoMudar={(preOpAvaliacaoAnestesica) => alterar({ preOpAvaliacaoAnestesica })}
+        />
+
+        <Campo rotulo={t('preOpExamesObservacao')}>
+          <input
+            className="campo"
+            value={form.preOpExamesObservacao}
+            onChange={(e) => alterar({ preOpExamesObservacao: e.target.value })}
+          />
+        </Campo>
+      </Secao>
+
+      <Secao titulo={t('pertencesDoPaciente')}>
+        <Interruptor
+          rotulo={t('pertencesProtese')}
+          valor={form.pertencesProteseDentaria}
+          aoMudar={(pertencesProteseDentaria) => alterar({ pertencesProteseDentaria })}
+        />
+        <Interruptor
+          rotulo={t('pertencesRoupas')}
+          valor={form.pertencesRoupasAcessorios}
+          aoMudar={(pertencesRoupasAcessorios) => alterar({ pertencesRoupasAcessorios })}
+        />
+
+        <Campo rotulo={t('pertencesDestino')} dica={t('dicaPertencesDestino')}>
+          <input
+            className="campo"
+            value={form.pertencesDestino}
+            onChange={(e) => alterar({ pertencesDestino: e.target.value })}
+          />
+        </Campo>
+
+        <Campo rotulo={t('encaminhadoAoCentro')}>
+          <input
+            type="time"
+            className="campo"
+            value={form.encaminhadoAoCentro}
+            onChange={(e) => alterar({ encaminhadoAoCentro: e.target.value })}
           />
         </Campo>
       </Secao>
@@ -590,6 +767,27 @@ export function Cirurgia() {
             onChange={(e) => alterar({ observacoesRecuperacao: e.target.value })}
           />
         </Campo>
+
+        <Campo rotulo={t('dietaAposJejum')}>
+          <input
+            className="campo"
+            value={form.recuperacaoDieta}
+            onChange={(e) => alterar({ recuperacaoDieta: e.target.value })}
+          />
+        </Campo>
+
+        {/*
+          Fecha o laço aberto lá em cima. Só aparece quando houve o que
+          guardar: sem retirada, devolver não quer dizer nada — e a prótese
+          esquecida numa gaveta vai embora com a equipe no fim da missão.
+        */}
+        {form.pertencesProteseDentaria || form.pertencesRoupasAcessorios ? (
+          <Interruptor
+            rotulo={t('pertencesDevolvidos')}
+            valor={form.pertencesDevolvidos}
+            aoMudar={(pertencesDevolvidos) => alterar({ pertencesDevolvidos })}
+          />
+        ) : null}
       </Secao>
 
       {/*
