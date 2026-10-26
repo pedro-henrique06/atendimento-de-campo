@@ -31,6 +31,7 @@ import {
   faixasImc,
   lateralidades,
   procedimentosEnfermagem,
+  procedimentosNaConsulta,
   procedimentosOdontologicos,
   sexos,
   sintomas as tabelaSintomas,
@@ -124,6 +125,25 @@ export function Prontuario() {
    * Pergunta antes porque é medida de paciente, e o histórico guarda quem
    * apagou — como a linha riscada no papel, que continua lá.
    */
+  /**
+   * Assina uma linha da prescrição.
+   *
+   * Só no prontuário, e não na ficha que prescreve: checar o que se acabou de
+   * escrever, na mesma tela, seria assinar que foi dado antes de alguém dar.
+   */
+  async function checarPrescricao(dispensacaoId: string, checada: boolean) {
+    setErros([]);
+
+    try {
+      await api.checarPrescricao(id, dispensacaoId, checada);
+      carregar();
+    } catch (erro) {
+      if (erro instanceof ErroApi) setErros(erro.erros);
+      else if (erro instanceof ErroDeRede) setErros([t('semConexao')]);
+      else setErros([t('erroInesperado')]);
+    }
+  }
+
   async function removerMedida(medicaoId: string) {
     if (!window.confirm(t('confirmarRemoverMedida'))) return;
 
@@ -509,6 +529,44 @@ export function Prontuario() {
               valor={consulta.ginecologia?.metodoContraceptivo}
             />
             <Linha rotulo={t('ultimoPreventivo')} valor={consulta.ginecologia?.ultimoPreventivo} />
+            {/*
+              Os exames pedidos numa linha: a pergunta depois é "o que está
+              pendente para este paciente?", e três linhas de sim e não
+              respondem pior do que uma lista do que foi pedido.
+            */}
+            <Linha
+              rotulo={t('examesComplementares')}
+              valor={
+                [
+                  consulta.exameLaboratorialSolicitado
+                    ? `${t('exameLaboratorial')}${
+                        consulta.exameLaboratorialDescricao
+                          ? ` (${consulta.exameLaboratorialDescricao})`
+                          : ''
+                      }`
+                    : null,
+                  consulta.papanicolauSolicitado
+                    ? `${t('papanicolau')}${
+                        consulta.papanicolauObservacao
+                          ? ` (${consulta.papanicolauObservacao})`
+                          : ''
+                      }`
+                    : null,
+                  consulta.outroExameSolicitado,
+                ]
+                  .filter((x): x is string => !!x)
+                  .join(' · ') || null
+              }
+            />
+            <Linha
+              rotulo={t('procedimentosNaConsulta')}
+              valor={
+                consulta.procedimentos
+                  .map((p) => traduzir(procedimentosNaConsulta, idioma, p))
+                  .join(', ') || null
+              }
+            />
+            <Linha rotulo={t('observacoes')} valor={consulta.procedimentosObservacao} />
             <Linha
               rotulo={t('desfecho')}
               valor={consulta.desfecho ? traduzir(desfechos, idioma, consulta.desfecho) : null}
@@ -517,7 +575,12 @@ export function Prontuario() {
 
           <div>
             <h3 className="rotulo">{t('dispensacao')}</h3>
-            <ListaItens itens={consulta.dispensacoes} />
+            <ListaItens
+              itens={consulta.dispensacoes}
+              aoChecar={
+                finalizado ? undefined : (item, checada) => checarPrescricao(item.id, checada)
+              }
+            />
           </div>
         </Secao>
       ))}
@@ -557,7 +620,12 @@ export function Prontuario() {
 
           <div>
             <h3 className="rotulo">{t('dispensacao')}</h3>
-            <ListaItens itens={prontuario.odontologia.dispensacoes} />
+            <ListaItens
+              itens={prontuario.odontologia.dispensacoes}
+              aoChecar={
+                finalizado ? undefined : (item, checada) => checarPrescricao(item.id, checada)
+              }
+            />
           </div>
         </Secao>
       ) : null}
@@ -592,7 +660,12 @@ export function Prontuario() {
 
           <div>
             <h3 className="rotulo">{t('dispensacao')}</h3>
-            <ListaItens itens={prontuario.enfermagem.dispensacoes} />
+            <ListaItens
+              itens={prontuario.enfermagem.dispensacoes}
+              aoChecar={
+                finalizado ? undefined : (item, checada) => checarPrescricao(item.id, checada)
+              }
+            />
           </div>
         </Secao>
       ) : null}
@@ -1020,7 +1093,12 @@ export function Prontuario() {
 
           <div>
             <h3 className="rotulo">{t('entregue')}</h3>
-            <ListaItens itens={prontuario.farmacia.dispensacoes} />
+            <ListaItens
+              itens={prontuario.farmacia.dispensacoes}
+              aoChecar={
+                finalizado ? undefined : (item, checada) => checarPrescricao(item.id, checada)
+              }
+            />
           </div>
         </Secao>
       ) : null}

@@ -30,6 +30,7 @@ import type {
   UnidadeDispensacao,
   ViaAdministracao,
   Vulnerabilidade,
+  ProcedimentoNaConsulta,
   TipoAnestesia,
   PosicionamentoCirurgico,
   DestinoPosOperatorio,
@@ -873,6 +874,31 @@ export const procedimentosOdontologicos: Traducao<ProcedimentoOdontologico> = {
   },
 };
 
+/*
+  O que foi feito na própria consulta.
+
+  Distinto dos procedimentos de enfermagem, e não uma duplicata deles: o
+  curativo feito pelo médico na sala da consulta é outro ato, de outra pessoa,
+  em outra fila.
+*/
+export const procedimentosNaConsulta: Traducao<ProcedimentoNaConsulta> = {
+  Pt: {
+    PassagemDiu: 'Passagem de DIU',
+    Curativo: 'Curativo',
+    Outro: 'Outro',
+  },
+  Es: {
+    PassagemDiu: 'Colocación de DIU',
+    Curativo: 'Curación',
+    Outro: 'Otro',
+  },
+  En: {
+    PassagemDiu: 'IUD insertion',
+    Curativo: 'Dressing',
+    Outro: 'Other',
+  },
+};
+
 export const procedimentosEnfermagem: Traducao<ProcedimentoEnfermagem> = {
   Pt: {
     Curativo: 'Curativo',
@@ -1071,6 +1097,7 @@ export const tabelasDeEnum = {
   faces,
   procedimentosOdontologicos,
   procedimentosEnfermagem,
+  procedimentosNaConsulta,
   sintomasSaudeMental,
   perdasVivenciadas,
   acoesAuditoria,
