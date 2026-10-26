@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ErroApi, ErroDeRede } from '../api/cliente';
-import { FILAS } from '../api/tipos';
+import { FILAS, PROCEDIMENTOS_NA_CONSULTA } from '../api/tipos';
 import type {
   Cid10,
   DesfechoConsulta,
   Especialidade,
   MarcacaoDente,
+  ProcedimentoNaConsulta,
   ProcedimentoOdontologico,
   Prontuario,
 } from '../api/tipos';
@@ -30,7 +31,12 @@ import { Encerramento } from '../componentes/Encerramento';
 import { Odontograma } from '../componentes/Odontograma';
 import { useRascunho } from '../hooks/useRascunho';
 import { useI18n, traduzir } from '../i18n';
-import { desfechos, especialidades, procedimentosOdontologicos } from '../i18n/enums';
+import {
+  desfechos,
+  especialidades,
+  procedimentosNaConsulta,
+  procedimentosOdontologicos,
+} from '../i18n/enums';
 
 const DESFECHOS: DesfechoConsulta[] = ['Alta', 'Encaminhado', 'Retorno', 'Evasao'];
 
@@ -166,6 +172,24 @@ interface FormConsulta {
   semanasGestacao: string;
   metodoContraceptivo: string;
   ultimoPreventivo: string;
+
+  /*
+    Exames complementares pedidos na consulta.
+
+    Sem USG: pedir um ultrassom é encaminhar para a fila do ultrassom, logo
+    abaixo no desfecho. Uma caixa aqui seria um segundo registro do mesmo
+    pedido, e na hora de contar quantos exames a missão pediu os dois números
+    discordariam.
+  */
+  exameLaboratorial: boolean;
+  exameLaboratorialDescricao: string;
+  papanicolau: boolean;
+  papanicolauObservacao: string;
+  outroExameSolicitado: string;
+
+  procedimentos: ProcedimentoNaConsulta[];
+  procedimentosObservacao: string;
+
   dispensacoes: LinhaDispensacao[];
 }
 
@@ -192,6 +216,13 @@ const CONSULTA_INICIAL: FormConsulta = {
   semanasGestacao: '',
   metodoContraceptivo: '',
   ultimoPreventivo: '',
+  exameLaboratorial: false,
+  exameLaboratorialDescricao: '',
+  papanicolau: false,
+  papanicolauObservacao: '',
+  outroExameSolicitado: '',
+  procedimentos: [],
+  procedimentosObservacao: '',
   dispensacoes: [],
 };
 
@@ -296,6 +327,13 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
               ultimoPreventivo: form.ultimoPreventivo.trim() || null,
             }
           : null,
+      exameLaboratorialSolicitado: form.exameLaboratorial,
+      exameLaboratorialDescricao: form.exameLaboratorialDescricao.trim() || null,
+      papanicolauSolicitado: form.papanicolau,
+      papanicolauObservacao: form.papanicolauObservacao.trim() || null,
+      outroExameSolicitado: form.outroExameSolicitado.trim() || null,
+      procedimentos: form.procedimentos,
+      procedimentosObservacao: form.procedimentosObservacao.trim() || null,
       dispensacoes: paraEnvio(form.dispensacoes),
     });
 
@@ -671,6 +709,89 @@ export function Atendimento({ modo }: { modo: 'consulta' | 'odontologia' }) {
           value={form.conduta}
           onChange={(e) => alterar({ conduta: e.target.value })}
         />
+      </Secao>
+
+      {/*
+        O que a consulta pede e não sai dali resolvido.
+
+        O ultrassom não está aqui de propósito: pedir um USG é encaminhar para
+        a fila do ultrassom, logo abaixo, e é assim que o pedido chega a quem
+        faz o exame. Uma caixa "USG" ao lado criaria um segundo registro do
+        mesmo pedido, sem nada que os mantivesse de acordo.
+      */}
+      <Secao titulo={t('examesComplementares')}>
+        <Interruptor
+          rotulo={t('exameLaboratorial')}
+          valor={form.exameLaboratorial}
+          aoMudar={(exameLaboratorial) => alterar({ exameLaboratorial })}
+        />
+
+        {form.exameLaboratorial ? (
+          <Campo rotulo={t('quaisExames')} dica={t('dicaQuaisExames')}>
+            <input
+              className="campo"
+              value={form.exameLaboratorialDescricao}
+              onChange={(e) => alterar({ exameLaboratorialDescricao: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Interruptor
+          rotulo={t('papanicolau')}
+          valor={form.papanicolau}
+          aoMudar={(papanicolau) => alterar({ papanicolau })}
+        />
+
+        {form.papanicolau ? (
+          <Campo rotulo={t('observacoes')}>
+            <input
+              className="campo"
+              value={form.papanicolauObservacao}
+              onChange={(e) => alterar({ papanicolauObservacao: e.target.value })}
+            />
+          </Campo>
+        ) : null}
+
+        <Campo rotulo={t('outroExameSolicitado')}>
+          <input
+            className="campo"
+            value={form.outroExameSolicitado}
+            onChange={(e) => alterar({ outroExameSolicitado: e.target.value })}
+          />
+        </Campo>
+      </Secao>
+
+      {/*
+        O que foi feito aqui mesmo. Não é a ficha da enfermagem: o curativo
+        feito pelo médico na sala da consulta é outro ato, de outra pessoa, em
+        outra fila — e produção por área só continua confiável se cada um
+        contar na fila onde aconteceu.
+      */}
+      <Secao titulo={t('procedimentosNaConsulta')}>
+        <Multiplas
+          valores={form.procedimentos}
+          opcoes={PROCEDIMENTOS_NA_CONSULTA}
+          aoAlternar={(procedimento) =>
+            alterar({
+              procedimentos: form.procedimentos.includes(procedimento)
+                ? form.procedimentos.filter((p) => p !== procedimento)
+                : [...form.procedimentos, procedimento],
+            })
+          }
+          tabela={procedimentosNaConsulta}
+          idioma={idioma}
+        />
+
+        {/* Sem procedimento nenhum, não há o que observar. */}
+        {form.procedimentos.length > 0 ? (
+          <Campo rotulo={t('observacoes')} dica={t('dicaProcedimentosObservacao')}>
+            <textarea
+              className="campo min-h-20"
+              value={form.procedimentosObservacao}
+              onChange={(e) => alterar({ procedimentosObservacao: e.target.value })}
+            />
+          </Campo>
+        ) : null}
       </Secao>
 
       {/*

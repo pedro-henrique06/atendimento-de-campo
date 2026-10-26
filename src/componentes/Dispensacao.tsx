@@ -136,7 +136,24 @@ function BuscaCatalogo({ aoEscolher }: { aoEscolher: (item: ItemCatalogo) => voi
  * lista para conferir contra o que foi prescrito — e duas cópias dela acabariam
  * mostrando o mesmo item de dois jeitos.
  */
-export function ListaItens({ itens }: { itens: Dispensacao[] }) {
+/**
+ * A prescrição como ela é lida depois: uma linha por item.
+ *
+ * Com `aoChecar`, cada linha ganha a assinatura do formulário de papel —
+ * "Profissional | Hora" ao lado do medicamento. Quem prescreve é uma pessoa,
+ * quem administra é outra, e essa coluna é o que liga as duas.
+ *
+ * Sem `aoChecar` a lista é só leitura, que é o caso de quem está preenchendo a
+ * própria ficha: checar o que se acabou de prescrever, na mesma tela, seria
+ * assinar que foi dado antes de alguém dar.
+ */
+export function ListaItens({
+  itens,
+  aoChecar,
+}: {
+  itens: Dispensacao[];
+  aoChecar?: (item: Dispensacao, checada: boolean) => void;
+}) {
   const { t, idioma } = useI18n();
 
   if (itens.length === 0) return <p className="text-sm text-texto-suave">{t('semItens')}</p>;
@@ -144,12 +161,56 @@ export function ListaItens({ itens }: { itens: Dispensacao[] }) {
   return (
     <ul className="space-y-1 text-sm">
       {itens.map((item) => (
-        <li key={item.id}>
-          · {item.quantidade} {traduzir(unidades, idioma, item.unidade)} — {item.item}
-          {item.via ? ` · ${traduzir(tabelaVias, idioma, item.via)}` : ''}
-          {item.posologia ? ` · ${item.posologia}` : ''}
-          {item.foraDoCatalogo ? (
-            <span className="ml-2 text-amarelo">({t('itemForaCatalogo')})</span>
+        /*
+          Com a checagem, cada item vira um bloco separado por uma linha.
+
+          Sem a separação, numa tela de celular a assinatura de um item cai
+          logo acima do texto do próximo e parece ser dele — e "quem deu o
+          quê" é exatamente a pergunta que esta coluna existe para responder.
+        */
+        <li
+          key={item.id}
+          className={aoChecar ? 'border-b border-borda py-2 first:pt-0 last:border-0' : ''}
+        >
+          <span>
+            · {item.quantidade} {traduzir(unidades, idioma, item.unidade)} — {item.item}
+            {item.via ? ` · ${traduzir(tabelaVias, idioma, item.via)}` : ''}
+            {item.posologia ? ` · ${item.posologia}` : ''}
+            {item.foraDoCatalogo ? (
+              <span className="ml-2 text-amarelo">({t('itemForaCatalogo')})</span>
+            ) : null}
+          </span>
+
+          {aoChecar ? (
+            <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2 pl-3">
+              {item.checadaEm ? (
+                <>
+                  {/*
+                    Quem e quando, e não só um tique: o tique diz que alguém
+                    deu, e a pergunta depois é quem.
+                  */}
+                  <span className="text-verde">
+                    {t('checadoPor')} {item.checadaPor?.nome ?? '—'} ·{' '}
+                    {new Date(item.checadaEm).toLocaleTimeString(undefined, { timeStyle: 'short' })}
+                  </span>
+                  <button
+                    type="button"
+                    className="shrink-0 text-xs text-texto-suave underline"
+                    onClick={() => aoChecar(item, false)}
+                  >
+                    {t('desfazerChecagem')}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="botao-secundario ml-auto w-auto shrink-0 px-4 py-1 text-xs"
+                  onClick={() => aoChecar(item, true)}
+                >
+                  {t('checarPrescricao')}
+                </button>
+              )}
+            </div>
           ) : null}
         </li>
       ))}

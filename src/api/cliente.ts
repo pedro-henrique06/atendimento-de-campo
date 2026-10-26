@@ -8,6 +8,7 @@ import type {
   ComunidadeAdmin,
   ContaCriada,
   DesfechoAtendimento,
+  Dispensacao,
   Especialidade,
   FuncaoProfissional,
   ItemCatalogo,
@@ -559,6 +560,20 @@ export const api = {
   removerSinaisVitais(id: string, medicaoId: string): Promise<void> {
     return requisitar<void>(`/atendimentos/${id}/sinais-vitais/${medicaoId}`, {
       method: 'DELETE',
+    });
+  },
+
+  /**
+   * Assina uma linha da prescrição: quem checou este item, e quando.
+   *
+   * Quem e quando saem do token e do relógio do servidor, e não daqui: aceitar
+   * a hora do aparelho faria a assinatura valer o que o relógio de quem checou
+   * disser que são horas.
+   */
+  checarPrescricao(id: string, dispensacaoId: string, checada: boolean): Promise<Dispensacao> {
+    return requisitar<Dispensacao>(`/atendimentos/${id}/prescricao/${dispensacaoId}/checagem`, {
+      method: 'POST',
+      body: JSON.stringify({ checada }),
     });
   },
 

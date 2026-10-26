@@ -121,6 +121,10 @@ export function blocoFichas() {
             diagnosticoObservacao: 'Pneumonia de comunidade, quadro leve.',
             conduta: 'Antibiótico por sete dias e retorno se piorar.',
             orientacoesGerais: 'Hidratação e repouso. Voltar se faltar ar.',
+            exameLaboratorialSolicitado: true,
+            exameLaboratorialDescricao: 'Hemograma e proteína C reativa.',
+            procedimentos: ['Curativo'],
+            procedimentosObservacao: 'Curativo em lesão de perna direita.',
             desfecho: 'Alta',
             dispensacoes: [
               {
@@ -141,6 +145,21 @@ export function blocoFichas() {
           conferirIgual(consulta.dispensacoes.length, 1, 'prescrições na consulta');
           conferirIgual(consulta.dispensacoes[0].quantidade, 21, 'quantidade prescrita');
           conferir(consulta.profissional?.registro, 'A ficha tinha que estar assinada com o registro.');
+          conferirIgual(consulta.exameLaboratorialSolicitado, true, 'exame laboratorial pedido');
+          conferir(
+            consulta.exameLaboratorialDescricao?.includes('Hemograma'),
+            'A descrição do exame laboratorial não voltou.',
+          );
+          conferirIgual(consulta.procedimentos.join(), 'Curativo', 'procedimentos na consulta');
+
+          /*
+            A linha nasce sem assinatura.
+
+            Prescrever e administrar são atos de pessoas diferentes, e a ficha
+            que prescreve não marca a checagem — se marcasse, assinaria que foi
+            dado antes de alguém dar.
+          */
+          conferirIgual(consulta.dispensacoes[0].checadaEm, null, 'checagem ao prescrever');
 
           ctx.fichas.ClinicaGeral = id;
         },

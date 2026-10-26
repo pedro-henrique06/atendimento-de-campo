@@ -579,7 +579,22 @@ export interface Dispensacao {
   via: ViaAdministracao | null;
   posologia: string | null;
   foraDoCatalogo: boolean;
+  /**
+   * Quem checou e quando: a coluna "Profissional | Hora" ao lado de cada linha
+   * da prescrição no papel. Nulos enquanto o item não foi checado.
+   */
+  checadaPor: Autor | null;
+  checadaEm: string | null;
 }
+
+/** O que foi feito na própria consulta, além de examinar e prescrever. */
+export type ProcedimentoNaConsulta = 'PassagemDiu' | 'Curativo' | 'Outro';
+
+export const PROCEDIMENTOS_NA_CONSULTA: ProcedimentoNaConsulta[] = [
+  'PassagemDiu',
+  'Curativo',
+  'Outro',
+];
 
 export interface Ortopedia {
   localizacao: string | null;
@@ -634,6 +649,23 @@ export interface Consulta {
    */
   sintomasSaudeMental: SintomaSaudeMental[];
   perdasVivenciadas: PerdaVivenciada[];
+
+  /*
+    Exames complementares pedidos na consulta.
+
+    Sem USG: pedir um ultrassom é encaminhar para a fila do ultrassom, e é
+    assim que o pedido chega a quem faz o exame. Uma caixa aqui seria um
+    segundo registro do mesmo pedido, sem nada que os mantivesse de acordo.
+  */
+  exameLaboratorialSolicitado: boolean;
+  exameLaboratorialDescricao: string | null;
+  papanicolauSolicitado: boolean;
+  papanicolauObservacao: string | null;
+  outroExameSolicitado: string | null;
+
+  procedimentos: ProcedimentoNaConsulta[];
+  procedimentosObservacao: string | null;
+
   dispensacoes: Dispensacao[];
   concluidaEm: string | null;
 }

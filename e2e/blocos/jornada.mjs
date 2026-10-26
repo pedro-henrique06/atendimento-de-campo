@@ -289,6 +289,74 @@ export function blocoJornada() {
             farmacia.observacoes.includes('12'),
             'A diferença entre o prescrito e o dispensado tinha que estar explicada.',
           );
+
+          /*
+            E a entrega é assinada: quem checou, e quando.
+
+            É a coluna "Profissional | Hora" do formulário de papel. Quem
+            prescreve é uma pessoa, quem entrega é outra, e essa assinatura é o
+            que liga as duas.
+          */
+          const linha = farmacia.dispensacoes[0];
+          const assinada = await cli.post(
+            `/atendimentos/${id}/prescricao/${linha.id}/checagem`,
+            { checada: true },
+          );
+
+          conferir(assinada.checadaEm, 'Checar não carimbou a hora.');
+          conferirIgual(
+            assinada.checadaPor?.nome,
+            ctx.contas.farmaceutico.nome,
+            'quem assinou a linha da prescrição',
+          );
+
+          // E a hora não é reescrita quando se checa de novo.
+          const denovo = await cli.post(
+            `/atendimentos/${id}/prescricao/${linha.id}/checagem`,
+            { checada: true },
+          );
+
+          conferirIgual(denovo.checadaEm, assinada.checadaEm, 'a hora da checagem depois de rechecar');
+        },
+      },
+
+      {
+        nome: 'o que já foi entregue não some quando a ficha é salva de novo',
+        async executar(ctx) {
+          const cli = ctx.contas.farmaceutico.cliente;
+          const { id } = ctx.jornada;
+          const dipirona = await itemDoCatalogo(cli, 'Dipirona');
+
+          // A farmácia corrige a observação — e, como qualquer edição, reenvia
+          // a lista inteira de itens.
+          await cli.put(`/atendimentos/${id}/farmacia`, {
+            orientacoes: 'Dipirona de 6/6 h apenas se dor. Não tomar com álcool.',
+            observacoes: 'Prescritos 20 comprimidos; o estoque tinha 12. Orientada a voltar amanhã.',
+            dispensacoes: [
+              {
+                itemId: dipirona.id,
+                quantidade: 12,
+                via: 'Oral',
+                posologia: '1 comprimido de 6/6 h se dor.',
+              },
+            ],
+          });
+
+          const farmacia = (await cli.get(`/atendimentos/${id}`)).farmacia;
+
+          /*
+            Salvar a ficha apaga e recria a lista. Sem a regra que preserva o
+            que já foi checado, a assinatura de quem entregou sumiria junto, e
+            o prontuário passaria a dizer que ninguém entregou nada.
+
+            E a linha continua sendo uma só: dois registros do mesmo remédio,
+            um assinado e outro não, seriam lidos como duas doses.
+          */
+          conferirIgual(farmacia.dispensacoes.length, 1, 'linhas da prescrição depois de salvar');
+          conferir(
+            farmacia.dispensacoes[0].checadaEm,
+            'A assinatura de quem entregou sumiu quando a ficha foi salva de novo.',
+          );
         },
       },
 
