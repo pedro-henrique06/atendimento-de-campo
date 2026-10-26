@@ -3,3 +3,6 @@ dist/
 *.local
 .DS_Store
 *.tsbuildinfo
+
+# Saída do roteiro de ponta a ponta
+e2e/prints/

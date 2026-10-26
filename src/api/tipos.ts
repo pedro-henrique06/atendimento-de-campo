@@ -624,6 +624,16 @@ export interface Consulta {
   encaminhadoPara: Especialidade | null;
   ortopedia: Ortopedia | null;
   ginecologia: Ginecologia | null;
+  /**
+   * Os dois blocos da ficha de saúde mental. Vazios nas outras especialidades.
+   *
+   * A API os aceitava e os gravava sem devolvê-los, então a ficha de saúde
+   * mental era lida como consulta genérica. "Perdas vivenciadas" é pergunta do
+   * formulário de catástrofe — casa, familiar, documentos — e é o dado que
+   * orienta o acompanhamento.
+   */
+  sintomasSaudeMental: SintomaSaudeMental[];
+  perdasVivenciadas: PerdaVivenciada[];
   dispensacoes: Dispensacao[];
   concluidaEm: string | null;
 }
